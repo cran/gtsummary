@@ -2,17 +2,24 @@
 % Please edit documentation in R/add_q.R
 \name{add_q}
 \alias{add_q}
-\title{Add a column of q values to objects to account for
+\title{Add a column of q values to account for
 multiple comparisons}
 \usage{
 add_q(x, ...)
 }
 \arguments{
-\item{x}{\code{fmt_table1} or \code{fmt_uni_regression} object}
+\item{x}{\code{tbl_summary} or \code{tbl_uvregression} object}
 
-\item{...}{further arguments passed to or from other methods.}
+\item{...}{Additional arguments passed to other methods.}
 }
 \description{
-Add a column of q values to objects to account for
+Add a column of q values to account for
 multiple comparisons
+}
+\seealso{
+\code{\link{add_q.tbl_summary}}, \code{\link{add_q.tbl_uvregression}},
+\code{\link{tbl_summary}}, \code{\link{tbl_uvregression}}
+}
+\author{
+Esther Drill, Daniel D. Sjoberg
 }

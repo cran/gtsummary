@@ -1,31 +1,31 @@
 context("test-bold_p")
 
 #### new comment
-test_that("no errors/warnings with standard use in fmt_table1() and add_comparison()", {
-  fmt_table1_comp <- fmt_table1(mtcars, by = "am") %>%
-    add_comparison()
+test_that("no errors/warnings with standard use in tbl_summary() and add_p()", {
+  tbl_summary_comp <- tbl_summary(mtcars, by = am) %>%
+    add_p()
 
-  expect_error(bold_p(fmt_table1_comp), NA)
-  expect_warning(bold_p(fmt_table1_comp), NA)
+  expect_error(bold_p(tbl_summary_comp), NA)
+  expect_warning(bold_p(tbl_summary_comp), NA)
 })
 
 
-test_that("expect error with use in fmt_table1() but NO add_comparison()", {
+test_that("expect error with use in tbl_summary() but NO add_p()", {
   table1_without_comp <-
-    fmt_table1(mtcars, by = "am")
+    tbl_summary(mtcars, by = am)
 
   expect_error(bold_p(table1_without_comp),
-    "There are no p-values to bold. You need to use add_comparison() after fmt_table1() and before using bold_p()",
+    "Before p-values are bolded, run add_p() to calculate the p-values",
     fixed = TRUE
   )
 })
 
 
 
-test_that("no errors/warnings with q=TRUE and add_q() used in fmt_table1", {
+test_that("no errors/warnings with q=TRUE and add_q() used in tbl_summary", {
   table1_comp_with_q <-
-    fmt_table1(mtcars, by = "am") %>%
-    add_comparison() %>%
+    tbl_summary(mtcars, by = am) %>%
+    add_p() %>%
     add_q()
 
   expect_error(bold_p(table1_comp_with_q, q = TRUE), NA)
@@ -33,32 +33,32 @@ test_that("no errors/warnings with q=TRUE and add_q() used in fmt_table1", {
 })
 
 
-test_that("expect error with q=TRUE and add_q() NOT USED in fmt_table1", {
+test_that("expect error with q=TRUE and add_q() NOT USED in tbl_summary", {
   table1_comp_without_q <-
-    fmt_table1(mtcars, by = "am") %>%
-    add_comparison()
+    tbl_summary(mtcars, by = am) %>%
+    add_p()
 
   expect_error(bold_p(table1_comp_without_q, q = TRUE),
-    "There are no q-values to bold. You need to use add_q() after add_comparison() and before using bold_p(q = TRUE)",
+    "Before q-values are bolded, run add_q() to calculate the q-values",
     fixed = TRUE
   )
 })
 
 
-test_that("no errors/warnings with standard use in fmt_regression()", {
+test_that("no errors/warnings with standard use in tbl_regression()", {
   fmt_reg <- lm(mpg ~ hp + am, mtcars) %>%
-    fmt_regression()
+    tbl_regression()
 
   expect_error(bold_p(fmt_reg), NA)
   expect_warning(bold_p(fmt_reg), NA)
 })
 
 
-test_that("no errors/warnings with standard use in fmt_uni_regression()", {
+test_that("no errors/warnings with standard use in tbl_uvregression()", {
   fmt_uni_reg <- trial %>%
-    fmt_uni_regression(
-      method = "lm",
-      y = "age"
+    tbl_uvregression(
+      method = lm,
+      y = age
     )
 
   expect_error(bold_p(fmt_uni_reg, p = 0.3), NA)
@@ -66,13 +66,13 @@ test_that("no errors/warnings with standard use in fmt_uni_regression()", {
 })
 
 
-test_that("no errors/warnings with use in fmt_uni_regression() with add_global()", {
+test_that("no errors/warnings with use in tbl_uvregression() with add_global_p()", {
   fmt_uni_reg_global_p <- trial %>%
-    fmt_uni_regression(
-      method = "lm",
-      y = "age"
+    tbl_uvregression(
+      method = lm,
+      y = age
     ) %>%
-    add_global()
+    add_global_p()
 
   expect_error(bold_p(fmt_uni_reg_global_p, p = 0.3), NA)
   expect_warning(bold_p(fmt_uni_reg_global_p, p = 0.3), NA)

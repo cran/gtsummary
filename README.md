@@ -1,84 +1,150 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
+<!-- badges: start -->
+
 [![Travis build
-status](https://travis-ci.org/ddsjoberg/clintable.svg?branch=master)](https://travis-ci.org/ddsjoberg/clintable)
+status](https://travis-ci.org/ddsjoberg/gtsummary.svg?branch=master)](https://travis-ci.org/ddsjoberg/gtsummary)
 [![AppVeyor build
-status](https://ci.appveyor.com/api/projects/status/github/ddsjoberg/clintable?branch=master&svg=true)](https://ci.appveyor.com/project/ddsjoberg/clintable)
+status](https://ci.appveyor.com/api/projects/status/github/ddsjoberg/gtsummary?branch=master&svg=true)](https://ci.appveyor.com/project/ddsjoberg/gtsummary)
 [![Coverage
-status](https://codecov.io/gh/ddsjoberg/clintable/branch/master/graph/badge.svg)](https://codecov.io/github/ddsjoberg/clintable?branch=master)  
-A collection of functions commonly used in the work of the
-biostatisticians. The goal of **gtsummary** is to make reporting of
-tabular analytic results simple, beautiful, and reproducible.  
-<!-- Update the list of contributors from the git shell `git shortlog -s -n` -->
+status](https://codecov.io/gh/ddsjoberg/gtsummary/branch/master/graph/badge.svg)](https://codecov.io/github/ddsjoberg/gtsummary?branch=master)
+[![CRAN
+status](https://www.r-pkg.org/badges/version/gtsummary)](https://cran.r-project.org/package=gtsummary)
+[![Lifecycle:
+maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
+<!-- badges: end -->
+
+## gtsummary <a href='https://github.com/ddsjoberg/gtsummary'><img src='man/figures/logo.png' align="right" height="120" /></a>
+
+The {gtsummary} package provides an elegant and flexible way to create
+publication-ready and reproducible analytical tables. The tables
+summarize data sets, regression models, and more. The code is concise
+and the tables are highly customizable. Data frames can be summarized
+with any function, e.g. mean(), median(), even user-written functions.
+Regression models are summarized and include the reference rows for
+categorical variables. Common regression models, such as logistic
+regression and Cox proportional hazards regression, are automatically
+identified and the tables are pre-filled with appropriate column headers
+(i.e. Odds Ratio, and Hazard Ratio). The package uses
+[{broom}](https://broom.tidyverse.org/) to perform initial tidying of
+the regression models, which means there is broad support for many types
+of regression models.
+
+{gtsummary} uses the [{gt}](https://gt.rstudio.com/) package enabling
+each table to be tailored to your preferences. If you label your data
+(which I recommend\!), the labels will be used in the table output. With
+{gtsummary} and [{labelled}](http://larmarange.github.io/labelled/)
+data, you get beautifully formatted, ready-to-share tables in a single
+line of code\! Check out the examples below, and review the vignettes
+for a detailed exploration of the output options.
 
 ## Installation
 
-You can install the production version of **gtsummary** with:
+The {gtsummary} package was written as a companion to the {gt} package
+from RStudio, and it is recommended to install both {gt} and
+{gtsummary}. The {gt} package is not automatically installed. If {gt} is
+not installed, `knitr::kable()` will be used to produce the summary
+tables. You can install {gtsummary} and {gt} with the following code.
+
+1.  Install {gtsummary}
+    
+    ``` r
+    install.packages("gtsummary")
+    ```
+
+2.  Install {gt} from GitHub (recommended)
+    
+    ``` r
+    install.packages("remotes")
+    remotes::install_github("rstudio/gt")
+    ```
+    
+      - If you experience issues installing {gt} on Windows, install
+        [Rtools from
+        CRAN](https://cran.r-project.org/bin/windows/Rtools/), restart
+        R, and attempt installation again.
+
+Install the development version of {gtsummary} with:
 
 ``` r
-install.packages("remotes")
-remotes::install_url("https://github.com/ddsjoberg/clintable/archive/master.zip")
-```
-
-and the development version with:
-
-``` r
-install.packages("remotes")
-remotes::install_url("https://github.com/ddsjoberg/clintable/archive/dev.zip")
+remotes::install_github("ddsjoberg/gtsummary")
 ```
 
 ## Examples
 
-The vignettes/tutorials for the primary **gtsummary** functions have
-detailed examples and can be found at
-[danieldsjoberg.com/clintable](http://www.danieldsjoberg.com/clintable).
-Each vignette is an Rmarkdown file (\*.Rmd) and a copy of the files can
-be found here:
-<https://github.com/ddsjoberg/clintable/tree/master/vignettes>.
+The {gtsummary} vignettes/tutorials contain detailed examples.
 
-### Table 1
+### Summary Table
 
 ``` r
 library(gtsummary)
-fmt_table1(trial, by = "trt") %>% 
-  add_comparison() %>% 
-  bold_labels()
+t1 <-
+  tbl_summary(
+    data = trial[c("trt", "age", "grade", "response")],
+    by = trt
+  ) %>%
+  add_p() 
 ```
 
-| Variable                | Drug              | Placebo           | p-value |
-| :---------------------- | :---------------- | :---------------- | :------ |
-|                         | N = 107           | N = 93            |         |
-| **Age, yrs**            | 47 (39, 58)       | 46 (36, 54)       | 0.3     |
-| Unknown                 | 3                 | 5                 |         |
-| **Marker Level, ng/mL** | 0.61 (0.22, 1.20) | 0.72 (0.22, 1.63) | 0.4     |
-| Unknown                 | 4                 | 4                 |         |
-| **T Stage**             |                   |                   | 0.13    |
-| T1                      | 25 (23%)          | 26 (28%)          |         |
-| T2                      | 26 (24%)          | 23 (25%)          |         |
-| T3                      | 29 (27%)          | 13 (14%)          |         |
-| T4                      | 27 (25%)          | 31 (33%)          |         |
-| **Grade**               |                   |                   | 0.3     |
-| I                       | 38 (36%)          | 29 (31%)          |         |
-| II                      | 34 (32%)          | 24 (26%)          |         |
-| III                     | 35 (33%)          | 40 (43%)          |         |
-| **Tumor Response**      | 52 (51%)          | 30 (33%)          | 0.017   |
-| Unknown                 | 6                 | 3                 |         |
+<img src="man/figures/README-tbl_summary.png" width="60%">
 
 ### Regression Models
 
 ``` r
-mod1 = glm(am ~ mpg + factor(cyl), mtcars, family = binomial(link = "logit"))
-fmt_regression(
-  mod1, exponentiate = TRUE, 
-  label = list(`factor(cyl)` = "No. of Cylinders", mpg = "Miles per Gallon")
-  )
+mod1 <- 
+  glm(response ~ trt + age + grade, trial, family = binomial(link = "logit"))
+
+t2 <- tbl_regression(mod1, exponentiate = TRUE)
 ```
 
-| N = 32           | OR   | 95% CI     | p-value |
-| :--------------- | :--- | :--------- | :------ |
-| Miles per Gallon | 1.45 | 1.03, 2.40 | 0.080   |
-| No. of Cylinders |      |            |         |
-| 4                | Ref. |            |         |
-| 6                | 2.08 | 0.13, 39.0 | 0.6     |
-| 8                | 2.02 | 0.04, 119  | 0.7     |
+<img src="man/figures/README-tbl_regression.png" width="44%">
+
+### Other Tables
+
+Side-by-side regression model results from `tbl_merge()`
+
+<img src="man/figures/tbl_merge_ex.png" width="60%">
+
+Survival Estimates from `tbl_survival()`
+
+<img src="man/figures/tbl_strata_ex1.png" width="31%">
+
+## Print Engine
+
+{gtsummary} uses the {gt} package to print all summary tables. In
+addition to supporting {gt}, the {gtsummary} package works well with
+`knitr::kable()`. This is particularly useful when outputting documents
+to Microsoft Word. If the {gt} package is not installed, {gtsummary}
+will fall back to `knitr::kable()`. To explicitly set the printing
+engine, set the option in the script or in the user- or project R
+profile, `.Rprofile`.
+
+    options(gtsummary.print_engine = "kable") 
+
+or
+
+    options(gtsummary.print_engine = "gt")
+
+Output from `kable` is less full featured compared to summary tables
+produced with {gt}. For example, `kable` summary tables do not include
+indentation, footnotes, and spanning header rows.
+
+## Contributing
+
+Please note that the {gtsummary} project is released with a [Contributor
+Code of
+Conduct](http://www.danieldsjoberg.com/gtsummary/CODE_OF_CONDUCT.html).
+By contributing to this project, you agree to abide by its terms. A big
+thank you to all contributors\!  
+[@ablack3](https://github.com/ablack3),
+[@ahinton-mmc](https://github.com/ahinton-mmc),
+[@ddsjoberg](https://github.com/ddsjoberg),
+[@emilyvertosick](https://github.com/emilyvertosick),
+[@jennybc](https://github.com/jennybc),
+[@jflynn264](https://github.com/jflynn264),
+[@karissawhiting](https://github.com/karissawhiting),
+[@margarethannum](https://github.com/margarethannum),
+[@michaelcurry1123](https://github.com/michaelcurry1123),
+[@sammo3182](https://github.com/sammo3182), and
+[@zabore](https://github.com/zabore)

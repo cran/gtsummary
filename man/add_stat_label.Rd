@@ -2,21 +2,44 @@
 % Please edit documentation in R/add_stat_label.R
 \name{add_stat_label}
 \alias{add_stat_label}
-\title{Adds a column showing a label for the summary statistics shown in each row}
+\title{Add statistic labels column}
 \usage{
-add_stat_label(x, iqr = TRUE)
+add_stat_label(x)
 }
 \arguments{
-\item{x}{object with class \code{fmt_table1} from the \code{\link{fmt_table1}} function}
-
-\item{iqr}{logical indicator whether '{q1}, {q2}' and '{p25}, {p75}' should
-resolve to 'IQR'. Default is \code{TRUE}}
+\item{x}{Object with class \code{tbl_summary} from the \link{tbl_summary} function}
+}
+\value{
+A \code{tbl_summary} object
 }
 \description{
-Rather than simply printing the summary statistics, with the use of \code{add_stat_label()},
-a column labeling the summary statistics is added.
+Adds a column with labels describing the summary statistics presented for
+each variable in the \link{tbl_summary} table.
 }
+\section{Example Output}{
+
+\if{html}{\figure{tbl_stat_ex.png}{options: width=50\%}}
+}
+
 \examples{
-mtcars \%>\% fmt_table1() \%>\% add_stat_label()
-mtcars \%>\% fmt_table1(by = "am") \%>\% add_stat_label(iqr = FALSE)
+tbl_stat_ex <-
+  trial \%>\%
+  dplyr::select(trt, age, grade, response) \%>\%
+  tbl_summary() \%>\%
+  add_stat_label()
 }
+\seealso{
+Other tbl_summary tools: \code{\link{add_n}},
+  \code{\link{add_overall}}, \code{\link{add_p}},
+  \code{\link{add_q.tbl_summary}},
+  \code{\link{bold_italicize_labels_levels}},
+  \code{\link{bold_p.tbl_summary}},
+  \code{\link{inline_text.tbl_summary}},
+  \code{\link{modify_header}},
+  \code{\link{sort_p.tbl_summary}},
+  \code{\link{tbl_summary}}
+}
+\author{
+Daniel D. Sjoberg
+}
+\concept{tbl_summary tools}

@@ -1,9 +1,9 @@
 context("test-add_q")
 
-test_that("no errors/warnings with standard use after fmt_table1() and add_comparison()", {
+test_that("no errors/warnings with standard use after tbl_summary() and add_p()", {
   table1 <- trial %>%
-    fmt_table1(by = "trt") %>%
-    add_comparison()
+    tbl_summary(by = trt) %>%
+    add_p()
 
   expect_error(add_q(table1), NA)
   expect_warning(add_q(table1), NA)
@@ -11,24 +11,26 @@ test_that("no errors/warnings with standard use after fmt_table1() and add_compa
 
 
 test_that("expect error if no p value in table 1", {
-  table1 <- trial %>% fmt_table1(by = "trt")
+  table1 <- trial %>% tbl_summary(by = trt)
 
   expect_error(
     add_q(table1),
-    "There are no p-values yet. You need to use the function add_comparison()
-    after fmt_table1() and before add_q()",
+    glue(
+      "There are no p-values yet. You need to use the function add_p(), ",
+      "after tbl_summary() and before add_q()"
+    ),
     fixed = TRUE
   )
 })
 
 
-test_that("no errors/warnings with standard use after fmt_uni_regression() and add_global()", {
+test_that("no errors/warnings with standard use after tbl_uvregression() and add_global_p()", {
   uni_reg <- trial %>%
-    fmt_uni_regression(
-      method = "lm",
-      y = "age"
+    tbl_uvregression(
+      method = lm,
+      y = age
     ) %>%
-    add_global()
+    add_global_p()
 
   expect_error(add_q(uni_reg), NA)
   expect_warning(add_q(uni_reg), NA)
@@ -36,16 +38,21 @@ test_that("no errors/warnings with standard use after fmt_uni_regression() and a
 
 
 
-test_that("expect error with no global p value in fmt_uni_regression", {
-  uni_reg <- trial %>% fmt_uni_regression(
-    method = "lm",
-    y = "age"
+test_that("expect error with no global p value in tbl_uvregression", {
+  uni_reg <- trial %>% tbl_uvregression(
+    method = lm,
+    y = age
   )
 
   expect_error(
-    add_q(uni_reg, p = 0.2),
-    "You need global p-values first. Use the function add_global() after
-    fmt_uni_regression() and before add_q()",
-    fixed = TRUE
+    add_q(uni_reg),
+    "You need global p-values first*",
+  )
+})
+
+test_that("add_q creates errors when non-function in input", {
+  expect_error(
+    add_q(uni_reg, pvalue_fun = mtcars),
+    "*"
   )
 })

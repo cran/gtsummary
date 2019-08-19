@@ -1,157 +1,184 @@
-#' Bold significant p-values in Rmarkdown
+#' Bold significant p-values or q-values
 #'
-#' Bold p-values in `fmt_table1`, `fmt_regression`, and `fmt_uni_regression`
-#' objects by adding '__' to each side of the string
+#' Bold values below a chosen threshold (e.g. <0.05)
+#' in gtsummary tables.
 #'
-#' @param x `fmt_table1`, `fmt_regression`, or `fmt_uni_regression` object
-#' @param ... further arguments passed to or from other methods.
-#' @seealso \code{\link{bold_p.fmt_table1}}, \code{\link{bold_p.fmt_regression}}
+#' @param x Object created using gtsummary functions
+#' @param ... Additional arguments passed to other methods.
+#' @author Daniel D. Sjoberg, Esther Drill
+#' @seealso \code{\link{bold_p.tbl_summary}},
+#' \code{\link{bold_p.tbl_regression}},
+#' \code{\link{bold_p.tbl_uvregression}}
 #' @export
 bold_p <- function(x, ...) UseMethod("bold_p")
 
-#' Bold or unbold p-values for `fmt_table1` objects in Rmarkdown
+
+#' Bold significant p-values or q-values
 #'
-#' @param x `fmt_table1` object
-#' @param t Determines the threshold below which p-values get bolded. Default is 0.05.
-#' @param q logical argument. When TRUE will bold or unbold the q-value column rather than the p-values
-#' @param ...	further arguments passed to or from other methods
-#' @export
-#' @examples
-#' trial %>% fmt_table1(by = "trt") %>% add_comparison() %>% bold_p()
-bold_p.fmt_table1 <- function(x, t = 0.05, q = FALSE, ...) {
-
-  # if bolding q values, checking add_q() was previously run
-  if (q == TRUE & !("add_q" %in% names(x$call_list))) {
-    stop(
-      "There are no q-values to bold. You need to use add_q() after add_comparison() and before using bold_p(q = TRUE)"
-    )
-  }
-  # checking that p-values do exist
-  if (!("add_comparison" %in% names(x$call_list))) {
-    stop(
-      "There are no p-values to bold. You need to use add_comparison() after fmt_table1() and before using bold_p()"
-    )
-  }
-
-  # getting name of column that will be bolded/unbolded
-  var_to_bold <- ifelse(q == TRUE, "qvalue", "pvalue")
-
-  # list of variable names where p-value/q-value will be bolded, and indicies of table1 rows that will change
-  var_sig <- x$meta_data$.variable[x$meta_data[[paste0(var_to_bold, "_exact")]] < t]
-  var_sig_indicies <- (x$table1$.variable %in% var_sig) & x$table1$row_type == "label"
-
-  # This replaces p-values/q-values for var_sig variables with bolded p-values
-  x$table1[[var_to_bold]] <-
-    ifelse(
-      var_sig_indicies,
-      paste0("__", x$table1[[var_to_bold]], "__"), # replacing sig rows with __ on each side
-      x$table1[[var_to_bold]]
-    )
-
-  # Returns the table 1 object
-  x$call_list <- c(x$call_list, list(bold_p = match.call()))
-  return(x)
-}
-
-#' Bold or unbold p-values for `fmt_regression`  objects in Rmarkdown
+#' Bold values below a chosen threshold (e.g. <0.05)
+#' in [tbl_summary] tables.
 #'
-#' @param x `fmt_regression` object
-#' @param t Determines the threshold below which p-values get bolded. Default is 0.05.
-#' @param ...	further arguments passed to or from other methods
-#' @export
+#' @param x Object created using `tbl_summary` function
+#' @param t Threshold below which values will be bold. Default is 0.05.
+#' @param q Logical argument. When TRUE will bold the q-value column rather
+#' than the p-values. Default is `FALSE`.
+#' @param ... Not used
+#' @family tbl_summary tools
+#' @return A `tbl_summary` object
+#' @author Daniel D. Sjoberg, Esther Drill
 #' @examples
-#' lm(mpg ~ hp + am, mtcars) %>%
-#'   fmt_regression() %>%
+#' tbl_sum_bold_p_ex <-
+#'   trial %>%
+#'   dplyr::select(age, grade, response, trt) %>%
+#'   tbl_summary(by = trt) %>%
+#'   add_p() %>%
 #'   bold_p()
-bold_p.fmt_regression <- function(x, t = 0.05, ...) {
+#' @section Example Output:
+#' \if{html}{\figure{tbl_sum_bold_p_ex.png}{options: width=50\%}}
+#' @export
+bold_p.tbl_summary <- function(x, t = 0.05, q = FALSE, ...) {
 
-  # This replaces p-values for var_sig variables with bolded p-values
-  x$model_tbl <-
-    x$model_tbl %>%
-    dplyr::mutate(
-      pvalue = ifelse(
-        .data$pvalue_exact < t,
-        paste0("__", .data$pvalue, "__"),
-        .data$pvalue
-      )
+  # checking that add_p has been previously run
+  if (is.null(x$call_list$add_p)) {
+    stop("Before p-values are bolded, run add_p() to calculate the p-values")
+  }
+  # checking that add_q has been previously run if bold q-values
+  if (q == TRUE & is.null(x$call_list$add_q)) {
+    stop("Before q-values are bolded, run add_q() to calculate the q-values")
+  }
+
+  # storing column names and gt_call name
+  col_name <- ifelse(q == FALSE, "p.value", "q.value")
+  fun_name <- ifelse(q == FALSE, "pvalue_fun", "qvalue_fun")
+
+  # modifying table_header with bold threshold
+  x$table_header$bold <-
+    ifelse(
+      x$table_header$column == col_name,
+      t, x$table_header$bold
     )
 
-  return(x)
+  # updating gt and kable calls with data from table_header
+  x <- update_calls_from_table_header(x)
+
+  x$call_list <- c(x$call_list, list(bold_p = match.call()))
+
+  x
 }
 
-#' Bold or unbold p-values for `fmt_uni_regression` objects in Rmarkdown
+#' Bold significant p-values or q-values
 #'
-#' @param x `fmt_uni_regression` object
-#' @param t Determines the threshold below which p-values get bolded. Default is 0.05.
-#' @param q logical argument. When TRUE will bold or unbold the q-value column rather than the p-values
-#' @param ...	further arguments passed to or from other methods
-#' @export
+#' Bold values below a chosen threshold (e.g. <0.05)
+#' in [tbl_regression] tables.
+#'
+#' @param x Object created using [tbl_regression] function
+#' @inheritParams bold_p.tbl_summary
+#' @author Daniel D. Sjoberg, Esther Drill
+#' @family tbl_regression tools
 #' @examples
+#' tbl_lm_bold_p_ex <-
+#'   glm(response ~ trt + grade, trial, family = binomial(link = "logit")) %>%
+#'   tbl_regression(exponentiate = TRUE) %>%
+#'   bold_p()
+#' @section Example Output:
+#' \if{html}{\figure{tbl_lm_bold_p_ex.png}{options: width=50\%}}
+#' @export
+#' @return A `tbl_regression` object
+
+bold_p.tbl_regression <- function(x, t = 0.05, ...) {
+
+  # modifying table_header with bold threshold
+  x$table_header$bold <-
+    ifelse(
+      x$table_header$column == "p.value",
+      t, x$table_header$bold
+    )
+
+  # updating gt and kable calls with data from table_header
+  x <- update_calls_from_table_header(x)
+
+  x$call_list <- c(x$call_list, list(bold_p = match.call()))
+
+  x
+}
+
+#' Bold significant p-values or q-values
 #'
-#' trial %>%
-#'   fmt_uni_regression(
-#'     method = "lm",
-#'     y = "age"
+#' Bold values below a chosen threshold (e.g. <0.05)
+#' in [tbl_uvregression] tables.
+#'
+#' @param x Object created using [tbl_uvregression] function
+#' @inheritParams bold_p.tbl_summary
+#' @author Daniel D. Sjoberg, Esther Drill
+#' @family tbl_uvregression tools
+#' @export
+#' @return A `tbl_uvregression` object
+#' @examples
+#' tbl_uvglm_bold_p_ex <-
+#'   trial %>%
+#'   dplyr::select(age, marker, response, grade) %>%
+#'   tbl_uvregression(
+#'     method = glm,
+#'     y = response,
+#'     method.args = list(family = binomial),
+#'     exponentiate = TRUE
 #'   ) %>%
-#'   bold_p(t = 0.20)
-bold_p.fmt_uni_regression <- function(x, t = 0.05, q = FALSE, ...) {
+#'   bold_p(t = 0.25)
+#' @section Example Output:
+#' \if{html}{\figure{tbl_uvglm_bold_p_ex.png}{options: width=50\%}}
 
-  # if bolding q values, checking add_q() was previously run
-  if (q == TRUE & !("add_q" %in% names(x$call_list))) {
-    stop("You need to use add_q() after fmt_uni_regression() before using bold_p(q = TRUE)")
+bold_p.tbl_uvregression <- function(x, t = 0.05, q = FALSE, ...) {
+
+  # checking that add_q has been previously run if bold q-values
+  if (q == TRUE & is.null(x$call_list$add_q)) {
+    stop("Before q-values are bolded, run add_q() to calculate the q-values")
   }
 
-  ### simplest scenario - without global p-values
-  if (q == FALSE & !("global_pvalue" %in% colnames(x$meta_data))) {
-    # This replaces p-values for var_sig variables with bolded p-values
-    x$model_tbl <-
-      x$model_tbl %>%
-      dplyr::mutate(pvalue = ifelse(.data$pvalue_exact < t,
-        paste0("__", .data$pvalue, "__"),
-        .data$pvalue
-      ))
-  }
+  col_name <- ifelse(q == FALSE, "p.value", "q.value")
+  fun_name <- ifelse(q == FALSE, "pvalue_fun", "qvalue_fun")
 
+  # modifying table_header with bold threshold
+  x$table_header$bold <-
+    ifelse(
+      x$table_header$column == col_name,
+      t, x$table_header$bold
+    )
 
+  # updating gt and kable calls with data from table_header
+  x <- update_calls_from_table_header(x)
 
-  ### with global p-values
-  if (q == FALSE &
-    ("global_pvalue" %in% colnames(x$meta_data))) {
-    var_sig <-
-      x$meta_data %>%
-      dplyr::filter(.data$global_pvalue_exact < t) %>%
-      dplyr::pull("variable")
+  x$call_list <- c(x$call_list, list(bold_p = match.call()))
 
-    x$model_tbl <-
-      x$model_tbl %>%
-      dplyr::mutate(
-        pvalue = ifelse(
-          .data$variable %in% var_sig & .data$row_type == "label",
-          paste0("__", .data$pvalue, "__"),
-          .data$pvalue
-        )
-      )
-  }
+  x
+}
 
-  # This replaces p-values for var_sig variables with bolded p-values
-  if (q == TRUE) {
-    # This replaces p-values for var_sig variables with bolded p-values
-    var_sig <-
-      x$meta_data %>%
-      dplyr::filter(.data$qvalue_exact < t) %>%
-      dplyr::pull("variable")
+#' Bold significant p-values or q-values
+#'
+#' Bold values below a chosen threshold (e.g. <0.05)
+#' in [tbl_stack] tables.
+#'
+#' @param x Object created using [tbl_stack] function
+#' @param ... arguments passed to `bold_p.*()` method that
+#' matches the first object in the `tbl_stack`
+#' @author Daniel D. Sjoberg
+#' @family tbl_uvregression tools
+#' @family tbl_regression tools
+#' @export
+#' @return A `tbl_stack` object
+#' @examples
+#' t1 <- tbl_regression(lm(age ~ response, trial))
+#' t2 <- tbl_regression(lm(age ~ grade, trial))
+#'
+#' bold_p_stack_ex <-
+#'   tbl_stack(list(t1, t2)) %>%
+#'   bold_p(t = 0.10)
+#' @section Example Output:
+#' \if{html}{\figure{bold_p_stack_ex.png}{options: width=50\%}}
 
-    x$model_tbl <-
-      x$model_tbl %>%
-      dplyr::mutate(
-        qvalue = ifelse(
-          .data$variable %in% var_sig & .data$row_type == "label",
-          paste0("__", .data$qvalue, "__"),
-          .data$qvalue
-        )
-      )
-  }
+bold_p.tbl_stack <- function(x, ...) {
 
-  # Returns the fmt_regression object
-  return(x)
+  # assigning the class to be the same as the first stacked object
+  class(x) <- class(x$tbl_regression_list[[1]])
+
+  bold_p(x, ...)
 }

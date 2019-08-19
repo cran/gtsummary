@@ -1,117 +1,234 @@
-#' Add a column of q values to objects to account for
+#' Add a column of q values to account for
 #' multiple comparisons
 #'
-#' @param x `fmt_table1` or `fmt_uni_regression` object
-#' @param ... further arguments passed to or from other methods.
+#' @param x `tbl_summary` or `tbl_uvregression` object
+#' @param ... Additional arguments passed to other methods.
+#' @author Esther Drill, Daniel D. Sjoberg
+#' @seealso \code{\link{add_q.tbl_summary}}, \code{\link{add_q.tbl_uvregression}},
+#' \code{\link{tbl_summary}}, \code{\link{tbl_uvregression}}
 #' @export
 add_q <- function(x, ...) UseMethod("add_q")
 
-#' Add a column of q values to `fmt_table1` object to account for
-#' multiple comparisons in Rmarkdown
+#' Add a column of q-values to account for multiple comparisons
 #'
-#' The adjustments to the p-values is performed with
-#' `stats::`\code{\link[stats]{p.adjust}}.  The default method for correction
-#' is false discovery rate (`"fdr"`)
+#' Adjustments to are p-values are performed with [stats::p.adjust].
 #'
-#' @param x `table1` object
-#' @param method character argument.  Methods from
-#' `stats::`\code{\link[stats]{p.adjust}} are accepted.  Default is `method = fdr`.
-#' @param pvalue_fun function for rounding/formatting p-values.  Default is \code{\link{fmt_pvalue}}.
-#' @param ...	further arguments passed to or from other methods
+#' @param x `tbl_summary` object
+#' @param method String indicating method to be used for p-value
+#' adjustment. Methods from
+#' [stats::p.adjust] are accepted.  Default is `method = 'fdr'`.
+#' @inheritParams tbl_regression
+#' @param ...	Additional arguments passed to or from other methods
+#' @author Esther Drill, Daniel D. Sjoberg
+#' @family tbl_summary tools
 #' @export
+#' @return A `tbl_summary` object
 #' @examples
-#' trial %>% fmt_table1(by = "trt") %>% add_comparison() %>% add_q()
-add_q.fmt_table1 <- function(x, method = "fdr", pvalue_fun = fmt_pvalue, ...) {
+#' tbl_sum_q_ex <-
+#'   trial %>%
+#'   dplyr::select(trt, age, grade, response) %>%
+#'   tbl_summary(by = trt) %>%
+#'   add_p() %>%
+#'   add_q()
+#' @section Example Output:
+#' \if{html}{\figure{tbl_sum_q_ex.png}{options: width=50\%}}
+
+add_q.tbl_summary <- function(x, method = "fdr",
+                              pvalue_fun = x$pvalue_fun, ...) {
 
   # This adjusts p-values for multiple testing. Default method is fdr.
-  if (!("add_comparison" %in% names(x$call_list))) {
-    stop("There are no p-values yet. You need to use the function add_comparison()
-    after fmt_table1() and before add_q()")
+  if (!("add_p" %in% names(x$call_list))) {
+    stop(glue(
+      "There are no p-values yet. You need to use the function add_p(), ",
+      "after tbl_summary() and before add_q()"
+    ))
+  }
+
+  # checking pvalue_fun are functions
+  if (!is.function(pvalue_fun)) {
+    stop("Input 'pvalue_fun' must be a function.")
   }
 
   # adding exact and printable q value to meta_data
   x$meta_data <-
     x$meta_data %>%
-    dplyr::mutate(
-      qvalue_exact = stats::p.adjust(.data$pvalue_exact, method = method),
-      qvalue = pvalue_fun(.data$qvalue_exact)
+    mutate(
+      q.value = stats::p.adjust(.data$p.value, method = method)
     )
 
-  # adding q value to table1
-  x$table1 <-
-    x$table1 %>%
-    dplyr::left_join(
+  # adding q value to summary table
+  x$table_body <-
+    x$table_body %>%
+    left_join(
       x$meta_data %>%
-        dplyr::select(c(".variable", "qvalue")) %>%
-        dplyr::mutate(row_type = "label"),
-      by = c(".variable", "row_type")
-    ) %>%
-    dplyr::mutate(
-      qvalue = ifelse(.data$row_type == "header2", "q-value", .data$qvalue)
+        select(c("variable", "q.value")) %>%
+        mutate(row_type = "label"),
+      by = c("variable", "row_type")
     )
+
+  x$table_header <-
+    tibble(column = names(x$table_body)) %>%
+    left_join(x$table_header, by = "column") %>%
+    table_header_fill_missing() %>%
+    table_header_fmt(q.value = "x$qvalue_fun")
+
+  # adding  column header
+  x <- modify_header_internal(x, q.value = "**q-value**")
+
+  # updating gt and kable calls with data from table_header
+  x <- update_calls_from_table_header(x)
 
   # keep track of what functions have been called
   x$call_list <- c(x$call_list, list(add_q = match.call()))
+
+  # returning qvalue method
+  x$qvalue_method <- method
+
+  # footnote text
+  footnote_text <-
+    method %>%
+    {
+      filter(add_q_method_lookup, !!parse_expr(glue("method == '{.}'")))
+    } %>%
+    pull("method_label")
+
+  x$qvalue_fun <- pvalue_fun
+
+  # gt calls -------------------------------------------------------------------
+  # column headers abbreviations footnote
+  x[["gt_calls"]][["footnote_q_method"]] <- glue(
+    "gt::tab_footnote(",
+    "  footnote = '{footnote_text}',",
+    "  locations = gt::cells_column_labels(",
+    "    columns = gt::vars(q.value))",
+    ")"
+  )
 
   # Returns the table 1 object
   return(x)
 }
 
 
-#' Add a column of q values to `fmt_uni_regression` object to account for
-#' multiple comparisons
+#' Add a column of q-values to account for multiple comparisons
 #'
-#' The adjustments to the p-values is performed with
-#' `stats::`\code{\link[stats]{p.adjust}}.  The default method for correction
-#' is false discovery rate (`"fdr"`)
+#' Adjustments to are p-values are performed with [stats::p.adjust].
 #'
-#' @param x `table1` object
-#' @param method character argument.  Methods from
-#' `stats::`\code{\link[stats]{p.adjust}} are accepted.  Default is `method = fdr`.
-#' @param ...	further arguments passed to or from other methods
+#' @param x `tbl_uvregression` object
+#' @param method String indicating method to be used for p-value adjustment.
+#' Methods from [stats::p.adjust] are accepted. Default is `method = 'fdr'`.
+#' @inheritParams tbl_regression
+#' @param ...	Additional arguments passed to or from other methods
+#' @author Esther Drill, Daniel D. Sjoberg
+#' @family tbl_uvregression tools
 #' @export
+#' @return A `tbl_uvregression` object
 #' @examples
-#' lm(mpg ~ hp + am, mtcars) %>%
-#'   fmt_regression() %>%
-#'   bold_p()
-#'
-#' trial %>%
-#'   fmt_uni_regression(
-#'     method = "lm",
-#'     y = "age"
+#' tbl_uvr_q_ex <-
+#'   trial %>%
+#'   dplyr::select(age, marker, grade, response) %>%
+#'   tbl_uvregression(
+#'     method = lm,
+#'     y = age
 #'   ) %>%
-#'   add_global() %>%
+#'   add_global_p() %>%
 #'   add_q()
-add_q.fmt_uni_regression <- function(x, method = "fdr", ...) {
+#' @section Example Output:
+#' \if{html}{\figure{tbl_uvr_q_ex.png}{options: width=50\%}}
 
-  # This adjusts p-values for multiple testing but only when the global approach is used.
-  # Default method is fdr.
-  if (!("global_pvalue" %in% colnames(x$meta_data))) {
-    stop("You need global p-values first. Use the function add_global() after
-    fmt_uni_regression() and before add_q()")
+add_q.tbl_uvregression <- function(x, method = "fdr",
+                                   pvalue_fun = x$inputs$pvalue_fun, ...) {
+
+  # This adjusts p-values for multiple testing but only when the
+  # global approach is used. Default method is fdr.
+  if (!("p.value_global" %in% colnames(x$meta_data))) {
+    stop(glue(
+      "You need global p-values first. Use the function add_global_p() after ",
+      "tbl_uvregression() and before add_q()"
+    ))
+  }
+
+  # checking pvalue_fun are functions
+  if (!is.function(pvalue_fun)) {
+    stop("Input 'pvalue_fun' must be a function.")
   }
 
   # adding exact and printable q value to meta_data
   x$meta_data <-
     x$meta_data %>%
-    dplyr::mutate(
-      qvalue_exact = stats::p.adjust(.data$global_pvalue_exact, method = method),
-      qvalue = x$inputs$pvalue_fun(.data$qvalue_exact)
+    mutate(
+      q.value_global = stats::p.adjust(.data$p.value_global, method = method)
     )
 
-  # adding q value to table1
-  x$model_tbl <-
-    x$model_tbl %>%
-    dplyr::left_join(
+  # adding q value to display table
+  x$table_body <-
+    x$table_body %>%
+    left_join(
       x$meta_data %>%
-        dplyr::select(c("variable", "qvalue")) %>%
-        dplyr::mutate(row_type = "label"),
+        select(c("variable", "q.value_global")) %>%
+        set_names(c("variable", "q.value")) %>%
+        mutate(row_type = "label"),
       by = c("variable", "row_type")
-    ) %>%
-    dplyr::mutate(
-      qvalue = ifelse(.data$row_type == "header1", "q-value", .data$qvalue)
     )
+
+  x$table_header <-
+    tibble(column = names(x$table_body)) %>%
+    left_join(x$table_header, by = "column") %>%
+    table_header_fill_missing() %>%
+    table_header_fmt(
+      q.value = "x$qvalue_fun"
+    )
+
+  x <- modify_header_internal(x, q.value = "**q-value**")
+
+  # updating gt and kable calls with data from table_header
+  x <- update_calls_from_table_header(x)
 
   x$call_list <- c(x$call_list, list(add_q = match.call()))
+
+  # returning qvalue method
+  x$qvalue_method <- method
+
+  # footnote text
+  footnote_text <-
+    method %>%
+    {
+      filter(add_q_method_lookup, !!parse_expr(glue("method == '{.}'")))
+    } %>%
+    pull("method_label")
+
+  x$qvalue_fun <- pvalue_fun
+
+  # gt function calls ----------------------------------------------------------
+  # column headers abbreviations footnote
+  x[["gt_calls"]][["footnote_q_method"]] <- glue(
+    "gt::tab_footnote(",
+    "footnote = '{footnote_text}',",
+    "locations = gt::cells_column_labels(",
+    "columns = gt::vars(q.value))",
+    ")"
+  )
+
   return(x)
 }
+
+
+# match method input to display name
+add_q_method_lookup <-
+  tibble::tibble(
+    method = stats::p.adjust.methods
+  ) %>%
+  left_join(
+    tibble::tribble(
+      ~method, ~method_label,
+      "holm", "Holm correction for multiple testing",
+      "hochberg", "Hochberg correction for multiple testing",
+      "hommel", "Hommel correction for multiple testing",
+      "bonferroni", "Bonferroni correction for multiple testing",
+      "BH", "Benjamini & Hochberg correction for multiple testing",
+      "BY", "Benjamini & Yekutieli correction for multiple testing",
+      "fdr", "False discovery rate correction for multiple testing",
+      "none", "No correction for multiple testing"
+    ),
+    by = "method"
+  ) %>%
+  mutate(method_label = coalesce(method_label, method))

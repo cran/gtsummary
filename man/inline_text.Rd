@@ -2,18 +2,25 @@
 % Please edit documentation in R/inline_text.R
 \name{inline_text}
 \alias{inline_text}
-\title{Report statistics from \code{fmt_table1} and \code{fmt_regression} inline in an Rmarkdown document}
+\title{Report statistics from gtsummary tables inline}
 \usage{
 inline_text(x, ...)
 }
 \arguments{
-\item{x}{\code{fmt_table1} or \code{fmt_regression} object}
+\item{x}{Object created from a gtsummary function}
 
-\item{...}{further arguments passed to or from other methods.}
+\item{...}{Additional arguments passed to other methods.}
+}
+\value{
+A string reporting results from a gtsummary table
 }
 \description{
-Report statistics from \code{fmt_table1} and \code{fmt_regression} inline in an Rmarkdown document
+Report statistics from gtsummary tables inline
 }
 \seealso{
-\code{\link{inline_text.fmt_table1}}, \code{\link{inline_text.fmt_regression}}
+\link{inline_text.tbl_summary}, \link{inline_text.tbl_regression},
+\link{inline_text.tbl_uvregression}, \link{inline_text.tbl_survival}
+}
+\author{
+Daniel D. Sjoberg
 }

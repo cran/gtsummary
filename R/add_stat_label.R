@@ -1,89 +1,66 @@
-#' Adds a column showing a label for the summary statistics shown in each row
+#' Add statistic labels column
 #'
-#' Rather than simply printing the summary statistics, with the use of `add_stat_label()`,
-#' a column labeling the summary statistics is added.
+#' Adds a column with labels describing the summary statistics presented for
+#' each variable in the [tbl_summary] table.
 #'
-#' @param x object with class `fmt_table1` from the \code{\link{fmt_table1}} function
-#' @param iqr logical indicator whether '{q1}, {q2}' and '{p25}, {p75}' should
-#' resolve to 'IQR'. Default is `TRUE`
+#' @param x Object with class `tbl_summary` from the [tbl_summary] function
+#' @family tbl_summary tools
+#' @author Daniel D. Sjoberg
 #' @export
+#' @return A `tbl_summary` object
 #' @examples
-#' mtcars %>% fmt_table1() %>% add_stat_label()
-#' mtcars %>% fmt_table1(by = "am") %>% add_stat_label(iqr = FALSE)
-add_stat_label <- function(x, iqr = TRUE) {
-  labels <- tibble::tribble(
-    ~stat, ~label,
-    "{min}", "Minimum",
-    "{minimum}", "Minimum",
-    "{max}", "Maximum",
-    "{maximum}", "Maximum",
-    "{med}", "Median",
-    "{median}", "Median",
-    "{mean}", "Mean",
-    "{p50}", "50%",
-    "{q1}", "Q1",
-    "{q2}", "Q2",
-    "{q3}", "Q3",
-    "{p25}", "25%",
-    "{p75}", "Q3",
-    "{sd}", "SD",
-    "{var}", "Variance",
-    "{n}", "n",
-    "{N}", "N",
-    "{p}%", "%",
-    "{p}", "%"
-  )
-
-  # adding IQR replacements if indicated
-  if (iqr == TRUE) {
-    labels <-
-      dplyr::bind_rows(
-        tibble::tribble(
-          ~stat, ~label,
-          "{q1}, {q3}", "IQR",
-          "{p25}, {p75}", "IQR"
-        ),
-        labels
-      )
-  }
-
-  # now replacing each of the statistics with their labels
-  x$meta_data$stat_label <- x$meta_data$.stat_display
-  for (i in 1:nrow(labels)) {
-    x$meta_data$stat_label <-
-      stringr::str_replace_all(
-        x$meta_data$stat_label,
-        stringr::fixed(labels$stat[i]),
-        labels$label[i]
-      )
-  }
+#' tbl_stat_ex <-
+#'   trial %>%
+#'   dplyr::select(trt, age, grade, response) %>%
+#'   tbl_summary() %>%
+#'   add_stat_label()
+#' @section Example Output:
+#' \if{html}{\figure{tbl_stat_ex.png}{options: width=50\%}}
+#'
+add_stat_label <- function(x) {
 
   # adding some meta data only needed for merging (i.e. the row_type)
   meta_data_stat_label <-
     x$meta_data %>%
-    dplyr::mutate(
-      row_type = ifelse(.data$.summary_type == "categorical", "level", "label")
+    mutate(
+      row_type = ifelse(.data$summary_type == "categorical", "level", "label")
     ) %>%
-    dplyr::select(dplyr::one_of(c(".variable", "row_type", "stat_label")))
+    select(c("variable", "row_type", "stat_label"))
 
-  # merging in new labels to table1
-  x$table1 <-
-    x$table1 %>%
-    dplyr::select(dplyr::one_of(c(".variable", "row_type", "label"))) %>%
-    dplyr::left_join(meta_data_stat_label, by = c(".variable", "row_type")) %>%
-    dplyr::left_join(x$table1, c(".variable", "row_type", "label"))
+  # merging in new labels to table_body
+  x$table_body <-
+    x$table_body %>%
+    select(c("variable", "row_type", "label")) %>%
+    left_join(meta_data_stat_label, by = c("variable", "row_type")) %>%
+    left_join(x$table_body, c("variable", "row_type", "label"))
 
-  x$table1 <-
-    x$table1 %>%
-    dplyr::mutate(
+  x$table_body <-
+    x$table_body %>%
+    mutate(
       # adding in "n" for missing rows, and header
-      stat_label = dplyr::case_when(
+      stat_label = case_when(
         .data$row_type == "missing" ~ "n",
-        .data$row_type == "header1" & is.null(x[["by"]]) ~ "Statistic",
-        .data$row_type == "header2" & !is.null(x[["by"]]) ~ "Statistic",
-        TRUE ~ stat_label
+        TRUE ~ .data$stat_label
       )
     )
+
+  x$table_header <-
+    tibble(column = names(x$table_body)) %>%
+    left_join(x$table_header, by = "column") %>%
+    table_header_fill_missing()
+
+  # updating header
+  x <- modify_header_internal(x, stat_label = "**Statistic**")
+
+  # updating gt and kable calls with data from table_header
+  x <- update_calls_from_table_header(x)
+
+  # removing previous footnote about which statistics are presented
+  x[["gt_calls"]][["footnote_stat_label"]] <- NULL
+
+  # keeping track of all functions previously run
+  x$call_list <- c(x$call_list, list(add_stat_label = match.call()))
+
 
   return(x)
 }

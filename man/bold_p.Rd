@@ -2,19 +2,24 @@
 % Please edit documentation in R/bold_p.R
 \name{bold_p}
 \alias{bold_p}
-\title{Bold significant p-values in Rmarkdown}
+\title{Bold significant p-values or q-values}
 \usage{
 bold_p(x, ...)
 }
 \arguments{
-\item{x}{\code{fmt_table1}, \code{fmt_regression}, or \code{fmt_uni_regression} object}
+\item{x}{Object created using gtsummary functions}
 
-\item{...}{further arguments passed to or from other methods.}
+\item{...}{Additional arguments passed to other methods.}
 }
 \description{
-Bold p-values in \code{fmt_table1}, \code{fmt_regression}, and \code{fmt_uni_regression}
-objects by adding '__' to each side of the string
+Bold values below a chosen threshold (e.g. <0.05)
+in gtsummary tables.
 }
 \seealso{
-\code{\link{bold_p.fmt_table1}}, \code{\link{bold_p.fmt_regression}}
+\code{\link{bold_p.tbl_summary}},
+\code{\link{bold_p.tbl_regression}},
+\code{\link{bold_p.tbl_uvregression}}
+}
+\author{
+Daniel D. Sjoberg, Esther Drill
 }

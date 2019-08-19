@@ -2,22 +2,50 @@
 % Please edit documentation in R/add_n.R
 \name{add_n}
 \alias{add_n}
-\title{Adds a column with N (or N missing) for each variable}
+\title{Add column with N}
 \usage{
 add_n(x, missing = FALSE, last = FALSE)
 }
 \arguments{
-\item{x}{object with class \code{fmt_table1} from the \code{\link{fmt_table1}} function}
+\item{x}{Object with class \code{tbl_summary} from the \link{tbl_summary} function}
 
-\item{missing}{logical argument indicating whether to print N (\code{missing = FALSE}),
+\item{missing}{Logical argument indicating whether to print N (\code{missing = FALSE}),
 or N missing (\code{missing = TRUE}).  Default is \code{FALSE}}
 
-\item{last}{logical indicator to include overall  column last. Default is \code{FALSE}}
+\item{last}{Logical indicator to include N column last in table.
+Default is \code{FALSE}, which will display N column first.}
+}
+\value{
+A \code{tbl_summary} object
 }
 \description{
-The function assumes the DEFAULT header are in use. Only modify header rows
-after all columns has been added.
+For each variable in a \code{tbl_summary} table, the \code{add_n} function adds a column with the
+total number of non-missing (or missing) observations
 }
+\section{Example Output}{
+
+\if{html}{\figure{tbl_n_ex.png}{options: width=50\%}}
+}
+
 \examples{
-trial \%>\% fmt_table1(by = "trt") \%>\% add_n()
+tbl_n_ex <-
+  trial \%>\%
+  dplyr::select(trt, age, grade, response) \%>\%
+  tbl_summary(by = trt) \%>\%
+  add_n()
 }
+\seealso{
+Other tbl_summary tools: \code{\link{add_overall}},
+  \code{\link{add_p}}, \code{\link{add_q.tbl_summary}},
+  \code{\link{add_stat_label}},
+  \code{\link{bold_italicize_labels_levels}},
+  \code{\link{bold_p.tbl_summary}},
+  \code{\link{inline_text.tbl_summary}},
+  \code{\link{modify_header}},
+  \code{\link{sort_p.tbl_summary}},
+  \code{\link{tbl_summary}}
+}
+\author{
+Daniel D. Sjoberg
+}
+\concept{tbl_summary tools}
