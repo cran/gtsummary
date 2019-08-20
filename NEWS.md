@@ -1,3 +1,9 @@
+# gtsummary 1.2.1
+
+* Vignettes install the {gt} package to a temporary directory (required for CRAN check) (#217)
+
+* Added ability to name custom `add_p()` tests (#213)
+
 # gtsummary 1.2.0
 
 * Users can pass variable names in backticks (#212)
@@ -26,7 +32,7 @@
     italicize_levels()  <-  tab_style_italicize_levels()  
 ```
 
-* Passing named lists in `tbl_summary()` is not defunct. 
+* Passing named lists in `tbl_summary()` is now defunct. 
 
 * `tbl_stack()` fix for `tbl_uvregression` objects (#175)
 

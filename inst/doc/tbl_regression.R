@@ -5,9 +5,6 @@ knitr::opts_chunk$set(
 )
 
 ## ---- include=FALSE------------------------------------------------------
-if(curl::has_internet()) 
-  remotes::install_github("rstudio/gt")
-
 library(gtsummary)
 library(dplyr)
 

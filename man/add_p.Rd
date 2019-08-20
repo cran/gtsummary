@@ -82,18 +82,22 @@ add_p_ex1 <-
   tbl_summary(by = trt) \%>\%
   add_p()
 
+\donttest{
 # Conduct a custom McNemar test for response,
-# The custom function must return a single p-value, or NA
+# Function must return a named list(p = 0.05, test = "McNemar's test")
+# Function names begins with 'add_p_test.' and ends with the alias
 add_p_test.mcnemar <- function(data, variable, by, ...) {
-  stats::mcnemar.test(data[[variable]], data[[by]])$p.value
+  result <- list()
+  result$p <- stats::mcnemar.test(data[[variable]], data[[by]])$p.value
+  result$test <- "McNemar's test"
+  result
 }
 
 add_p_ex2 <-
-  trial \%>\%
-  dplyr::select(response, trt) \%>\%
+  trial[c("response", "trt")] \%>\%
   tbl_summary(by = trt) \%>\%
   add_p(test = vars(response) ~ "mcnemar")
-
+}
 }
 \seealso{
 See tbl_summary \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html}{vignette} for detailed examples
