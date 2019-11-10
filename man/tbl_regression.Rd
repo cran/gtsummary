@@ -5,8 +5,9 @@
 \title{Display regression model results in table}
 \usage{
 tbl_regression(x, label = NULL, exponentiate = FALSE, include = NULL,
-  exclude = NULL, show_yesno = NULL, conf.level = NULL,
-  intercept = FALSE, estimate_fun = NULL, pvalue_fun = NULL)
+  exclude = NULL, show_single_row = NULL, conf.level = NULL,
+  intercept = FALSE, estimate_fun = NULL, pvalue_fun = NULL,
+  show_yesno = NULL)
 }
 \arguments{
 \item{x}{Regression model object}
@@ -17,14 +18,14 @@ e.g. \code{list("age" ~ "Age, yrs", "ptstage" ~ "Path T Stage")}}
 \item{exponentiate}{Logical indicating whether to exponentiate the
 coefficient estimates. Default is \code{FALSE}.}
 
-\item{include}{Names of variables to include in output.}
+\item{include}{Character vector of variable names to include from output.}
 
-\item{exclude}{Names of variables to exclude from output.}
+\item{exclude}{Character vector of variable names to exclude from output.}
 
-\item{show_yesno}{By default yes/no categorical variables are printed on a
-single row, when the 'No' category is the reference group.  To print both
-levels in the output table, include the variable name in the show_yesno
-vector, e.g. `show_yesno = c("var1", "var2")``}
+\item{show_single_row}{By default categorical variables are printed on
+multiple rows.  If a variable is binary (e.g. Yes/No) and you wish to print
+the regression coefficient on a single row, include the variable name here,
+e.g. \code{show_single_row = c("var1", "var2")}}
 
 \item{conf.level}{Must be strictly greater than 0 and less than 1.
 Defaults to 0.95, which corresponds to a 95 percent confidence interval.}
@@ -42,13 +43,17 @@ The function must have a numeric vector input (the numeric, exact p-value),
 and return a string that is the rounded/formatted p-value (e.g.
 \code{pvalue_fun = function(x) style_pvalue(x, digits = 2)} or equivalently,
 \code{purrr::partial(style_pvalue, digits = 2)}).}
+
+\item{show_yesno}{deprecated}
 }
 \value{
 A \code{tbl_regression} object
 }
 \description{
-This function uses \link[broom:tidy]{broom::tidy} and \link[broom.mixed:tidy]{broom.mixed::tidy}
-to perform the initial model formatting. Review the
+This function takes a regression model object and returns a formatted table
+that is publication-ready. The function is highly customizable
+allowing the user to obtain a bespoke summary table of the
+regression model results. Review the
 \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html}{tbl_regression vignette}
 for detailed examples.
 }
@@ -67,11 +72,10 @@ also be set.
 
 \section{Note}{
 
-The N reported in the \code{tbl_regression()} output is the number of observations
+The N reported in the output is the number of observations
 in the data frame \code{model.frame(x)}. Depending on the model input, this N
-may represent different quantities. In most cases, it is the total number of
-observations in your model; however, the precise definition of an observation,
-or unit of analysis, may differ across models. Here are some common examples.
+may represent different quantities. In most cases, it is the number of people or
+units in your model.  Here are some common exceptions.
 \enumerate{
 \item Survival regression models including time dependent covariates.
 \item Random- or mixed-effects regression models with clustered data.
@@ -110,6 +114,12 @@ library(lme4)
 tbl_regression_ex3 <-
   glmer(am ~ hp + (1 | gear), mtcars, family = binomial) \%>\%
   tbl_regression(exponentiate = TRUE)
+
+# for convenience, you can also pass named lists to any arguments
+# that accept formulas (e.g label, etc.)
+ glm(response ~ age + grade, trial, family = binomial(link = "logit")) \%>\%
+    tbl_regression(exponentiate = TRUE, label = list(age = "Patient Age"))
+
 }
 \seealso{
 See tbl_regression \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html}{vignette} for detailed examples

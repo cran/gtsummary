@@ -48,21 +48,22 @@
 #'   tbl_summary(by = trt) %>%
 #'   add_p()
 #'
-#' \donttest{
 #' # Conduct a custom McNemar test for response,
-#' # Function must return a named list(p = 0.05, test = "McNemar's test")
-#' # Function names begins with 'add_p_test.' and ends with the alias
-#' add_p_test.mcnemar <- function(data, variable, by, ...) {
+#' # Function must return a named list of the p-value and the
+#' # test name: list(p = 0.123, test = "McNemar's test")
+#' # The '...' must be included as input
+#' # This feature is experimental, and the API may change in the future
+#' my_mcnemar <- function(data, variable, by, ...) {
 #'   result <- list()
 #'   result$p <- stats::mcnemar.test(data[[variable]], data[[by]])$p.value
-#'   result$test <- "McNemar's test"
+#'   result$test <- "McNemar\\'s test"
 #'   result
 #' }
-#'
+#'\donttest{
 #' add_p_ex2 <-
 #'   trial[c("response", "trt")] %>%
 #'   tbl_summary(by = trt) %>%
-#'   add_p(test = vars(response) ~ "mcnemar")
+#'   add_p(test = vars(response) ~ "my_mcnemar")
 #' }
 #' @section Example Output:
 #' \if{html}{Example 1}
@@ -74,10 +75,28 @@
 #' \if{html}{\figure{add_p_ex2.png}{options: width=45\%}}
 
 add_p <- function(x, test = NULL, pvalue_fun = NULL,
-                  group = NULL, include = NULL, exclude = NULL) {
+                   group = NULL, include = NULL, exclude = NULL) {
 
   # converting bare arguments to string ----------------------------------------
   group <- enquo_to_string(rlang::enquo(group), arg_name = "group")
+
+  # putting arguments in a list to pass to tbl_summary_
+  add_p_args <- as.list(environment())
+
+  # passing arguments to add_p_
+  do.call(add_p_, add_p_args)
+}
+
+#' Standard evaluation version of add_p()
+#'
+#' The `'group ='` argument can be passed as a string, rather than with non-standard
+#' evaluation as in [add_p]. Review the help file for [add_p] fully documented
+#' options and arguments.
+#'
+#' @inheritParams add_p
+#' @export
+add_p_ <- function(x, test = NULL, pvalue_fun = NULL,
+                  group = NULL, include = NULL, exclude = NULL) {
 
   # group argument -------------------------------------------------------------
   if (!is.null(group)) {
@@ -192,7 +211,13 @@ add_p <- function(x, test = NULL, pvalue_fun = NULL,
     tibble(column = names(table_body)) %>%
     left_join(x$table_header, by = "column") %>%
     table_header_fill_missing() %>%
-    table_header_fmt(p.value = "x$pvalue_fun")
+    table_header_fmt(p.value = "x$pvalue_fun") %>%
+    mutate(footnote = map2(
+      .data$column, .data$footnote,
+      function(x, y) {
+        if (x == "p.value") return(c(y, footnote_add_p(meta_data))); return(y)
+      }
+    ))
 
   # updating header
   x <- modify_header_internal(x, p.value = "**p-value**")
@@ -202,16 +227,6 @@ add_p <- function(x, test = NULL, pvalue_fun = NULL,
 
 
   x$call_list <- c(x$call_list, list(add_p = match.call()))
-
-  # gt formatting --------------------------------------------------------------
-  # adding footnote listing statistics presented in table
-  x[["gt_calls"]][["footnote_add_p"]] <- glue(
-    "gt::tab_footnote(",
-    'footnote = "{footnote_add_p(meta_data)}", ',
-    "locations = gt::cells_column_labels(",
-    "columns = gt::vars(p.value))",
-    ")"
-  )
 
   x
 }

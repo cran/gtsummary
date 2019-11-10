@@ -8,6 +8,18 @@ knitr::opts_chunk$set(
 library(gtsummary)
 library(dplyr)
 
+# installing gt 
+if (curl::has_internet()) {
+  # adding tmpdir to libPath
+  temp_path <- file.path(tempdir(), "gt_folder")
+  dir.create(temp_path)
+  lib_path <-.libPaths()
+  .libPaths(c(lib_path, temp_path))
+  
+  # installing gt
+  remotes::install_github("rstudio/gt", lib = temp_path)
+}
+
 ## ---- eval=FALSE---------------------------------------------------------
 #  install.packages("gtsummary")
 #  remotes::install_github("rstudio/gt")
@@ -47,13 +59,13 @@ tbl_regression(m1) %>% purrr::pluck("gt_calls") %>% head(n = 5)
 
 ## ----as_gt2, eval=FALSE--------------------------------------------------
 #  tbl_regression(m1, exponentiate = TRUE) %>%
-#    as_gt(exclude = "footnote_abbreviation")
+#    as_gt(exclude = "tab_footnote")
 
 ## ----as_gt1, echo=FALSE--------------------------------------------------
 # this code chunk only works if gt is installed
 if (requireNamespace("gt", quietly = TRUE)) {
   tbl_regression(m1, exponentiate = TRUE) %>%
-    as_gt(exclude = "footnote_abbreviation")
+    as_gt(exclude = "tab_footnote")
 }
 
 ## ----tbl_uvregression----------------------------------------------------
@@ -80,6 +92,23 @@ trial %>%
 #  help("Rprofile")
 #  
 #  usethis::edit_r_profile()
+
+## ---- echo=FALSE---------------------------------------------------------
+data.frame(
+  `Description` = c("Formatting and rounding p-values", 
+                    "Formatting and rounding for regression coefficients",
+                    "Set level for limits",
+                    "Print tables with `gt` or `kable`"),
+  `Example` = c("`options(gtsummary.pvalue_fun = function(x) gtsummary::style_pvalue(x, digits = 2))`",
+                '`options(gtsummary.tbl_regression.estimate_fun = function(x) gtsummary::style_sigfig(x, digits = 3))`',
+                '`options(gtsummary.conf.level = 0.90)`',
+                '`options(gtsummary.print_engine = "kable")`   `options(gtsummary.print_engine = "gt")`'),
+  `Functions` = c("`add_p()`, `tbl_regression()`, `tbl_uvregression()`",
+                  "`tbl_regression()`, `tbl_uvregression()`",
+                  "`tbl_regression()`, `tbl_uvregression()`",
+                  "All `tbl_*()` functions")
+) %>% 
+  knitr::kable()
 
 ## ----eval=FALSE----------------------------------------------------------
 #  options(gtsummary.tbl_regression.estimate_fun = function(x) sigfig(x, digits = 3))

@@ -64,9 +64,10 @@ tidy_wrap <- function(x, exponentiate, conf.level) {
 #' @param tidy broom tidy result
 #' @inheritParams tbl_regression
 #' @noRd
+#' @importFrom stringr fixed str_detect
 #' @keywords internal
 
-parse_fit <- function(fit, tidy, label, show_yesno) {
+parse_fit <- function(fit, tidy, label, show_single_row) {
   # extracting model frame
   model_frame <- stats::model.frame(fit)
 
@@ -95,12 +96,12 @@ parse_fit <- function(fit, tidy, label, show_yesno) {
   for (v in (names(model_frame) %>% rev())) {
 
     # checking character and factor levels
-    if (any(class(model_frame[[v]]) %in% c("character", "factor"))) {
+    if (any(class(model_frame[[v]]) %in% c("character", "factor", "logical"))) {
       term_match <-
         term_match %>%
         mutate(
           variable = ifelse(
-            stringr::str_starts(stringr::fixed(.data$term), stringr::fixed(v)) &
+            stringr::str_starts(fixed(.data$term), fixed(v)) &
               .data$term %in% paste0(v, unique(model_frame[[v]])) &
               is.na(.data$variable),
             v,
@@ -121,10 +122,11 @@ parse_fit <- function(fit, tidy, label, show_yesno) {
   }
 
   # if the variable name contains a ':', weird formatting will likely happen
-  if (stringr::str_detect(stringr::fixed(names(model_frame)), stringr::fixed(":")) %>% any()) {
-    warning(glue(
+  if (str_detect(fixed(names(model_frame[, -1, drop = FALSE])), fixed(":")) %>% any()) {
+    message(glue(
       "Some variable names contain ':', which may cause formatting issues. ",
-      "Please rename columns without ':'."
+      "Please rename columns without ':'.\n\n",
+      "Variable name(s): {paste0('`', names(model_frame[, -1, drop = FALSE]), '`', collapse = ' ')}"
     ))
   }
 
@@ -136,8 +138,8 @@ parse_fit <- function(fit, tidy, label, show_yesno) {
         if (any(class(model_frame[[x]]) %in% c("factor", "character"))) {
           unique(model_frame[[x]]) %>%
             as.character() %>%
-            stringr::fixed() %>%
-            stringr::str_detect(stringr::fixed(":")) %>%
+            fixed() %>%
+            str_detect(fixed(":")) %>%
             any() %>%
             return()
         }
@@ -154,29 +156,6 @@ parse_fit <- function(fit, tidy, label, show_yesno) {
       "Please re-level values without ':'."
     ))
   }
-
-  # show yes-no ----------------------------------------------------------------
-  # creating a list of variables that are yes/no that will,
-  # by default, be printed on a single row
-  yesno_levels <- list(c("No", "Yes"), c("no", "yes"), c("NO", "YES"))
-  yesno_variables <- NULL
-  for (v in term_match$variable) {
-    for (yn in yesno_levels) {
-      if ("character" %in% class(model_frame[[v]]) &
-        model_frame[[v]] %>%
-          stats::na.omit() %>%
-          setequal(yn)) {
-        yesno_variables <- c(yesno_variables, v)
-      }
-      # for factors the ORDER must be no THEN yes (making no the reference group)
-      else if ("factor" %in% class(model_frame[[v]]) &
-        attr(model_frame[[v]], "level") %>% identical(yn)) {
-        yesno_variables <- c(yesno_variables, v)
-      }
-    }
-  }
-  # removing variables user requested to show both levels
-  yesno_variables <- yesno_variables %>% setdiff(show_yesno)
 
   # more  var labels -----------------------------------------------------------
   # model.frame() strips variable labels from cox models.  this attempts
@@ -247,7 +226,7 @@ parse_fit <- function(fit, tidy, label, show_yesno) {
           if (variable_type == "continuous") {
             return(variable_lbl)
           }
-          stringr::str_remove(term_split, pattern = stringr::fixed(variable))
+          stringr::str_remove(term_split, pattern = fixed(variable))
         }
       )
     )
@@ -287,7 +266,7 @@ parse_fit <- function(fit, tidy, label, show_yesno) {
           if (var_type == "continuous") {
             return(TRUE)
           }
-          if (var_type == "categorical" & group %in% yesno_variables) {
+          if (var_type == "categorical" & group %in% show_single_row) {
             return(TRUE)
           }
           if (var_type == "categorical") {
@@ -306,6 +285,35 @@ parse_fit <- function(fit, tidy, label, show_yesno) {
         }
       )
     )
+
+  # show_single_row check ------------------------------------------------------
+  # checking that all variables listed in show_single_row appear in results
+  for (i in show_single_row) {
+    if (!i %in% tidy_group$group)
+      stop(glue(
+        "'{i}' from argument 'show_single_row' is not a variable ",
+        "from the model. Select from:\n",
+        "{paste(tidy_group$group %>% setdiff('(Intercept)'), collapse = ', ')}"
+      ))
+  }
+
+  # check that all variables in show_single_row are dichotomous
+  bad_show_single_row <-
+    tidy_group %>%
+    mutate(
+      bad_show_single_row = purrr::map2_lgl(
+        .data$group, .data$data,
+        ~ .x %in% show_single_row && nrow(.y) > 1
+      )
+    ) %>%
+    filter(.data$bad_show_single_row == TRUE) %>%
+    pull(.data$group)
+  if (length(bad_show_single_row) > 0 ) {
+      stop(glue(
+        "'{paste(bad_show_single_row, collapse = \"', '\")}' from argument ",
+        "'show_single_row' may only be applied to binary variables."
+      ))
+  }
 
   # final touches to result ----------------------------------------------------
   # adding in refernce rows, and header rows for categorical and interaction variables

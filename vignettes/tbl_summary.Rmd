@@ -4,9 +4,11 @@ author: "Daniel D. Sjoberg"
 date: "Last Updated: June 20, 2019"
 output: rmarkdown::html_vignette
 vignette: >
+  %\VignetteEncoding{UTF-8}
   %\VignetteIndexEntry{Tutorial: tbl_summary}
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include = FALSE}
@@ -42,6 +44,18 @@ Before going through the tutorial, install {gtsummary} and {gt}.
 ```{r, include=FALSE}
 library(gtsummary)
 library(dplyr)
+
+# installing gt 
+if (curl::has_internet()) {
+  # adding tmpdir to libPath
+  temp_path <- file.path(tempdir(), "gt_folder")
+  dir.create(temp_path)
+  lib_path <-.libPaths()
+  .libPaths(c(lib_path, temp_path))
+  
+  # installing gt
+  remotes::install_github("rstudio/gt", lib = temp_path)
+}
 ```
 
 ```{r, eval=FALSE}
@@ -52,11 +66,9 @@ library(gtsummary)
 library(dplyr)
 ```
 
-If you experience issues installing {gt} on Windows, install [Rtools from CRAN](https://cran.r-project.org/bin/windows/Rtools/), restart R, and attempt installation again.  The vignettes hosted on https://cran.r-project.org do not use the {gt} package to print tables.  For examples with {gt}, browse to the {gtsummary} [website](http://www.danieldsjoberg.com/gtsummary/).
-
-Examples utilize the {gt} package to generate tables.  The  `knitr::kable()` function will be used to generate tables if the {gt} package is not available, or if the user requests with `options(gtsummary.print_engine = "kable")`. 
-
 - If you experience issues installing {gt} on Windows, install [Rtools from CRAN](https://cran.r-project.org/bin/windows/Rtools/), restart R, and attempt installation again.
+
+The vignettes hosted on https://cran.r-project.org may not use the {gt} package to print tables.  For examples with {gt}, browse to the {gtsummary} [website](http://www.danieldsjoberg.com/gtsummary/). The  `knitr::kable()` function is used to generate tables when the {gt} package is not available, or if the user requests with `options(gtsummary.print_engine = "kable")`. 
 
 ## Basic Usage
 
@@ -291,7 +303,7 @@ After the `as_gt()` function is run, additional formatting may be added to the t
 
 ```{r as_gt2, eval=FALSE}
 tbl_summary(trial2, by = trt) %>%
-  as_gt(exclude = "footnote_stat_label") %>%
+  as_gt(exclude = "tab_footnote") %>%
   gt::tab_spanner(label = "Randomization Group",
                   columns = gt::starts_with("stat_"))
 ```
@@ -300,7 +312,7 @@ tbl_summary(trial2, by = trt) %>%
 # this code chunk only works if gt is installed
 if (requireNamespace("gt", quietly = TRUE)) {
   tbl_summary(trial2, by = trt) %>%
-    as_gt(exclude = "footnote_stat_label") %>%
+    as_gt(exclude = "tab_footnote") %>%
     gt::tab_spanner(label = "Randomization Group",
                     columns = gt::starts_with("stat_"))
 }
@@ -318,11 +330,20 @@ usethis::edit_r_profile()
 
 The following parameters are available to be set:
 
-| Description                                         | Example                                                                                   | Functions                                                                        |
-|-----------------------------------------------------|-------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
-| Formatting and rounding p-values                    | `options(gtsummary.pvalue_fun = function(x) gtsummary::style_pvalue(x, digits = 2))`                  | `add_p()`, `tbl_regression()`, `tbl_uvregression()`                              |
-| Formatting and rounding percentages                 | `options(gtsummary.tbl_summary.percent_fun = function(x) sprintf("%.2f", 100 * x))`                              | `tbl_summary()`                                                                  |
-| Print tables with `gt` or `kable`                   | `options(gtsummary.print_engine = "kable")`   `options(gtsummary.print_engine = "gt")`    | All `tbl_*()` functions                                                          |
+```{r, echo=FALSE}
+data.frame(
+  `Description` = c("Formatting and rounding p-values", 
+                    "Formatting and rounding percentages",
+                    "Print tables with `gt` or `kable`"),
+  `Example` = c("`options(gtsummary.pvalue_fun = function(x) gtsummary::style_pvalue(x, digits = 2))`",
+                '`options(gtsummary.tbl_summary.percent_fun = function(x) sprintf("%.2f", 100 * x))`',
+                '`options(gtsummary.print_engine = "kable")`   `options(gtsummary.print_engine = "gt")`'),
+  `Functions` = c("`add_p()`, `tbl_regression()`, `tbl_uvregression()`",
+                  "`tbl_summary()`",
+                  "All `tbl_*()` functions")
+) %>% 
+  knitr::kable()
+```
 
 When setting default rounding/formatting functions, set the default to a function object rather than an evaluated function.  For example, if you want to round percentages to 3 significant figures use,
 

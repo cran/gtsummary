@@ -1,6 +1,54 @@
+# gtsummary 1.2.2
+
+## New Features
+
+* `tbl_summary` objects may be stacked and merged with `tbl_stack()` and `tbl_merge()` (#230, #255)
+
+* The `add_n()` function now reports additional statistics: total N, non-missing N, missing N, and their percentages.  The `missing = ` argument has been deprecated in favor of the `statistic = ` argument. (#237)
+
+* Users may now pass a list of formulas, named lists, or a combination of both (#251)
+
+* Users can add an option to their script to append any {gt} calls when a {gtsummary} object is printed: `gtsummary.as_gt.addl_cmds`
+
+* Added `include =` and `exclude =` arguments to `tbl_uvregression()` (#240)
+
+* Added standard evaluation variants, `tbl_summary_()` and `add_p_()` (#223)
+
+* Added `as_tibble()` function that converts any {gtsummary} table to a tibble (#245)
+
+* New `show_single_row` argument in `tbl_regression()` and `tbl_uvregression()` allows any binary variable to be printed on a single row.  Previous argument `show_yesno` is now deprecated. (#220)
+
+## Documentation 
+
+* Added a gallery of tables possible by merging, stacking, and modifying {gtsummary} arguments (#258)
+
+* Added a vignette documenting each global option that can be set in {gtsummary} (#289)
+
+* Added {lifecycle} badges to mark deprecated and experimental functions (#225)
+
+## Other Updates
+
+* The `by = ` column in `tbl_summary()` now has missing variables dropped rather than halting with error (#279)
+
+* Bug fix in `vars()` selection where only first variable listed was being selected (#259)
+
+* Bug fix where logical variable labels printed as `NA` in `tbl_regression()` (#248)
+
+* `tbl_merge()` now interprets `tab_spanner =` text with `gt::md()` (#253)
+
+* No longer checking outcome variable name for consistency in `tbl_regression()`---only checking independent variable names (#287)
+
+* Improved error messaging for `add_global_p()` (#243)
+
+* Removed `gt::cols_merge()` function ahead of the {gt} package [PR 355](https://github.com/rstudio/gt/pull/355) that changes the `cols_merge()` API (#222)
+
+* Updated API for using custom functions to calculate p-values in `add_p()`. User now may reference a custom function by its name. (#226)
+
+* Removed legacy support for tidyr version less than 1.0.0 (#235)
+
 # gtsummary 1.2.1
 
-* Vignettes install the {gt} package to a temporary directory (required for CRAN check) (#217)
+* Vignettes no longer install the {gt} package (required for CRAN check) (#217)
 
 * Added ability to name custom `add_p()` tests (#213)
 

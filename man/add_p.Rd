@@ -42,9 +42,9 @@ used calculate p-values with correlated data (e.g. when the test argument
 is \code{"lme4"}). Default is \code{NULL}.  If specified,
 the row associated with this variable is omitted from the summary table.}
 
-\item{include}{Names of variables to include in output.}
+\item{include}{Character vector of variable names to include from output.}
 
-\item{exclude}{Names of variables to exclude from output.}
+\item{exclude}{Character vector of variable names to exclude from output.}
 }
 \value{
 A \code{tbl_summary} object
@@ -82,21 +82,22 @@ add_p_ex1 <-
   tbl_summary(by = trt) \%>\%
   add_p()
 
-\donttest{
 # Conduct a custom McNemar test for response,
-# Function must return a named list(p = 0.05, test = "McNemar's test")
-# Function names begins with 'add_p_test.' and ends with the alias
-add_p_test.mcnemar <- function(data, variable, by, ...) {
+# Function must return a named list of the p-value and the
+# test name: list(p = 0.123, test = "McNemar's test")
+# The '...' must be included as input
+# This feature is experimental, and the API may change in the future
+my_mcnemar <- function(data, variable, by, ...) {
   result <- list()
   result$p <- stats::mcnemar.test(data[[variable]], data[[by]])$p.value
-  result$test <- "McNemar's test"
+  result$test <- "McNemar\\\\'s test"
   result
 }
-
+\donttest{
 add_p_ex2 <-
   trial[c("response", "trt")] \%>\%
   tbl_summary(by = trt) \%>\%
-  add_p(test = vars(response) ~ "mcnemar")
+  add_p(test = vars(response) ~ "my_mcnemar")
 }
 }
 \seealso{
@@ -111,7 +112,7 @@ Other tbl_summary tools: \code{\link{add_n}},
   \code{\link{inline_text.tbl_summary}},
   \code{\link{modify_header}},
   \code{\link{sort_p.tbl_summary}},
-  \code{\link{tbl_summary}}
+  \code{\link{tbl_merge}}, \code{\link{tbl_summary}}
 }
 \author{
 Emily C. Zabor, Daniel D. Sjoberg

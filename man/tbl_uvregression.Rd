@@ -6,8 +6,9 @@
 \usage{
 tbl_uvregression(data, method, y, method.args = NULL,
   formula = "{y} ~ {x}", exponentiate = FALSE, label = NULL,
-  hide_n = FALSE, show_yesno = NULL, conf.level = NULL,
-  estimate_fun = NULL, pvalue_fun = NULL)
+  include = NULL, exclude = NULL, hide_n = FALSE,
+  show_single_row = NULL, conf.level = NULL, estimate_fun = NULL,
+  pvalue_fun = NULL, show_yesno = NULL)
 }
 \arguments{
 \item{data}{Data frame to be used in univariate regression modeling.  Data
@@ -31,12 +32,16 @@ coefficient estimates. Default is \code{FALSE}.}
 \item{label}{List of formulas specifying variables labels,
 e.g. \code{list("age" ~ "Age, yrs", "ptstage" ~ "Path T Stage")}}
 
+\item{include}{Character vector of variable names to include from output.}
+
+\item{exclude}{Character vector of variable names to exclude from output.}
+
 \item{hide_n}{Hide N column. Default is \code{FALSE}}
 
-\item{show_yesno}{By default yes/no categorical variables are printed on a
-single row, when the 'No' category is the reference group.  To print both
-levels in the output table, include the variable name in the show_yesno
-vector, e.g. `show_yesno = c("var1", "var2")``}
+\item{show_single_row}{By default categorical variables are printed on
+multiple rows.  If a variable is binary (e.g. Yes/No) and you wish to print
+the regression coefficient on a single row, include the variable name here,
+e.g. \code{show_single_row = c("var1", "var2")}}
 
 \item{conf.level}{Must be strictly greater than 0 and less than 1.
 Defaults to 0.95, which corresponds to a 95 percent confidence interval.}
@@ -51,23 +56,38 @@ The function must have a numeric vector input (the numeric, exact p-value),
 and return a string that is the rounded/formatted p-value (e.g.
 \code{pvalue_fun = function(x) style_pvalue(x, digits = 2)} or equivalently,
 \code{purrr::partial(style_pvalue, digits = 2)}).}
+
+\item{show_yesno}{deprecated}
 }
 \value{
 A \code{tbl_uvregression} object
 }
 \description{
-The \code{tbl_uvregression} function arguments are similar to the \link{tbl_regression}
-arguments. Review the
+This function estimates univariate regression models and returns them in
+a publication-ready table. The function takes as arguments a data frame,
+the type of regression model, and the outcome variable. Each column in the
+data frame is regressed on the specified outcome. The \code{tbl_uvregression}
+function arguments are similar to the \link{tbl_regression} arguments. Review the
 \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html#tbl_uvregression}{tbl_uvregression vignette}
 for detailed examples.
 }
+\section{Example Output}{
+
+\if{html}{Example 1}
+
+\if{html}{\figure{tbl_uv_ex1.png}{options: width=50\%}}
+
+\if{html}{Example 2}
+
+\if{html}{\figure{tbl_uv_ex2.png}{options: width=50\%}}
+}
+
 \section{Setting Defaults}{
 
-If you like to consistently use a different function to format p-values or
+If you prefer to consistently use a different function to format p-values or
 estimates, you can set options in the script or in the user- or
 project-level startup file, '.Rprofile'.  The default confidence level can
-also be set. Please note the default option for the estimate is the same
-as it is for \code{tbl_regression()}.
+also be set.
 \itemize{
 \item \code{options(gtsummary.pvalue_fun = new_function)}
 \item \code{options(gtsummary.tbl_regression.estimate_fun = new_function)}
@@ -77,7 +97,7 @@ as it is for \code{tbl_regression()}.
 
 \section{Note}{
 
-The N reported in the \code{tbl_uvregression()} output is the number of observations
+The N reported in the output is the number of observations
 in the data frame \code{model.frame(x)}. Depending on the model input, this N
 may represent different quantities. In most cases, it is the number of people or
 units in your model.  Here are some common exceptions.
@@ -88,17 +108,6 @@ units in your model.  Here are some common exceptions.
 }
 
 This list is not exhaustive, and care should be taken for each number reported.
-}
-
-\section{Example Output}{
-
-\if{html}{Example 1}
-
-\if{html}{\figure{tbl_uv_ex1.png}{options: width=50\%}}
-
-\if{html}{Example 2}
-
-\if{html}{\figure{tbl_uv_ex2.png}{options: width=50\%}}
 }
 
 \examples{
@@ -122,6 +131,18 @@ tbl_uv_ex2 <-
     exponentiate = TRUE,
     pvalue_fun = function(x) style_pvalue(x, digits = 2)
   )
+
+# for convenience, you can also pass named lists to any arguments
+# that accept formulas (e.g label, etc.)
+library(survival)
+trial \%>\%
+   dplyr::select(ttdeath, death, age, grade, response) \%>\%
+   tbl_uvregression(
+     method = coxph,
+     y = Surv(ttdeath, death),
+     label = list(grade = "Grade"),
+     exponentiate = TRUE)
+
 }
 \seealso{
 See tbl_regression \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html#tbl_uvregression}{vignette}  for detailed examples
