@@ -4,21 +4,12 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
+## ----exit_early, include = FALSE, eval = !requireNamespace("gt")---------
+#  knitr::knit_exit()
+
 ## ---- include=FALSE------------------------------------------------------
 library(gtsummary)
 library(dplyr)
-
-# installing gt 
-if (curl::has_internet()) {
-  # adding tmpdir to libPath
-  temp_path <- file.path(tempdir(), "gt_folder")
-  dir.create(temp_path)
-  lib_path <-.libPaths()
-  .libPaths(c(lib_path, temp_path))
-  
-  # installing gt
-  remotes::install_github("rstudio/gt", lib = temp_path)
-}
 
 ## ---- eval=FALSE---------------------------------------------------------
 #  install.packages("gtsummary")

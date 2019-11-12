@@ -5,6 +5,9 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
+## ----exit_early, include = FALSE, eval = !requireNamespace("gt")---------
+#  knitr::knit_exit()
+
 ## ------------------------------------------------------------------------
 #  options(gtsummary.pvalue_fun = function(x) style_pvalue(x, digits = 2))
 

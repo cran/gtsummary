@@ -5,17 +5,8 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
-# installing gt 
-if (curl::has_internet()) {
-  # adding tmpdir to libPath
-  temp_path <- file.path(tempdir(), "gt_folder")
-  dir.create(temp_path)
-  lib_path <-.libPaths()
-  .libPaths(c(lib_path, temp_path))
-  
-  # installing gt
-  remotes::install_github("rstudio/gt", lib = temp_path)
-}
+## ----exit_early, include = FALSE, eval = !requireNamespace("gt")---------
+#  knitr::knit_exit()
 
 ## ---- echo=FALSE, comment=""---------------------------------------------
 if (!requireNamespace("gt", quietly = TRUE)) {
@@ -112,26 +103,20 @@ tbl_merge(list(gt_eventn, gt_model)) %>%
   as_gt(exclude = "tab_spanner")
 
 ## ------------------------------------------------------------------------
-df_models <-
-  tibble(outcome = c("age", "marker")) %>%
-  mutate(
-    outcome_label = map_chr(outcome,
-                        ~attr(trial[[.x]], 'label')),
-    lm_model = map(outcome,
-                   ~lm(str_glue("{.x} ~ trt"), trial)),
-    tbl_reg = map2(
-      lm_model, outcome_label,
-      ~tbl_regression(.x, show_single_row = "trt", label = list(trt = .y))
-    )
-  )
-
-df_models %>%
-  pull(tbl_reg) %>%
-  tbl_stack() %>%
+tbl_reg <-
+  trial[c("age", "marker", "trt")] %>%
+  tbl_uvregression(
+    method = lm,
+    x = trt,
+    show_single_row = "trt",
+    hide_n = TRUE
+  ) %>%
   modify_header(
     label = md("**Model Outcome**"),
     estimate = md("**Treatment Coef.**")
-  ) %>%
+  ) 
+
+tbl_reg %>%
   as_gt() %>%
   tab_footnote(
     footnote = "Values larger than 0 indicate larger values in the Drug group.", 
@@ -148,21 +133,8 @@ gt_sum <-
   add_n() %>%
   modify_header(stat_by = md("**{level}**"))
 
-# before we merge we need to update the variable name in df_models gtsummary tables 
-# to match the tbl_summary object
-df_models2 <-
-  df_models %>%
-  mutate(tbl_reg = map2(tbl_reg, outcome,
-                        function(x, y){
-                          x$table_body$variable <- y 
-                          x
-                        }))
 
-
-tbl_merge(list(
-  gt_sum,
-  pull(df_models2, tbl_reg) %>% tbl_stack()
-)) %>%
+tbl_merge(list(gt_sum, tbl_reg))  %>%
   modify_header(estimate_2 = md("**Difference**")) %>%
   as_gt(exclude = "tab_spanner")
 
