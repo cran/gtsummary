@@ -1,31 +1,31 @@
-## ----setup, include = FALSE----------------------------------------------
+## ----setup, include = FALSE---------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
 
-## ----exit_early, include = FALSE, eval = !requireNamespace("gt")---------
+## ----exit_early, include = FALSE, eval = !requireNamespace("gt")--------------
 #  knitr::knit_exit()
 
-## ---- include=FALSE------------------------------------------------------
+## ---- include=FALSE-----------------------------------------------------------
 library(gtsummary)
 library(dplyr)
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  install.packages("gtsummary")
 #  remotes::install_github("rstudio/gt")
 #  
 #  library(gtsummary)
 #  library(dplyr)
 
-## ---- message=FALSE------------------------------------------------------
+## ---- message=FALSE-----------------------------------------------------------
 # build logistic regression model
 m1 = glm(response ~ age + stage + grade, trial, family = binomial(link = "logit"))
 
 # format results into data frame
 tbl_regression(m1, exponentiate = TRUE)
 
-## ---- message=FALSE------------------------------------------------------
+## ---- message=FALSE-----------------------------------------------------------
 # format results into data frame with global p-values
 m1 %>%
   tbl_regression(
@@ -38,28 +38,28 @@ m1 %>%
   bold_labels() %>% 
   italicize_levels()
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 tbl_m1 <- tbl_regression(m1, exponentiate = TRUE)
 tbl_m1
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 tbl_regression(m1) %>% names()
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 tbl_regression(m1) %>% purrr::pluck("gt_calls") %>% head(n = 5)
 
-## ----as_gt2, eval=FALSE--------------------------------------------------
+## ----as_gt2, eval=FALSE-------------------------------------------------------
 #  tbl_regression(m1, exponentiate = TRUE) %>%
 #    as_gt(exclude = "tab_footnote")
 
-## ----as_gt1, echo=FALSE--------------------------------------------------
+## ----as_gt1, echo=FALSE-------------------------------------------------------
 # this code chunk only works if gt is installed
 if (requireNamespace("gt", quietly = TRUE)) {
   tbl_regression(m1, exponentiate = TRUE) %>%
     as_gt(exclude = "tab_footnote")
 }
 
-## ----tbl_uvregression----------------------------------------------------
+## ----tbl_uvregression---------------------------------------------------------
 trial %>%
   select(-death, -ttdeath, -stage) %>%
   tbl_uvregression(
@@ -79,12 +79,12 @@ trial %>%
   bold_p(t = 0.10, q = TRUE) %>%
   bold_labels()
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  help("Rprofile")
 #  
 #  usethis::edit_r_profile()
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 data.frame(
   `Description` = c("Formatting and rounding p-values", 
                     "Formatting and rounding for regression coefficients",
@@ -101,6 +101,6 @@ data.frame(
 ) %>% 
   knitr::kable()
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 #  options(gtsummary.tbl_regression.estimate_fun = function(x) sigfig(x, digits = 3))
 

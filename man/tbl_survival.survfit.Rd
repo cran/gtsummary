@@ -4,11 +4,19 @@
 \alias{tbl_survival.survfit}
 \title{Creates table of survival probabilities}
 \usage{
-\method{tbl_survival}{survfit}(x, times = NULL, probs = NULL,
+\method{tbl_survival}{survfit}(
+  x,
+  times = NULL,
+  probs = NULL,
   label = ifelse(is.null(probs), "{time}", "{prob*100}\%"),
-  level_label = "{level}, N = {n}", header_label = NULL,
-  header_estimate = NULL, failure = FALSE, missing = "-",
-  estimate_fun = NULL, ...)
+  level_label = "{level}, N = {n}",
+  header_label = NULL,
+  header_estimate = NULL,
+  failure = FALSE,
+  missing = "-",
+  estimate_fun = NULL,
+  ...
+)
 }
 \arguments{
 \item{x}{A survfit object with a no stratification
@@ -66,8 +74,8 @@ formatted summary of the results
 The \code{level_label} is used to modify the stratum labels. The default is
 \code{level_label = "{level}, N = {n}"}. The quantities in the curly
 brackets evaluate to stratum-specific values.  For example, in the trial
-data set, there is a column called \code{trt} with levels 'Drug' and 'Placebo'.
-In this example, \code{{level}} would evaluate to either 'Drug' or 'Placebo'
+data set, there is a column called \code{trt} with levels 'Drug A' and 'Drug B'.
+In this example, \code{{level}} would evaluate to either 'Drug A' or 'Drug B'
 depending on the stratum.  Other quantities available to print are:
 \itemize{
 \item \code{{level}} level of the stratification variable
@@ -107,8 +115,9 @@ tbl_nostrata_ex2 <-
   )
 }
 \seealso{
-Other tbl_survival tools: \code{\link{inline_text.tbl_survival}},
-  \code{\link{modify_header}}
+Other tbl_survival tools: 
+\code{\link{inline_text.tbl_survival}()},
+\code{\link{modify_header}()}
 }
 \author{
 Daniel D. Sjoberg

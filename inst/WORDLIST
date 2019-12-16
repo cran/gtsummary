@@ -1,6 +1,5 @@
 Anova
 AppVeyor
-attr
 ci
 conf
 coxph
@@ -24,6 +23,7 @@ magrittr
 mL
 nevent
 ng
+ORCID
 pre
 pvalue
 Rprofile
@@ -35,6 +35,7 @@ survfit
 tbl
 tibble
 tibbles
+tidiers
 tidyr
 tidyselect
 tidyverse

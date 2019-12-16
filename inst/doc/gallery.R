@@ -1,14 +1,14 @@
-## ---- include = FALSE----------------------------------------------------
+## ---- include = FALSE---------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   eval = TRUE,
   comment = "#>"
 )
 
-## ----exit_early, include = FALSE, eval = !requireNamespace("gt")---------
+## ----exit_early, include = FALSE, eval = !requireNamespace("gt")--------------
 #  knitr::knit_exit()
 
-## ---- echo=FALSE, comment=""---------------------------------------------
+## ---- echo=FALSE, comment=""--------------------------------------------------
 if (!requireNamespace("gt", quietly = TRUE)) {
   usethis::ui_oops(paste(
     "The gt package is required to build the gtsummary gallery,",
@@ -20,20 +20,20 @@ if (!requireNamespace("gt", quietly = TRUE)) {
   knitr::knit_exit()
 }
 
-## ----setup, message = FALSE----------------------------------------------
+## ----setup, message = FALSE---------------------------------------------------
 library(gtsummary); library(gt); library(survival)
 library(dplyr); library(stringr); library(purrr); library(forcats)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 trial[c("trt", "age", "grade")] %>%
   tbl_summary(by = trt, missing = "no") %>%
   modify_header(stat_by = md("**{level}** N =  {n} ({style_percent(p)}%)")) %>%
   add_n() %>%
   bold_labels() %>%
   as_gt() %>%
-  tab_spanner(columns = starts_with("stat_"), md("**Randomization Group**"))
+  tab_spanner(columns = starts_with("stat_"), md("**Chemotherapy Treatment**"))
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 trial[!is.na(trial$response), c("response", "age", "grade")] %>%
   mutate(response = factor(response, labels = c("No Tumor Response", "Tumor Responded"))) %>%
   tbl_summary(
@@ -44,7 +44,7 @@ trial[!is.na(trial$response), c("response", "age", "grade")] %>%
   add_p(pvalue_fun = partial(style_pvalue, digits = 2)) %>%
   add_q()
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 trial[c("response", "age", "grade")] %>%
   mutate(
     response = factor(response, labels = c("No Tumor Response", "Tumor Responded")) %>% 
@@ -55,7 +55,7 @@ trial[c("response", "age", "grade")] %>%
     label = list(vars(age) ~ "Patient Age", vars(grade) ~ "Tumor Grade")
   )  
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 trial[c("response", "age", "grade")] %>%
   tbl_uvregression(
     method = glm,
@@ -65,7 +65,7 @@ trial[c("response", "age", "grade")] %>%
   ) %>%
   add_nevent()
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 gt_r1 <- glm(response ~ age + trt, trial, family = binomial) %>%
   tbl_regression(exponentiate = TRUE)
 gt_r2 <- coxph(Surv(ttdeath, death) ~ age + trt, trial) %>%
@@ -77,7 +77,7 @@ tbl_merge(
   tab_spanner = c("**Summary Statistics**", "**Tumor Response**", "**Time to Death**")
 )
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 gt_model <-
   trial[c("ttdeath", "death", "stage", "grade")] %>%
   tbl_uvregression(
@@ -102,7 +102,7 @@ tbl_merge(list(gt_eventn, gt_model)) %>%
   italicize_levels() %>%
   as_gt(exclude = "tab_spanner")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 tbl_reg <-
   trial[c("age", "marker", "trt")] %>%
   tbl_uvregression(
@@ -123,7 +123,7 @@ tbl_reg %>%
     locations = cells_column_labels(columns = vars(estimate))
   )
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 gt_sum <- 
   trial[c("age", "marker", "trt")] %>%
   mutate(trt = fct_rev(trt)) %>%

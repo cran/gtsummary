@@ -1,38 +1,38 @@
-## ----setup, include = FALSE----------------------------------------------
+## ----setup, include = FALSE---------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
 
-## ----exit_early, include = FALSE, eval = !requireNamespace("gt")---------
+## ----exit_early, include = FALSE, eval = !requireNamespace("gt")--------------
 #  knitr::knit_exit()
 
-## ---- include=FALSE------------------------------------------------------
+## ---- include=FALSE-----------------------------------------------------------
 library(gtsummary)
 library(dplyr)
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  install.packages("gtsummary")
 #  remotes::install_github("rstudio/gt")
 #  
 #  library(gtsummary)
 #  library(dplyr)
 
-## ---- message=FALSE------------------------------------------------------
+## ---- message=FALSE-----------------------------------------------------------
 # printing trial data
 head(trial) %>% knitr::kable()
 
-## ---- message=FALSE------------------------------------------------------
+## ---- message=FALSE-----------------------------------------------------------
 trial2 =
   trial %>%
   select(trt, marker, stage)
 
 tbl_summary(trial2)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 tbl_summary(trial2, by = trt) %>% add_p()
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 trial2 %>%
   # build base summary table
   tbl_summary(
@@ -58,7 +58,7 @@ trial2 %>%
   # include percent in headers
   modify_header(stat_by = "**{level}**, N = {n} ({style_percent(p, symbol = TRUE)})")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 trial %>%
   dplyr::select(trt, response, age, stage, marker, grade) %>%
   tbl_summary(
@@ -69,37 +69,37 @@ trial %>%
   add_p(test = list(contains("response") ~ "fisher.test", # select using functions in tidyselect
                     all_continuous() ~ "t.test"))
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 tab1 = tbl_summary(trial2, by = trt)
 tab1
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 tbl_summary(trial2) %>% names()
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 tbl_summary(trial2) %>% purrr::pluck("gt_calls") %>% head(n = 5)
 
-## ----as_gt2, eval=FALSE--------------------------------------------------
+## ----as_gt2, eval=FALSE-------------------------------------------------------
 #  tbl_summary(trial2, by = trt) %>%
 #    as_gt(exclude = "tab_footnote") %>%
-#    gt::tab_spanner(label = "Randomization Group",
+#    gt::tab_spanner(label = gt::md("**Treatment Group**"),
 #                    columns = gt::starts_with("stat_"))
 
-## ----as_gt1, echo=FALSE--------------------------------------------------
+## ----as_gt1, echo=FALSE-------------------------------------------------------
 # this code chunk only works if gt is installed
 if (requireNamespace("gt", quietly = TRUE)) {
   tbl_summary(trial2, by = trt) %>%
     as_gt(exclude = "tab_footnote") %>%
-    gt::tab_spanner(label = "Randomization Group",
+    gt::tab_spanner(label = gt::md("**Treatment Group**"),
                     columns = gt::starts_with("stat_"))
 }
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  help("Rprofile")
 #  
 #  usethis::edit_r_profile()
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 data.frame(
   `Description` = c("Formatting and rounding p-values", 
                     "Formatting and rounding percentages",
@@ -113,6 +113,6 @@ data.frame(
 ) %>% 
   knitr::kable()
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 #  options(gtsummary.tbl_summary.percent_fun = function(x) sigfig(x, digits = 3))
 

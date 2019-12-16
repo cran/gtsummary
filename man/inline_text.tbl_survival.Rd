@@ -4,9 +4,15 @@
 \alias{inline_text.tbl_survival}
 \title{Report statistics from survival summary tables inline}
 \usage{
-\method{inline_text}{tbl_survival}(x, strata = NULL, time = NULL,
-  prob = NULL, pattern = "{estimate} ({conf.level*100}\% CI {ci})",
-  estimate_fun = x$estimate_fun, ...)
+\method{inline_text}{tbl_survival}(
+  x,
+  strata = NULL,
+  time = NULL,
+  prob = NULL,
+  pattern = "{estimate} ({conf.level*100}\% CI {ci})",
+  estimate_fun = x$estimate_fun,
+  ...
+)
 }
 \arguments{
 \item{x}{Object created from  \link{tbl_survival}}
@@ -64,13 +70,14 @@ surv_table <-
   tbl_survival(times = c(12, 24))
 
 inline_text(surv_table,
-  strata = "Drug",
+  strata = "Drug A",
   time = 12
 )
 }
 \seealso{
-Other tbl_survival tools: \code{\link{modify_header}},
-  \code{\link{tbl_survival.survfit}}
+Other tbl_survival tools: 
+\code{\link{modify_header}()},
+\code{\link{tbl_survival.survfit}()}
 }
 \author{
 Karissa Whiting

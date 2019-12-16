@@ -17,9 +17,11 @@
 #' e.g. \code{list(all_continuous() ~ "t.test", all_categorical() ~ "fisher.test")}.
 #' Options include
 #' * `"t.test"` for a t-test,
+#' * `"aov"` for a one-way ANOVA test,
 #' * `"wilcox.test"` for a Wilcoxon rank-sum test,
 #' * `"kruskal.test"` for a Kruskal-Wallis rank-sum test,
-#' * `"chisq.test"` for a Chi-squared test of independence,
+#' * `"chisq.test"` for a chi-squared test of independence,
+#' * `"chisq.test.no.correct"` for a chi-squared test of independence without continuity correction,
 #' * `"fisher.test"` for a Fisher's exact test,
 #' * `"lme4"` for a random intercept logistic regression model to account for
 #' clustered data, `lme4::glmer(by ~ variable + (1 | group), family = binomial)`.
@@ -59,7 +61,7 @@
 #'   result$test <- "McNemar\\'s test"
 #'   result
 #' }
-#'\donttest{
+#' \donttest{
 #' add_p_ex2 <-
 #'   trial[c("response", "trt")] %>%
 #'   tbl_summary(by = trt) %>%
@@ -75,7 +77,7 @@
 #' \if{html}{\figure{add_p_ex2.png}{options: width=45\%}}
 
 add_p <- function(x, test = NULL, pvalue_fun = NULL,
-                   group = NULL, include = NULL, exclude = NULL) {
+                  group = NULL, include = NULL, exclude = NULL) {
 
   # converting bare arguments to string ----------------------------------------
   group <- enquo_to_string(rlang::enquo(group), arg_name = "group")
@@ -96,7 +98,7 @@ add_p <- function(x, test = NULL, pvalue_fun = NULL,
 #' @inheritParams add_p
 #' @export
 add_p_ <- function(x, test = NULL, pvalue_fun = NULL,
-                  group = NULL, include = NULL, exclude = NULL) {
+                   group = NULL, include = NULL, exclude = NULL) {
 
   # group argument -------------------------------------------------------------
   if (!is.null(group)) {
@@ -125,8 +127,10 @@ add_p_ <- function(x, test = NULL, pvalue_fun = NULL,
   if (class(x) != "tbl_summary") stop("x must be class 'tbl_summary'")
   # checking that input x has a by var
   if (is.null(x$inputs[["by"]])) {
-    stop(paste0("Cannot add comparison when no 'by' variable ",
-                "in original tbl_summary() call"))
+    stop(paste0(
+      "Cannot add comparison when no 'by' variable ",
+      "in original tbl_summary() call"
+    ))
   }
 
   # test -----------------------------------------------------------------------
@@ -139,8 +143,8 @@ add_p_ <- function(x, test = NULL, pvalue_fun = NULL,
   if (!is.null(test)) {
     # checking that all inputs are named
     if ((names(test) %>%
-         purrr::discard(. == "") %>%
-         length()) != length(test)) {
+      purrr::discard(. == "") %>%
+      length()) != length(test)) {
       stop(glue(
         "Each element in 'test' must be named. ",
         "For example, 'test = list(age = \"t.test\", ptstage = \"fisher.test\")'"
@@ -182,10 +186,14 @@ add_p_ <- function(x, test = NULL, pvalue_fun = NULL,
         include = include
       ),
       # grabbing p-value and test label from test_result
-      p.value = map_dbl(.data$test_result,
-                        ~pluck(.x, "p") %||% NA_real_),
-      stat_test_lbl = map_chr(.data$test_result,
-                              ~pluck(.x, "test") %||% NA_character_)
+      p.value = map_dbl(
+        .data$test_result,
+        ~ pluck(.x, "p") %||% NA_real_
+      ),
+      stat_test_lbl = map_chr(
+        .data$test_result,
+        ~ pluck(.x, "test") %||% NA_character_
+      )
     ) %>%
     select(-.data$test_result)
 
@@ -215,7 +223,10 @@ add_p_ <- function(x, test = NULL, pvalue_fun = NULL,
     mutate(footnote = map2(
       .data$column, .data$footnote,
       function(x, y) {
-        if (x == "p.value") return(c(y, footnote_add_p(meta_data))); return(y)
+        if (x == "p.value") {
+          return(c(y, footnote_add_p(meta_data)))
+        }
+        return(y)
       }
     ))
 
@@ -234,7 +245,7 @@ add_p_ <- function(x, test = NULL, pvalue_fun = NULL,
 # function to create text for footnote
 footnote_add_p <- function(meta_data) {
   meta_data$stat_test_lbl %>%
-    keep(~!is.na(.)) %>%
+    keep(~ !is.na(.)) %>%
     unique() %>%
     paste(collapse = "; ") %>%
     paste0("Statistical tests performed: ", .)

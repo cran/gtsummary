@@ -4,10 +4,20 @@
 \alias{tbl_regression}
 \title{Display regression model results in table}
 \usage{
-tbl_regression(x, label = NULL, exponentiate = FALSE, include = NULL,
-  exclude = NULL, show_single_row = NULL, conf.level = NULL,
-  intercept = FALSE, estimate_fun = NULL, pvalue_fun = NULL,
-  show_yesno = NULL)
+tbl_regression(
+  x,
+  label = NULL,
+  exponentiate = FALSE,
+  include = NULL,
+  exclude = NULL,
+  show_single_row = NULL,
+  conf.level = NULL,
+  intercept = FALSE,
+  estimate_fun = NULL,
+  pvalue_fun = NULL,
+  show_yesno = NULL,
+  tidy_fun = NULL
+)
 }
 \arguments{
 \item{x}{Regression model object}
@@ -45,6 +55,9 @@ and return a string that is the rounded/formatted p-value (e.g.
 \code{purrr::partial(style_pvalue, digits = 2)}).}
 
 \item{show_yesno}{deprecated}
+
+\item{tidy_fun}{Option to specify a particular tidier function if the
+model is not a \link[=tidy_vetted]{vetted model}. Default it \code{NULL}}
 }
 \value{
 A \code{tbl_regression} object
@@ -117,22 +130,23 @@ tbl_regression_ex3 <-
 
 # for convenience, you can also pass named lists to any arguments
 # that accept formulas (e.g label, etc.)
- glm(response ~ age + grade, trial, family = binomial(link = "logit")) \%>\%
-    tbl_regression(exponentiate = TRUE, label = list(age = "Patient Age"))
-
+glm(response ~ age + grade, trial, family = binomial(link = "logit")) \%>\%
+  tbl_regression(exponentiate = TRUE, label = list(age = "Patient Age"))
 }
 \seealso{
 See tbl_regression \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html}{vignette} for detailed examples
 
-Other tbl_regression tools: \code{\link{add_global_p.tbl_regression}},
-  \code{\link{add_nevent.tbl_regression}},
-  \code{\link{bold_italicize_labels_levels}},
-  \code{\link{bold_p.tbl_regression}},
-  \code{\link{bold_p.tbl_stack}},
-  \code{\link{inline_text.tbl_regression}},
-  \code{\link{modify_header}},
-  \code{\link{sort_p.tbl_regression}},
-  \code{\link{tbl_merge}}, \code{\link{tbl_stack}}
+Other tbl_regression tools: 
+\code{\link{add_global_p.tbl_regression}()},
+\code{\link{add_nevent.tbl_regression}()},
+\code{\link{bold_italicize_labels_levels}},
+\code{\link{bold_p.tbl_regression}()},
+\code{\link{bold_p.tbl_stack}()},
+\code{\link{inline_text.tbl_regression}()},
+\code{\link{modify_header}()},
+\code{\link{sort_p.tbl_regression}()},
+\code{\link{tbl_merge}()},
+\code{\link{tbl_stack}()}
 }
 \author{
 Daniel D. Sjoberg
