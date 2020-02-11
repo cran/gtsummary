@@ -25,8 +25,7 @@ add_q <- function(x, ...) UseMethod("add_q")
 #' @return A `tbl_summary` object
 #' @examples
 #' tbl_sum_q_ex <-
-#'   trial %>%
-#'   dplyr::select(trt, age, grade, response) %>%
+#'   trial[c("trt", "age", "grade", "response")] %>%
 #'   tbl_summary(by = trt) %>%
 #'   add_p() %>%
 #'   add_q()
@@ -34,7 +33,7 @@ add_q <- function(x, ...) UseMethod("add_q")
 #' \if{html}{\figure{tbl_sum_q_ex.png}{options: width=50\%}}
 
 add_q.tbl_summary <- function(x, method = "fdr",
-                              pvalue_fun = x$pvalue_fun, ...) {
+                              pvalue_fun = x$fmt_fun$p.value, ...) {
 
   # This adjusts p-values for multiple testing. Default method is fdr.
   if (!("add_p" %in% names(x$call_list))) {
@@ -74,7 +73,8 @@ add_q.tbl_summary <- function(x, method = "fdr",
     tibble(column = names(x$table_body)) %>%
     left_join(x$table_header, by = "column") %>%
     table_header_fill_missing() %>%
-    table_header_fmt(q.value = "x$qvalue_fun") %>%
+    # table_header_fmt(q.value = "x$qvalue_fun") %>%
+    table_header_fmt_fun(q.value = pvalue_fun) %>%
     mutate(footnote = map2(
       .data$column, .data$footnote,
       function(x, y) {
@@ -96,7 +96,6 @@ add_q.tbl_summary <- function(x, method = "fdr",
 
   # returning qvalue method
   x$qvalue_method <- method
-  x$qvalue_fun <- pvalue_fun
 
   # Returns the table 1 object
   return(x)
@@ -118,8 +117,7 @@ add_q.tbl_summary <- function(x, method = "fdr",
 #' @return A `tbl_uvregression` object
 #' @examples
 #' tbl_uvr_q_ex <-
-#'   trial %>%
-#'   dplyr::select(age, marker, grade, response) %>%
+#'   trial[c("age", "marker", "grade", "response")] %>%
 #'   tbl_uvregression(
 #'     method = lm,
 #'     y = age
@@ -130,7 +128,7 @@ add_q.tbl_summary <- function(x, method = "fdr",
 #' \if{html}{\figure{tbl_uvr_q_ex.png}{options: width=50\%}}
 
 add_q.tbl_uvregression <- function(x, method = "fdr",
-                                   pvalue_fun = x$inputs$pvalue_fun, ...) {
+                                   pvalue_fun = x$fmt_fun$p.value, ...) {
 
   # This adjusts p-values for multiple testing but only when the
   # global approach is used. Default method is fdr.
@@ -172,7 +170,8 @@ add_q.tbl_uvregression <- function(x, method = "fdr",
     tibble(column = names(x$table_body)) %>%
     left_join(x$table_header, by = "column") %>%
     table_header_fill_missing() %>%
-    table_header_fmt(q.value = "x$qvalue_fun") %>%
+    # table_header_fmt(q.value = "x$qvalue_fun") %>%
+    table_header_fmt_fun(q.value = pvalue_fun) %>%
     mutate(footnote = map2(
       .data$column, .data$footnote,
       function(x, y) {
@@ -192,7 +191,6 @@ add_q.tbl_uvregression <- function(x, method = "fdr",
 
   # returning qvalue method
   x$qvalue_method <- method
-  x$qvalue_fun <- pvalue_fun
 
   return(x)
 }

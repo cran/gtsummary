@@ -4,8 +4,8 @@ ci
 conf
 coxph
 customizable
-dplyr
 exponentiate
+fmt
 geeglm
 geepack
 github
@@ -26,10 +26,13 @@ ng
 ORCID
 pre
 pvalue
+README
 Rprofile
 rstudio
 RStudio
 Rtools
+sha
+SHA
 sig
 survfit
 tbl

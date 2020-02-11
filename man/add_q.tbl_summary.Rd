@@ -4,7 +4,7 @@
 \alias{add_q.tbl_summary}
 \title{Add a column of q-values to account for multiple comparisons}
 \usage{
-\method{add_q}{tbl_summary}(x, method = "fdr", pvalue_fun = x$pvalue_fun, ...)
+\method{add_q}{tbl_summary}(x, method = "fdr", pvalue_fun = x$fmt_fun$p.value, ...)
 }
 \arguments{
 \item{x}{\code{tbl_summary} object}
@@ -35,8 +35,7 @@ Adjustments to are p-values are performed with \link[stats:p.adjust]{stats::p.ad
 
 \examples{
 tbl_sum_q_ex <-
-  trial \%>\%
-  dplyr::select(trt, age, grade, response) \%>\%
+  trial[c("trt", "age", "grade", "response")] \%>\%
   tbl_summary(by = trt) \%>\%
   add_p() \%>\%
   add_q()

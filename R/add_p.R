@@ -32,9 +32,9 @@
 #' for categorical variables with any expected cell count <5.
 #' A custom test function can be added for all or some variables. See below for
 #' an example.
-#' @param group Column name of an ID or grouping variable. The column can be
-#' used calculate p-values with correlated data (e.g. when the test argument
-#' is `"lme4"`). Default is `NULL`.  If specified,
+#' @param group Column name (unquoted or quoted) of an ID or grouping variable.
+#' The column can be used to calculate p-values with correlated data (e.g. when
+#' the test argument is `"lme4"`). Default is `NULL`.  If specified,
 #' the row associated with this variable is omitted from the summary table.
 #' @inheritParams tbl_regression
 #' @inheritParams tbl_summary
@@ -45,8 +45,7 @@
 #' @author Emily C. Zabor, Daniel D. Sjoberg
 #' @examples
 #' add_p_ex1 <-
-#'   trial %>%
-#'   dplyr::select(age, grade, response, trt) %>%
+#'   trial[c("age", "grade", "response", "trt")] %>%
 #'   tbl_summary(by = trt) %>%
 #'   add_p()
 #'
@@ -61,12 +60,11 @@
 #'   result$test <- "McNemar\\'s test"
 #'   result
 #' }
-#' \donttest{
+#'
 #' add_p_ex2 <-
 #'   trial[c("response", "trt")] %>%
 #'   tbl_summary(by = trt) %>%
-#'   add_p(test = vars(response) ~ "my_mcnemar")
-#' }
+#'   add_p(test = response ~ "my_mcnemar")
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
@@ -74,37 +72,41 @@
 #'
 #' \if{html}{Example 2}
 #'
-#' \if{html}{\figure{add_p_ex2.png}{options: width=45\%}}
+#' \if{html}{\figure{add_p_ex2.png}{options: width=60\%}}
 
 add_p <- function(x, test = NULL, pvalue_fun = NULL,
-                  group = NULL, include = NULL, exclude = NULL) {
+                  group = NULL, include = everything(), exclude = NULL) {
+
+  # DEPRECATION notes ----------------------------------------------------------
+  if (!rlang::quo_is_null(rlang::enquo(exclude))) {
+    lifecycle::deprecate_warn(
+      "1.2.5",
+      "gtsummary::add_p(exclude = )",
+      "add_p(include = )",
+      details = paste0(
+        "The `include` argument accepts quoted and unquoted expressions similar\n",
+        "to `dplyr::select()`. To exclude variable, use the minus sign.\n",
+        "For example, `include = -c(age, stage)`"
+      )
+    )
+  }
 
   # converting bare arguments to string ----------------------------------------
-  group <- enquo_to_string(rlang::enquo(group), arg_name = "group")
-
-  # putting arguments in a list to pass to tbl_summary_
-  add_p_args <- as.list(environment())
-
-  # passing arguments to add_p_
-  do.call(add_p_, add_p_args)
-}
-
-#' Standard evaluation version of add_p()
-#'
-#' The `'group ='` argument can be passed as a string, rather than with non-standard
-#' evaluation as in [add_p]. Review the help file for [add_p] fully documented
-#' options and arguments.
-#'
-#' @inheritParams add_p
-#' @export
-add_p_ <- function(x, test = NULL, pvalue_fun = NULL,
-                   group = NULL, include = NULL, exclude = NULL) {
+  group <- var_input_to_string(data = x$inputs$data,
+                               select_input = !!rlang::enquo(group),
+                               arg_name = "group", select_single = TRUE)
+  include <- var_input_to_string(data = x$inputs$data,
+                                 select_input = !!rlang::enquo(include),
+                                 arg_name = "include")
+  exclude <- var_input_to_string(data = x$inputs$data,
+                                 select_input = !!rlang::enquo(exclude),
+                                 arg_name = "exclude")
 
   # group argument -------------------------------------------------------------
   if (!is.null(group)) {
     # checking group is in the data frame
     if (!group %in% x$meta_data$variable) {
-      stop(glue("'{group}' is not a column name in the input data frame."))
+      stop(glue("'{group}' is not a column name in the input data frame."), call. = FALSE)
     }
     # dropping group variable from table_body and meta_data
     x$table_body <- x$table_body %>% filter(.data$variable != group)
@@ -120,45 +122,44 @@ add_p_ <- function(x, test = NULL, pvalue_fun = NULL,
       "'pvalue_fun' is not a valid function.  Please pass only a function\n",
       "object. For example,\n\n",
       "'pvalue_fun = function(x) style_pvalue(x, digits = 2)'"
-    ))
+    ), call. = FALSE)
   }
 
   # checking that input is class tbl_summary
-  if (class(x) != "tbl_summary") stop("x must be class 'tbl_summary'")
+  if (!inherits(x, "tbl_summary")) stop("`x` must be class 'tbl_summary'", call. = FALSE)
   # checking that input x has a by var
   if (is.null(x$inputs[["by"]])) {
     stop(paste0(
       "Cannot add comparison when no 'by' variable ",
       "in original tbl_summary() call"
-    ))
+    ), call. = FALSE)
   }
 
   # test -----------------------------------------------------------------------
   # parsing into a named list
   test <- tidyselect_to_list(
     x$inputs$data, test,
-    .meta_data = x$meta_data, input_type = "test"
+    .meta_data = x$meta_data, arg_name = "test"
   )
 
   if (!is.null(test)) {
     # checking that all inputs are named
     if ((names(test) %>%
-      purrr::discard(. == "") %>%
-      length()) != length(test)) {
+         purrr::discard(. == "") %>%
+         length()) != length(test)) {
       stop(glue(
         "Each element in 'test' must be named. ",
         "For example, 'test = list(age = \"t.test\", ptstage = \"fisher.test\")'"
-      ))
+      ), call. = FALSE)
     }
   }
 
   # checking pvalue_fun are functions
   if (!is.function(pvalue_fun)) {
-    stop("Input 'pvalue_fun' must be a function.")
+    stop("Input 'pvalue_fun' must be a function.", call. = FALSE)
   }
 
   # Getting p-values only for included variables
-  if (is.null(include)) include <- x$table_body$variable %>% unique()
   include <- include %>% setdiff(exclude)
 
 
@@ -212,14 +213,13 @@ add_p_ <- function(x, test = NULL, pvalue_fun = NULL,
     )
 
   x$table_body <- table_body
-  x$pvalue_fun <- pvalue_fun
   x$meta_data <- meta_data
 
   x$table_header <-
     tibble(column = names(table_body)) %>%
     left_join(x$table_header, by = "column") %>%
     table_header_fill_missing() %>%
-    table_header_fmt(p.value = "x$pvalue_fun") %>%
+    table_header_fmt_fun(p.value = pvalue_fun) %>%
     mutate(footnote = map2(
       .data$column, .data$footnote,
       function(x, y) {
@@ -235,7 +235,6 @@ add_p_ <- function(x, test = NULL, pvalue_fun = NULL,
 
   # updating gt and kable calls with data from table_header
   x <- update_calls_from_table_header(x)
-
 
   x$call_list <- c(x$call_list, list(add_p = match.call()))
 

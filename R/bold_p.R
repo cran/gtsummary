@@ -28,8 +28,7 @@ bold_p <- function(x, ...) UseMethod("bold_p")
 #' @author Daniel D. Sjoberg, Esther Drill
 #' @examples
 #' tbl_sum_bold_p_ex <-
-#'   trial %>%
-#'   dplyr::select(age, grade, response, trt) %>%
+#'   trial[c("age", "grade", "response", "trt")] %>%
 #'   tbl_summary(by = trt) %>%
 #'   add_p() %>%
 #'   bold_p()
@@ -115,8 +114,7 @@ bold_p.tbl_regression <- function(x, t = 0.05, ...) {
 #' @return A `tbl_uvregression` object
 #' @examples
 #' tbl_uvglm_bold_p_ex <-
-#'   trial %>%
-#'   dplyr::select(age, marker, response, grade) %>%
+#'   trial[c("age", "marker", "response", "grade")] %>%
 #'   tbl_uvregression(
 #'     method = glm,
 #'     y = response,
@@ -178,7 +176,7 @@ bold_p.tbl_uvregression <- function(x, t = 0.05, q = FALSE, ...) {
 bold_p.tbl_stack <- function(x, ...) {
 
   # assigning the class to be the same as the first stacked object
-  class(x) <- class(x$tbl_regression_list[[1]])
+  class(x) <- class(x$tbls[[1]])
 
   bold_p(x, ...)
 }

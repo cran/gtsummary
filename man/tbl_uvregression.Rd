@@ -13,7 +13,7 @@ tbl_uvregression(
   formula = "{y} ~ {x}",
   exponentiate = FALSE,
   label = NULL,
-  include = NULL,
+  include = everything(),
   exclude = NULL,
   hide_n = FALSE,
   show_single_row = NULL,
@@ -37,7 +37,7 @@ Specify one and only one of \code{y} or \code{x}}
 \item{x}{Model covariate (e.g. \code{x = trt}).
 All other columns in \code{data} will serve as the outcome in a regression model
 with \code{x} as a covariate.  Output table is best when \code{x} is a continuous or
-binary variable displayed on a single row.
+dichotomous variable displayed on a single row.
 Specify one and only one of \code{y} or \code{x}}
 
 \item{method.args}{List of additional arguments passed on to the regression
@@ -52,18 +52,20 @@ random intercept model, the formula may be \code{formula = "{y} ~ {x} + (1 | gea
 coefficient estimates. Default is \code{FALSE}.}
 
 \item{label}{List of formulas specifying variables labels,
-e.g. \code{list("age" ~ "Age, yrs", "ptstage" ~ "Path T Stage")}}
+e.g. \code{list(age ~ "Age, yrs", stage ~ "Path T Stage")}}
 
-\item{include}{Character vector of variable names to include from output.}
+\item{include}{Variables to include in output. Input may be a vector of
+quoted variable names, unquoted variable names, or tidyselect select helper
+functions. Default is \code{everything()}.}
 
-\item{exclude}{Character vector of variable names to exclude from output.}
+\item{exclude}{DEPRECATED}
 
 \item{hide_n}{Hide N column. Default is \code{FALSE}}
 
 \item{show_single_row}{By default categorical variables are printed on
-multiple rows.  If a variable is binary (e.g. Yes/No) and you wish to print
-the regression coefficient on a single row, include the variable name here,
-e.g. \code{show_single_row = c("var1", "var2")}}
+multiple rows.  If a variable is dichotomous (e.g. Yes/No) and you wish to print
+the regression coefficient on a single row, include the variable name(s)
+here--quoted and unquoted variable name accepted.}
 
 \item{conf.level}{Must be strictly greater than 0 and less than 1.
 Defaults to 0.95, which corresponds to a 95 percent confidence interval.}
@@ -79,10 +81,11 @@ and return a string that is the rounded/formatted p-value (e.g.
 \code{pvalue_fun = function(x) style_pvalue(x, digits = 2)} or equivalently,
 \code{purrr::partial(style_pvalue, digits = 2)}).}
 
-\item{show_yesno}{deprecated}
+\item{show_yesno}{DEPRECATED}
 
 \item{tidy_fun}{Option to specify a particular tidier function if the
-model is not a \link[=tidy_vetted]{vetted model}. Default it \code{NULL}}
+model is not a \link[=tidy_vetted]{vetted model} or you need to implement a
+custom method. Default is \code{NULL}}
 }
 \value{
 A \code{tbl_uvregression} object
@@ -105,7 +108,7 @@ covariate in the \verb{x=} argument. Each column of the data frame will serve as
 the outcome in a univariate regression model. Take care using the \code{x} argument
 that each of the columns in the data frame are appropriate for the same type
 of model, e.g. they are all continuous variables appropriate for \link{lm}, or
-binary variables appropriate for logistic regression with \link{glm}.
+dichotomous variables appropriate for logistic regression with \link{glm}.
 }
 \section{Example Output}{
 
@@ -149,7 +152,7 @@ This list is not exhaustive, and care should be taken for each number reported.
 \examples{
 tbl_uv_ex1 <-
   tbl_uvregression(
-    trial \%>\% dplyr::select(response, age, grade),
+    trial[c("response", "age", "grade")],
     method = glm,
     y = response,
     method.args = list(family = binomial),
@@ -160,10 +163,9 @@ tbl_uv_ex1 <-
 library(survival)
 tbl_uv_ex2 <-
   tbl_uvregression(
-    trial \%>\% dplyr::select(ttdeath, death, age, grade, response),
+    trial[c("ttdeath", "death", "age", "grade", "response")],
     method = coxph,
     y = Surv(ttdeath, death),
-    label = list(vars(grade) ~ "Grade"),
     exponentiate = TRUE,
     pvalue_fun = function(x) style_pvalue(x, digits = 2)
   )
@@ -171,12 +173,10 @@ tbl_uv_ex2 <-
 # for convenience, you can also pass named lists to any arguments
 # that accept formulas (e.g label, etc.)
 library(survival)
-trial \%>\%
-  dplyr::select(ttdeath, death, age, grade, response) \%>\%
+trial[c("ttdeath", "death", "age", "grade", "response")] \%>\%
   tbl_uvregression(
     method = coxph,
     y = Surv(ttdeath, death),
-    label = list(grade = "Grade"),
     exponentiate = TRUE
   )
 }

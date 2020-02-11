@@ -32,17 +32,18 @@
 #' @param exponentiate Logical indicating whether to exponentiate the
 #' coefficient estimates. Default is `FALSE`.
 #' @param label List of formulas specifying variables labels,
-#' e.g. `list("age" ~ "Age, yrs", "ptstage" ~ "Path T Stage")`
-#' @param include Character vector of variable names to include from output.
-#' @param exclude Character vector of variable names to exclude from output.
+#' e.g. `list(age ~ "Age, yrs", stage ~ "Path T Stage")`
+#' @param include Variables to include in output. Input may be a vector of
+#' quoted variable names, unquoted variable names, or tidyselect select helper
+#' functions. Default is `everything()`.
 #' @param conf.level Must be strictly greater than 0 and less than 1.
 #' Defaults to 0.95, which corresponds to a 95 percent confidence interval.
 #' @param intercept Logical argument indicating whether to include the intercept
 #' in the output.  Default is `FALSE`
 #' @param show_single_row By default categorical variables are printed on
-#' multiple rows.  If a variable is binary (e.g. Yes/No) and you wish to print
-#' the regression coefficient on a single row, include the variable name here,
-#' e.g. `show_single_row = c("var1", "var2")`
+#' multiple rows.  If a variable is dichotomous (e.g. Yes/No) and you wish to print
+#' the regression coefficient on a single row, include the variable name(s)
+#' here--quoted and unquoted variable name accepted.
 #' @param estimate_fun Function to round and format coefficient estimates.
 #' Default is [style_sigfig] when the coefficients are not transformed, and
 #' [style_ratio] when the coefficients have been exponentiated.
@@ -52,9 +53,11 @@
 #' and return a string that is the rounded/formatted p-value (e.g.
 #' `pvalue_fun = function(x) style_pvalue(x, digits = 2)` or equivalently,
 #'  `purrr::partial(style_pvalue, digits = 2)`).
-#' @param show_yesno deprecated
 #' @param tidy_fun Option to specify a particular tidier function if the
-#' model is not a [vetted model][tidy_vetted]. Default it `NULL`
+#' model is not a [vetted model][tidy_vetted] or you need to implement a
+#' custom method. Default is `NULL`
+#' @param exclude DEPRECATED
+#' @param show_yesno DEPRECATED
 #' @author Daniel D. Sjoberg
 #' @seealso See tbl_regression \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html}{vignette} for detailed examples
 #' @family tbl_regression tools
@@ -93,15 +96,29 @@
 #' \if{html}{\figure{tbl_regression_ex3.png}{options: width=50\%}}
 
 tbl_regression <- function(x, label = NULL, exponentiate = FALSE,
-                           include = NULL, exclude = NULL,
-                           show_single_row = NULL, conf.level = NULL, intercept = FALSE,
-                           estimate_fun = NULL, pvalue_fun = NULL, show_yesno = NULL,
-                           tidy_fun = NULL) {
+                           include = everything(), show_single_row = NULL,
+                           conf.level = NULL, intercept = FALSE,
+                           estimate_fun = NULL, pvalue_fun = NULL,
+                           tidy_fun = NULL,
+                           show_yesno = NULL, exclude = NULL) {
   # deprecated arguments -------------------------------------------------------
   if (!is.null(show_yesno)) {
     lifecycle::deprecate_stop(
       "1.2.2", "tbl_regression(show_yesno = )",
       "tbl_regression(show_single_row = )"
+    )
+  }
+
+  if (!rlang::quo_is_null(rlang::enquo(exclude))) {
+    lifecycle::deprecate_warn(
+      "1.2.5",
+      "gtsummary::tbl_regression(exclude = )",
+      "tbl_regression(include = )",
+      details = paste0(
+        "The `include` argument accepts quoted and unquoted expressions similar\n",
+        "to `dplyr::select()`. To exclude variable, use the minus sign.\n",
+        "For example, `include = -c(age, stage)`"
+      )
     )
   }
 
@@ -120,18 +137,23 @@ tbl_regression <- function(x, label = NULL, exponentiate = FALSE,
     getOption("gtsummary.conf.level", default = 0.95)
 
   # checking estimate_fun and pvalue_fun are functions
-  if (!is.function(estimate_fun) | !is.function(pvalue_fun)) {
-    stop("Inputs 'estimate_fun' and 'pvalue_fun' must be functions.")
+  if (!purrr::every(list(estimate_fun, pvalue_fun, tidy_fun %||% pvalue_fun), is.function)) {
+    stop("Inputs `estimate_fun`, `pvalue_fun`, `tidy_fun` must be functions.",
+         call. = FALSE)
   }
 
-  # converting tidyselect formula lists to named lists
+  include <- rlang::enquo(include)
+  exclude <- rlang::enquo(exclude)
+  show_single_row <- rlang::enquo(show_single_row)
+
+  # will return call, and all object passed to in tbl_regression call
+  # the object func_inputs is a list of every object passed to the function
+  func_inputs <- as.list(environment())
+
+    # converting tidyselect formula lists to named lists
   # extracting model frame
-  model_frame <- tryCatch(
-    {
+  model_frame <- tryCatch({
       stats::model.frame(x)
-    },
-    warning = function(w) {
-      warning(x)
     },
     error = function(e) {
       usethis::ui_oops(paste0(
@@ -144,20 +166,11 @@ tbl_regression <- function(x, label = NULL, exponentiate = FALSE,
         "Review the GitHub issue linked below for a possible solution."
       ))
       usethis::ui_code_block("https://github.com/ddsjoberg/gtsummary/issues/231")
-      stop(e)
+      stop(as.character(e), call. = FALSE)
     }
   )
-  label <- tidyselect_to_list(model_frame, label, input_type = "label")
-  # all sepcifed labels must be a string of length 1
-  if (!every(label, ~ rlang::is_string(.x))) {
-    stop("Each `label` specified must be a string of length 1.")
-  }
 
-  # will return call, and all object passed to in tbl_regression call
-  # the object func_inputs is a list of every object passed to the function
-  func_inputs <- as.list(environment())
-
-  # using broom and broom.mixed to tidy up regression results, and
+  # using broom to tidy up regression results, and
   # then reversing order of data frame
   tidy_model <-
     tidy_wrap(x, exponentiate, conf.level, tidy_fun)
@@ -167,7 +180,7 @@ tbl_regression <- function(x, label = NULL, exponentiate = FALSE,
   # rows for reference groups, and headers for
   # categorical variables
   table_body <-
-    parse_fit(x, tidy_model, label, show_single_row) %>%
+    parse_fit(x, tidy_model, label, !!show_single_row) %>%
     # adding character CI
     mutate(
       ci = if_else(
@@ -180,17 +193,11 @@ tbl_regression <- function(x, label = NULL, exponentiate = FALSE,
     select(-.data$p.value, .data$p.value)
 
   # including and excluding variables/intercept indicated
-  # Note, include = names(stats::model.frame(mod_nlme))
-  # has an error for nlme because it is "reStruct"
-  if (!is.null(include)) {
-    include_err <- include %>% setdiff(table_body$variable %>% unique())
-    if (length(include_err) > 0) {
-      stop(glue(
-        "'include' must be be a subset of '{paste(table_body$variable %>% unique(), collapse = ', ')}'"
-      ))
-    }
-  }
-  if (is.null(include)) include <- table_body$variable %>% unique()
+  include <- var_input_to_string(data = vctr_2_tibble(unique(table_body$variable)),
+                                 arg_name = "include", select_input = !!include)
+  exclude <- var_input_to_string(data = vctr_2_tibble(unique(table_body$variable)),
+                                 arg_name = "exclude", select_input = !!exclude)
+
   if (intercept == FALSE) include <- include %>% setdiff("(Intercept)")
   include <- include %>% setdiff(exclude)
 
@@ -200,17 +207,17 @@ tbl_regression <- function(x, label = NULL, exponentiate = FALSE,
     filter(.data$variable %in% include)
 
   # model N
-  n <- stats::model.frame(x) %>% nrow()
+  n <- nrow(model_frame)
 
   # table of column headers
   table_header <-
     tibble(column = names(table_body)) %>%
     table_header_fill_missing() %>%
-    table_header_fmt(
-      p.value = "x$inputs$pvalue_fun",
-      estimate = "x$inputs$estimate_fun",
-      conf.low = "x$inputs$estimate_fun",
-      conf.high = "x$inputs$estimate_fun"
+    table_header_fmt_fun(
+      p.value = pvalue_fun,
+      estimate = estimate_fun,
+      conf.low = estimate_fun,
+      conf.high = estimate_fun
     ) %>%
     # adding footnotes to table_header tibble
     mutate(
@@ -250,8 +257,8 @@ tbl_regression <- function(x, label = NULL, exponentiate = FALSE,
   # writing additional gt and kable calls with data from table_header
   results <- update_calls_from_table_header(results)
 
-  # assigning a class of tbl_regression (for special printing in Rmarkdown)
-  class(results) <- "tbl_regression"
+  # assigning a class of tbl_regression (for special printing in R markdown)
+  class(results) <- c("tbl_regression", "gtsummary")
 
   results
 }
@@ -282,7 +289,7 @@ gt_tbl_regression <- quote(list(
   tab_style_text_indent = glue(
     "gt::tab_style(",
     "style = gt::cell_text(indent = gt::px(10), align = 'left'),",
-    "locations = gt::cells_data(",
+    "locations = gt::cells_body(",
     "columns = gt::vars(label), ",
     "rows = row_type != 'label'",
     "))"
@@ -290,7 +297,7 @@ gt_tbl_regression <- quote(list(
 ))
 
 
-# kable function calls ------------------------------------------------------------
+# kable function calls ---------------------------------------------------------
 # quoting returns an expression to be evaluated later
 kable_tbl_regression <- quote(list(
   # first call to the gt function
@@ -313,24 +320,24 @@ estimate_header <- function(x, exponentiate) {
   # first identify the type ----------------------------------------------------
   model_type <- "generic"
   # GLM and GEE models
-  if (class(x)[1] %in% c("glm", "geeglm") &&
+  if (inherits(x, c("glm", "geeglm")) &&
     x$family$family == "binomial" &&
     x$family$link == "logit") {
     model_type <- "logistic"
-  } else if (class(x)[1] %in% c("glm", "geeglm") &&
+  } else if (inherits(x, c("glm", "geeglm")) &&
     x$family$family == "poisson" &&
     x$family$link == "log") {
     model_type <- "poisson"
   } # Cox Models
-  else if (class(x)[1] == "coxph") {
+  else if (inherits(x, "coxph")) {
     model_type <- "prop_hazard"
   } # LME4 models
-  else if (class(x)[1] == "glmerMod" &&
+  else if (inherits(x, "glmerMod") &&
     attr(class(x), "package") == "lme4" &&
     x@resp$family$family == "binomial" &&
     x@resp$family$link == "logit") {
     model_type <- "logistic"
-  } else if (class(x)[1] == "glmerMod" &&
+  } else if (inherits(x, "glmerMod") &&
     attr(class(x), "package") == "lme4" &&
     x@resp$family$family == "poisson" &&
     x@resp$family$link == "log") {

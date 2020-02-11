@@ -3,23 +3,17 @@
 \name{deprecated}
 \alias{deprecated}
 \alias{add_comparison}
-\alias{cols_label_summary}
 \alias{add_global}
 \alias{tab_style_bold_p}
 \alias{tab_style_bold_labels}
 \alias{tab_style_italicize_levels}
 \alias{tab_style_italicize_labels}
 \alias{tab_style_bold_levels}
-\alias{fmt_uni_regression}
-\alias{fmt_table1}
-\alias{fmt_regression}
-\alias{fmt_beta}
-\alias{fmt_pvalue}
+\alias{tbl_summary_}
+\alias{add_p_}
 \title{Deprecated functions}
 \usage{
 add_comparison(...)
-
-cols_label_summary(stat_overall = NULL, ...)
 
 add_global(...)
 
@@ -33,15 +27,9 @@ tab_style_italicize_labels(...)
 
 tab_style_bold_levels(...)
 
-fmt_uni_regression(...)
+tbl_summary_(...)
 
-fmt_table1(...)
-
-fmt_regression(...)
-
-fmt_beta(...)
-
-fmt_pvalue(...)
+add_p_(...)
 }
 \description{
 \Sexpr[results=rd, stage=render]{lifecycle::badge("deprecated")}

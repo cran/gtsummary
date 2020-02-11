@@ -4,49 +4,54 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
-## ----exit_early, include = FALSE, eval = !requireNamespace("gt")--------------
-#  knitr::knit_exit()
-
 ## ---- include=FALSE-----------------------------------------------------------
 library(gtsummary)
 library(dplyr)
 
 ## ---- eval=FALSE--------------------------------------------------------------
 #  install.packages("gtsummary")
-#  remotes::install_github("rstudio/gt")
+#  remotes::install_github("rstudio/gt", ref = gtsummary::gt_sha)
 #  
 #  library(gtsummary)
 #  library(dplyr)
 
 ## ---- message=FALSE-----------------------------------------------------------
-# printing trial data
-head(trial) %>% knitr::kable()
+head(trial)
 
-## ---- message=FALSE-----------------------------------------------------------
+## -----------------------------------------------------------------------------
 trial2 =
   trial %>%
-  select(trt, marker, stage)
+  dplyr::select(trt, marker, stage)
 
+## ---- message=FALSE-----------------------------------------------------------
 tbl_summary(trial2)
 
 ## -----------------------------------------------------------------------------
 tbl_summary(trial2, by = trt) %>% add_p()
 
+## ---- eval = FALSE------------------------------------------------------------
+#  trial %>%
+#    tbl_summary(by = trt, missing = "no") %>%
+#    add_n() %>%
+#    as_gt() %>%
+#    <gt functions>
+
 ## -----------------------------------------------------------------------------
 trial2 %>%
   # build base summary table
   tbl_summary(
+    # split table by treatment variable
     by = trt,
     # change variable labels
-    label = list(vars(marker) ~ "Marker, ng/mL",
-                 vars(stage) ~ "Clinical T Stage"),
+    label = list(marker ~ "Marker, ng/mL",
+                 stage ~ "Clinical T Stage"),
     # change statistics printed in table
     statistic = list(all_continuous() ~ "{mean} ({sd})",
                      all_categorical() ~ "{n} / {N} ({p}%)"),
     digits = list("marker" ~ c(1, 2))
   ) %>%
   # add p-values, report t-test, round large pvalues to two decimal place
-  add_p(test = list(vars(marker) ~ "t.test"),
+  add_p(test = list(marker ~ "t.test"),
                  pvalue_fun = function(x) style_pvalue(x, digits = 2)) %>%
   # add statistic labels
   add_stat_label() %>%
@@ -58,20 +63,24 @@ trial2 %>%
   # include percent in headers
   modify_header(stat_by = "**{level}**, N = {n} ({style_percent(p, symbol = TRUE)})")
 
+## ---- eval=FALSE--------------------------------------------------------------
+#  all_continuous()      all_categorical()      all_dichotomous()
+
+## ---- eval=FALSE--------------------------------------------------------------
+#  all_numeric()         all_integer()          all_logical()
+#  all_factor()          all_character()        all_double()
+
 ## -----------------------------------------------------------------------------
 trial %>%
   dplyr::select(trt, response, age, stage, marker, grade) %>%
   tbl_summary(
     by = trt,
-    type = list(c("response", "grade") ~ "categorical"), # select by variables in a vector
-    statistic = list(all_continuous() ~ "{mean} ({sd})", all_categorical() ~ "{p}%") # select by summary type/attribute
+    type = list(c(response, grade) ~ "categorical"), # select by variables in c()
+    statistic = list(all_continuous() ~ "{mean} ({sd})", 
+                     all_categorical() ~ "{p}%") # select by summary type
   ) %>%
   add_p(test = list(contains("response") ~ "fisher.test", # select using functions in tidyselect
                     all_continuous() ~ "t.test"))
-
-## -----------------------------------------------------------------------------
-tab1 = tbl_summary(trial2, by = trt)
-tab1
 
 ## -----------------------------------------------------------------------------
 tbl_summary(trial2) %>% names()
@@ -81,7 +90,7 @@ tbl_summary(trial2) %>% purrr::pluck("gt_calls") %>% head(n = 5)
 
 ## ----as_gt2, eval=FALSE-------------------------------------------------------
 #  tbl_summary(trial2, by = trt) %>%
-#    as_gt(exclude = "tab_footnote") %>%
+#    as_gt(include = -tab_footnote) %>%
 #    gt::tab_spanner(label = gt::md("**Treatment Group**"),
 #                    columns = gt::starts_with("stat_"))
 
@@ -89,7 +98,7 @@ tbl_summary(trial2) %>% purrr::pluck("gt_calls") %>% head(n = 5)
 # this code chunk only works if gt is installed
 if (requireNamespace("gt", quietly = TRUE)) {
   tbl_summary(trial2, by = trt) %>%
-    as_gt(exclude = "tab_footnote") %>%
+    as_gt(include = -tab_footnote) %>%
     gt::tab_spanner(label = gt::md("**Treatment Group**"),
                     columns = gt::starts_with("stat_"))
 }

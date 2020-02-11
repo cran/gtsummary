@@ -9,8 +9,7 @@
 #' @return Functions return the same class of gtsummary object supplied
 #' @examples
 #' tbl_bold_ital_ex <-
-#'   trial %>%
-#'   dplyr::select(trt, age, grade) %>%
+#'   trial[c("trt", "age", "grade")] %>%
 #'   tbl_summary() %>%
 #'   bold_labels() %>%
 #'   bold_levels() %>%
@@ -26,7 +25,7 @@ NULL
 #' @export
 bold_labels <- function(x) {
   # input checks ---------------------------------------------------------------
-  if (!class(x) %in% c(
+  if (!class(x)[1] %in% c(
     "tbl_summary", "tbl_regression", "tbl_uvregression",
     "tbl_stack", "tbl_merge"
   ) %>% all()) {
@@ -40,7 +39,7 @@ bold_labels <- function(x) {
   # adding p-value formatting
   x[["gt_calls"]][["bold_labels"]] <- glue(
     "gt::tab_style(style = gt::cell_text(weight = 'bold'), ",
-    "locations = gt::cells_data(columns = gt::vars(label),",
+    "locations = gt::cells_body(columns = gt::vars(label),",
     "rows = row_type == 'label'))"
   )
 
@@ -63,7 +62,7 @@ bold_labels <- function(x) {
 #' @export
 bold_levels <- function(x) {
   # input checks ---------------------------------------------------------------
-  if (!class(x) %in% c(
+  if (!class(x)[1] %in% c(
     "tbl_summary", "tbl_regression", "tbl_uvregression",
     "tbl_stack", "tbl_merge"
   ) %>% all()) {
@@ -77,7 +76,7 @@ bold_levels <- function(x) {
   # adding p-value formatting
   x[["gt_calls"]][["bold_levels"]] <- glue(
     "gt::tab_style(style = gt::cell_text(weight = 'bold'), ",
-    "locations = gt::cells_data(columns = gt::vars(label),",
+    "locations = gt::cells_body(columns = gt::vars(label),",
     "rows = row_type %in% c('level', 'missing')))"
   )
 
@@ -101,7 +100,7 @@ bold_levels <- function(x) {
 #' @export
 italicize_labels <- function(x) {
   # input checks ---------------------------------------------------------------
-  if (!class(x) %in%
+  if (!class(x)[1] %in%
     c(
       "tbl_summary", "tbl_regression", "tbl_uvregression",
       "tbl_stack", "tbl_merge"
@@ -116,7 +115,7 @@ italicize_labels <- function(x) {
   # adding p-value formatting
   x[["gt_calls"]][["italicize_labels"]] <- glue(
     "gt::tab_style(style = gt::cell_text(style = 'italic'), ",
-    "locations = gt::cells_data(columns = gt::vars(label),",
+    "locations = gt::cells_body(columns = gt::vars(label),",
     "rows = row_type == 'label'))"
   )
 
@@ -140,7 +139,7 @@ italicize_labels <- function(x) {
 #' @export
 italicize_levels <- function(x) {
   # input checks ---------------------------------------------------------------
-  if (!class(x) %in% c(
+  if (!class(x)[1] %in% c(
     "tbl_summary", "tbl_regression", "tbl_uvregression",
     "tbl_stack", "tbl_merge", "tbl_stack", "tbl_merge"
   ) %>% all()
@@ -155,7 +154,7 @@ italicize_levels <- function(x) {
   # adding p-value formatting
   x[["gt_calls"]][["italicize_levels"]] <- glue(
     "gt::tab_style(style = gt::cell_text(style = 'italic'), ",
-    "locations = gt::cells_data(columns = gt::vars(label),",
+    "locations = gt::cells_body(columns = gt::vars(label),",
     "rows = row_type %in% c('level', 'missing')))"
   )
 

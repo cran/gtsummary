@@ -8,18 +8,6 @@ knitr::opts_chunk$set(
 ## ----exit_early, include = FALSE, eval = !requireNamespace("gt")--------------
 #  knitr::knit_exit()
 
-## ---- echo=FALSE, comment=""--------------------------------------------------
-if (!requireNamespace("gt", quietly = TRUE)) {
-  usethis::ui_oops(paste(
-    "The gt package is required to build the gtsummary gallery,",
-    "and was not available\non this platform during the",
-    "package building process. To view the gallery,",
-    "visit the package website.\n\n",
-    "{usethis::ui_path('http://www.danieldsjoberg.com/gtsummary/')}"
-  ))
-  knitr::knit_exit()
-}
-
 ## ----setup, message = FALSE---------------------------------------------------
 library(gtsummary); library(gt); library(survival)
 library(dplyr); library(stringr); library(purrr); library(forcats)
@@ -39,7 +27,7 @@ trial[!is.na(trial$response), c("response", "age", "grade")] %>%
   tbl_summary(
     by = response, 
     missing = "no",
-    label = list(vars(age) ~ "Patient Age", vars(grade) ~ "Tumor Grade")
+    label = list(age ~ "Patient Age", grade ~ "Tumor Grade")
   ) %>%
   add_p(pvalue_fun = partial(style_pvalue, digits = 2)) %>%
   add_q()
@@ -52,8 +40,40 @@ trial[c("response", "age", "grade")] %>%
   ) %>%
   tbl_summary(
     by = response, 
-    label = list(vars(age) ~ "Patient Age", vars(grade) ~ "Tumor Grade")
+    label = list(age ~ "Patient Age", grade ~ "Tumor Grade")
   )  
+
+## -----------------------------------------------------------------------------
+# table summarizing data with no p-values
+t0 <- trial %>%
+  select(grade, age, response) %>%
+  tbl_summary(by = grade, missing = "no") %>%
+  modify_header(stat_by = md("**{level}**"))
+
+# table comparing grade I and II
+t1 <- trial %>%
+  select(grade, age, response) %>%
+  filter(grade %in% c("I", "II")) %>%
+  tbl_summary(by = grade, missing = "no") %>%
+  add_p() %>%
+  modify_header(p.value = md("**I vs. II**"))
+
+# table comparing grade I and II
+t2 <- trial %>%
+  select(grade, age, response) %>%
+  filter(grade %in% c("I", "III")) %>%
+  tbl_summary(by = grade, missing = "no") %>%
+  add_p()  %>%
+  modify_header(p.value = md("**I vs. III**"))
+
+# merging the 3 tables together, and adding additional gt formatting
+tbl_merge(list(t0, t1, t2)) %>%
+  as_gt(include = -tab_spanner) %>%
+  # hiding repeated summary columns
+  cols_hide(columns = vars(stat_1_2, stat_2_2, stat_1_3, stat_2_3)) %>%
+  # adding spanning headers for summary stats and pvalues
+  tab_spanner(label = md("**Tumor Grade**"), columns = starts_with("stat_")) %>%
+  tab_spanner(label = md("**p-value**"), columns = starts_with("p.value")) 
 
 ## -----------------------------------------------------------------------------
 trial[c("response", "age", "grade")] %>%
@@ -100,7 +120,7 @@ gt_eventn <-
 tbl_merge(list(gt_eventn, gt_model)) %>%
   bold_labels() %>%
   italicize_levels() %>%
-  as_gt(exclude = "tab_spanner")
+  as_gt(include = -tab_spanner)
 
 ## -----------------------------------------------------------------------------
 tbl_reg <-
@@ -136,5 +156,16 @@ gt_sum <-
 
 tbl_merge(list(gt_sum, tbl_reg))  %>%
   modify_header(estimate_2 = md("**Difference**")) %>%
-  as_gt(exclude = "tab_spanner")
+  as_gt(include = -tab_spanner)
+
+## -----------------------------------------------------------------------------
+my_tidy <- function(x, exponentiate =  FALSE, conf.level = 0.95, ...) {
+  dplyr::bind_cols(
+    broom::tidy(x, exponentiate = exponentiate, conf.int = FALSE),
+    broom::confint_tidy(x, func = stats::confint.default, conf.level = conf.level)
+  )
+}
+
+lm(age ~ grade + marker, trial) %>%
+  tbl_regression(tidy_fun = my_tidy)
 

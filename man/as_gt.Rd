@@ -4,29 +4,31 @@
 \alias{as_gt}
 \title{Convert gtsummary object to a gt_tbl object}
 \usage{
-as_gt(x, include = NULL, exclude = NULL, omit = NULL)
+as_gt(x, include = everything(), exclude = NULL, omit = NULL)
 }
 \arguments{
 \item{x}{Object created by a function from the gtsummary package
 (e.g. \link{tbl_summary} or \link{tbl_regression})}
 
-\item{include}{Character vector naming gt commands to include in printing.
-Default is \code{NULL}, which utilizes all commands in \code{x$gt_calls}.}
+\item{include}{Commands to include in output. Input may be a vector of
+quoted or unquoted names. tidyselect and gtsummary select helper
+functions are also accepted.
+Default is \code{everything()}, which includes all commands in \code{x$gt_calls}.}
 
-\item{exclude}{Character vector naming gt commands to exclude in printing.
-Default is \code{NULL}.}
+\item{exclude}{DEPRECATED.}
 
-\item{omit}{DEPRECATED. Argument is synonymous with \code{exclude}
-vector of named gt commands to omit. Default is \code{NULL}}
+\item{omit}{DEPRECATED.}
 }
 \value{
 A \code{gt_tbl} object
 }
 \description{
-Function converts gtsummary objects to a gt_tbl objects.
+Function converts a gtsummary object to a gt_tbl object.
 Function is used in the background when the results are printed or knit.
 A user can use this function if they wish to add customized formatting
 available via the \href{https://gt.rstudio.com/index.html}{gt package}.
+You can install gt with \code{remotes::install_github("rstudio/gt", ref = gtsummary::gt_sha)}.
+
 Review the
 \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html#advanced}{tbl_summary vignette}
 or
@@ -40,6 +42,8 @@ for detailed examples in the 'Advanced Customization' section.
 }
 
 \examples{
+# Requires the gt package
+# remotes::install_github("rstudio/gt", ref = gtsummary::gt_sha)
 \donttest{
 as_gt_ex <-
   trial[c("trt", "age", "response", "grade")] \%>\%

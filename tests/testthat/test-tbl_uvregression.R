@@ -5,30 +5,60 @@ library(lme4)
 
 test_that("lm: no errors/warnings with standard use", {
   expect_error(mtcars %>%
-    tbl_uvregression(
-      method = lm,
-      y = mpg
-    ), NA)
+                 tbl_uvregression(
+                   method = lm,
+                   y = mpg
+                 ), NA)
+  expect_error(mtcars %>%
+                 tbl_uvregression(
+                   method = lm,
+                   y = "mpg"
+                 ), NA)
   expect_warning(mtcars %>%
+                   tbl_uvregression(
+                     method = lm,
+                     y = mpg
+                   ), NA)
+})
+
+test_that("geeglm: no errors/warnings with standard use", {
+  expect_error(
     tbl_uvregression(
-      method = lm,
-      y = mpg
+      na.omit(trial),
+      y = age,
+      method = geepack::geeglm,
+      method.args = list(
+        id = response,
+        corstr = "exchangeable"
+      ),
+      include = -response
+    ), NA)
+  expect_warning(
+    tbl_uvregression(
+      na.omit(trial),
+      y = age,
+      method = geepack::geeglm,
+      method.args = list(
+        id = response,
+        corstr = "exchangeable"
+      ),
+      include = -response
     ), NA)
 })
 
 test_that("lm specifying tidy_fun: no errors/warnings with standard use", {
   expect_error(mtcars %>%
-    tbl_uvregression(
-      method = lm,
-      y = mpg,
-      tidy_fun = broom::tidy
-    ), NA)
+                 tbl_uvregression(
+                   method = lm,
+                   y = mpg,
+                   tidy_fun = broom::tidy
+                 ), NA)
   expect_warning(mtcars %>%
-    tbl_uvregression(
-      method = lm,
-      y = mpg,
-      tidy_fun = broom::tidy
-    ), NA)
+                   tbl_uvregression(
+                     method = lm,
+                     y = mpg,
+                     tidy_fun = broom::tidy
+                   ), NA)
 })
 
 test_that("coxph: no errors/warnings with standard use", {
@@ -96,7 +126,6 @@ test_that("glmer: no errors/warnings with standard use", {
         label = "cyl" ~ "No. Cylinders",
         hide_n = TRUE,
         include = c("am", "gear", "hp", "cyl"),
-        exclude = c("hp")
       ), NA
   )
   expect_warning(
@@ -108,7 +137,6 @@ test_that("glmer: no errors/warnings with standard use", {
         formula = "{y} ~ {x} + (1 | gear)",
         method.args = list(family = binomial),
         include = c("am", "gear", "hp", "cyl"),
-        exclude = c("hp")
       ), NA
   )
 })
@@ -130,7 +158,7 @@ test_that("tbl_uvregression x= argument tests", {
   )
 
   expect_identical(
-    ux_x$tbl_regression_list$age$model_obj %>% coef(),
+    ux_x$tbls$age$model_obj %>% coef(),
     lm(age ~ response, trial) %>% coef()
   )
 })
@@ -204,6 +232,23 @@ test_that("tbl_uvregression creates errors with bad inputs", {
       method = coxph,
       y = Surv(time, status),
       formula = "y ~ x"
+    ),
+    "*"
+  )
+  expect_error(
+    tbl_uvregression(
+      data = lung,
+      method = lm,
+      y = age,
+      x = marker
+    ),
+    "*"
+  )
+  expect_error(
+    tbl_uvregression(
+      data = lung,
+      method = lm,
+      y = c(age, sex)
     ),
     "*"
   )

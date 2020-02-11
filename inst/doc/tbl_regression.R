@@ -13,7 +13,7 @@ library(dplyr)
 
 ## ---- eval=FALSE--------------------------------------------------------------
 #  install.packages("gtsummary")
-#  remotes::install_github("rstudio/gt")
+#  remotes::install_github("rstudio/gt", ref = gtsummary::gt_sha)
 #  
 #  library(gtsummary)
 #  library(dplyr)
@@ -22,7 +22,12 @@ library(dplyr)
 # build logistic regression model
 m1 = glm(response ~ age + stage + grade, trial, family = binomial(link = "logit"))
 
-# format results into data frame
+# view raw model results
+summary(m1)$coefficients
+
+
+## ---- message=FALSE-----------------------------------------------------------
+# format results
 tbl_regression(m1, exponentiate = TRUE)
 
 ## ---- message=FALSE-----------------------------------------------------------
@@ -39,10 +44,6 @@ m1 %>%
   italicize_levels()
 
 ## -----------------------------------------------------------------------------
-tbl_m1 <- tbl_regression(m1, exponentiate = TRUE)
-tbl_m1
-
-## -----------------------------------------------------------------------------
 tbl_regression(m1) %>% names()
 
 ## -----------------------------------------------------------------------------
@@ -50,13 +51,13 @@ tbl_regression(m1) %>% purrr::pluck("gt_calls") %>% head(n = 5)
 
 ## ----as_gt2, eval=FALSE-------------------------------------------------------
 #  tbl_regression(m1, exponentiate = TRUE) %>%
-#    as_gt(exclude = "tab_footnote")
+#    as_gt(include = -tab_footnote)
 
 ## ----as_gt1, echo=FALSE-------------------------------------------------------
 # this code chunk only works if gt is installed
 if (requireNamespace("gt", quietly = TRUE)) {
   tbl_regression(m1, exponentiate = TRUE) %>%
-    as_gt(exclude = "tab_footnote")
+    as_gt(include = -tab_footnote)
 }
 
 ## ----tbl_uvregression---------------------------------------------------------

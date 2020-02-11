@@ -7,8 +7,9 @@
 \method{inline_text}{tbl_summary}(
   x,
   variable,
+  column = NULL,
   level = NULL,
-  column = ifelse(is.null(x$by), "stat_0", stop("Must specify column")),
+  pattern = NULL,
   pvalue_fun = function(x) style_pvalue(x, prepend_p = TRUE),
   ...
 )
@@ -18,11 +19,14 @@
 
 \item{variable}{Variable name of statistic to present}
 
+\item{column}{Column name to return from \code{x$table_body}.
+Can also pass the level of a by variable.}
+
 \item{level}{Level of the variable to display for categorical variables.
 Can also specify the 'Unknown' row.  Default is \code{NULL}}
 
-\item{column}{Column name to return from \code{x$table_body}.
-Can also pass the level of a by variable.}
+\item{pattern}{String indicating the statistics to return.
+Uses \link[glue:glue]{glue::glue} formatting. Default is pattern shown in \code{tbl_summary()} output}
 
 \item{pvalue_fun}{Function to round and format p-values.
 Default is \link{style_pvalue}.
@@ -39,15 +43,16 @@ A string reporting results from a gtsummary table
 \description{
 Extracts and returns statistics from a \code{tbl_summary} object for
 inline reporting in an R markdown document. Detailed examples in the
-\href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html#inline_text}{tbl_summary vignette}
+\href{http://www.danieldsjoberg.com/gtsummary/articles/inline_text.html}{inline_text vignette}
 }
 \examples{
 t1 <- tbl_summary(trial)
 t2 <- tbl_summary(trial, by = trt) \%>\% add_p()
 
-inline_text(t1, variable = "age")
-inline_text(t2, variable = "grade", level = "I", column = "Drug A")
-inline_text(t2, variable = "grade", column = "p.value")
+inline_text(t1, variable = age)
+inline_text(t2, variable = grade, level = "I", column = "Drug A",
+pattern = "{n}/{N} ({p})\%")
+inline_text(t2, variable = grade, column = "p.value")
 }
 \seealso{
 Other tbl_summary tools: 

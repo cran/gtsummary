@@ -25,11 +25,6 @@ assign_test <- function(data, var, var_summary_type, by_var, test, group) {
 }
 
 assign_test_one <- function(data, var, var_summary_type, by_var, test, group) {
-  # if the 'by' variable is null, no tests will be performed
-  if (is.null(by_var)) {
-    return(NA_character_)
-  }
-
   # if user specifed test to be performed, do that test.
   if (!is.null(test[[var]])) {
     return(test[[var]])
@@ -59,11 +54,20 @@ assign_test_one <- function(data, var, var_summary_type, by_var, test, group) {
     return(getOption("gtsummary.add_p.test.continuous", default = "kruskal.test"))
   }
 
+  # if all obs are missing, assigning chisq
+  if (length(data[[var]]) == sum(is.na(data[[var]])))
+    return(getOption("gtsummary.add_p.test.categorical", default = "chisq.test"))
+
   # calculate expected counts
   min_exp <-
-    expand.grid(table(data[[var]]), table(data[[by_var]])) %>%
-    mutate(exp = .data$Var1 * .data$Var2 /
-      sum(table(data[[var]], data[[by_var]]))) %>%
+    expand.grid(
+      table(data[[var]]) / sum(!is.na(data[[var]])),
+      table(data[[by_var]]) / sum(!is.na(data[[by_var]]))
+    ) %>%
+    mutate(
+      exp = .data$Var1 * .data$Var2 *
+        sum(!is.na(data[[var]]) & !is.na(data[[by_var]]))
+    ) %>%
     pull(exp) %>%
     min()
 

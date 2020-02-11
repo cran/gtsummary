@@ -8,34 +8,34 @@ tbl_regression(
   x,
   label = NULL,
   exponentiate = FALSE,
-  include = NULL,
-  exclude = NULL,
+  include = everything(),
   show_single_row = NULL,
   conf.level = NULL,
   intercept = FALSE,
   estimate_fun = NULL,
   pvalue_fun = NULL,
+  tidy_fun = NULL,
   show_yesno = NULL,
-  tidy_fun = NULL
+  exclude = NULL
 )
 }
 \arguments{
 \item{x}{Regression model object}
 
 \item{label}{List of formulas specifying variables labels,
-e.g. \code{list("age" ~ "Age, yrs", "ptstage" ~ "Path T Stage")}}
+e.g. \code{list(age ~ "Age, yrs", stage ~ "Path T Stage")}}
 
 \item{exponentiate}{Logical indicating whether to exponentiate the
 coefficient estimates. Default is \code{FALSE}.}
 
-\item{include}{Character vector of variable names to include from output.}
-
-\item{exclude}{Character vector of variable names to exclude from output.}
+\item{include}{Variables to include in output. Input may be a vector of
+quoted variable names, unquoted variable names, or tidyselect select helper
+functions. Default is \code{everything()}.}
 
 \item{show_single_row}{By default categorical variables are printed on
-multiple rows.  If a variable is binary (e.g. Yes/No) and you wish to print
-the regression coefficient on a single row, include the variable name here,
-e.g. \code{show_single_row = c("var1", "var2")}}
+multiple rows.  If a variable is dichotomous (e.g. Yes/No) and you wish to print
+the regression coefficient on a single row, include the variable name(s)
+here--quoted and unquoted variable name accepted.}
 
 \item{conf.level}{Must be strictly greater than 0 and less than 1.
 Defaults to 0.95, which corresponds to a 95 percent confidence interval.}
@@ -54,10 +54,13 @@ and return a string that is the rounded/formatted p-value (e.g.
 \code{pvalue_fun = function(x) style_pvalue(x, digits = 2)} or equivalently,
 \code{purrr::partial(style_pvalue, digits = 2)}).}
 
-\item{show_yesno}{deprecated}
-
 \item{tidy_fun}{Option to specify a particular tidier function if the
-model is not a \link[=tidy_vetted]{vetted model}. Default it \code{NULL}}
+model is not a \link[=tidy_vetted]{vetted model} or you need to implement a
+custom method. Default is \code{NULL}}
+
+\item{show_yesno}{DEPRECATED}
+
+\item{exclude}{DEPRECATED}
 }
 \value{
 A \code{tbl_regression} object
@@ -142,6 +145,7 @@ Other tbl_regression tools:
 \code{\link{bold_italicize_labels_levels}},
 \code{\link{bold_p.tbl_regression}()},
 \code{\link{bold_p.tbl_stack}()},
+\code{\link{combine_terms}()},
 \code{\link{inline_text.tbl_regression}()},
 \code{\link{modify_header}()},
 \code{\link{sort_p.tbl_regression}()},
