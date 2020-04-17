@@ -54,7 +54,7 @@
 #' `pvalue_fun = function(x) style_pvalue(x, digits = 2)` or equivalently,
 #'  `purrr::partial(style_pvalue, digits = 2)`).
 #' @param tidy_fun Option to specify a particular tidier function if the
-#' model is not a [vetted model][tidy_vetted] or you need to implement a
+#' model is not a [vetted model][vetted_models] or you need to implement a
 #' custom method. Default is `NULL`
 #' @param exclude DEPRECATED
 #' @param show_yesno DEPRECATED
@@ -178,19 +178,30 @@ tbl_regression <- function(x, label = NULL, exponentiate = FALSE,
   # parsing the terms from model and variable names
   # outputing a tibble of the parsed model with
   # rows for reference groups, and headers for
-  # categorical variables
-  table_body <-
-    parse_fit(x, tidy_model, label, !!show_single_row) %>%
-    # adding character CI
-    mutate(
-      ci = if_else(
-        !is.na(.data$conf.low),
-        paste0(estimate_fun(.data$conf.low), ", ", estimate_fun(.data$conf.high)),
-        NA_character_
+  table_body <- parse_fit(x, tidy_model, label, !!show_single_row)
+
+  # saving evaluated `label`, and `show_single_row`
+  func_inputs$label <- attr(table_body, "label")
+  func_inputs$show_single_row <- attr(table_body, "show_single_row")
+
+  # adding character CI
+  if (all(c("conf.low", "conf.high") %in% names(table_body))) {
+    table_body <-
+      table_body %>%
+      # adding character CI
+      mutate(
+        ci = if_else(
+          !is.na(.data$conf.low),
+          paste0(estimate_fun(.data$conf.low), ", ", estimate_fun(.data$conf.high)),
+          NA_character_
+        )
       )
-    ) %>%
-    # moving pvalue col to end of df
-    select(-.data$p.value, .data$p.value)
+  }
+
+  # moving pvalue col to end of df
+  if ("p.value" %in% names(table_body)) {
+    table_body <- select(table_body, -.data$p.value, .data$p.value)
+  }
 
   # including and excluding variables/intercept indicated
   include <- var_input_to_string(data = vctr_2_tibble(unique(table_body$variable)),
@@ -213,26 +224,37 @@ tbl_regression <- function(x, label = NULL, exponentiate = FALSE,
   table_header <-
     tibble(column = names(table_body)) %>%
     table_header_fill_missing() %>%
-    table_header_fmt_fun(
-      p.value = pvalue_fun,
-      estimate = estimate_fun,
+    table_header_fmt_fun(estimate = estimate_fun)
+
+  if ("p.value" %in% names(table_body)) {
+    table_header <- table_header_fmt_fun(table_header, p.value = pvalue_fun)
+  }
+  if (all(c("conf.low", "conf.high") %in% names(table_body))) {
+    table_header <- table_header_fmt_fun(
+      table_header,
       conf.low = estimate_fun,
       conf.high = estimate_fun
-    ) %>%
+    )
+  }
+
+  table_header <- table_header %>%
     # adding footnotes to table_header tibble
     mutate(
-      footnote_abbrev = map2(
-        .data$column, .data$footnote_abbrev,
-        function(x1, y1) {
-          if (x1 == "estimate") {
-            return(c(y1, estimate_header(x, exponentiate) %>% attr("footnote")))
-          } else if (x1 == "ci") {
-            return(c(y1, "CI = Confidence Interval"))
-          }
-          return(y1)
-        }
+      footnote_abbrev = case_when(
+        .data$column == "estimate" ~
+          estimate_header(x, exponentiate) %>% attr("footnote") %||% NA_character_,
+        .data$column == "ci" ~ "CI = Confidence Interval",
+        TRUE ~ .data$footnote_abbrev
+      ),
+      missing_emdash = case_when(
+        .data$column %in% c("estimate", "ci") ~ "row_ref == TRUE",
+        TRUE ~ .data$missing_emdash
       )
     )
+
+  # saving the evaluated lists (named lists) as the function inputs
+  func_inputs$include <- include
+  func_inputs$exclude <- NULL # making this NULL since it's deprecated
 
   results <- list(
     table_body = table_body,
@@ -240,80 +262,31 @@ tbl_regression <- function(x, label = NULL, exponentiate = FALSE,
     n = n,
     model_obj = x,
     inputs = func_inputs,
-    call_list = list(tbl_regression = match.call()),
-    gt_calls = eval(gt_tbl_regression),
-    kable_calls = eval(kable_tbl_regression)
+    call_list = list(tbl_regression = match.call())
   )
 
   # setting column headers
   results <- modify_header_internal(
     results,
     label = "**Characteristic**",
-    estimate = glue("**{estimate_header(x, exponentiate)}**"),
-    ci = glue("**{style_percent(conf.level, symbol = TRUE)} CI**"),
-    p.value = "**p-value**"
+    estimate = glue("**{estimate_header(x, exponentiate)}**")
   )
-
-  # writing additional gt and kable calls with data from table_header
-  results <- update_calls_from_table_header(results)
+  if ("p.value" %in% names(table_body)) {
+    results <- modify_header_internal(
+      results, p.value = "**p-value**"
+    )
+  }
+  if (all(c("conf.low", "conf.high") %in% names(table_body))) {
+    results <- modify_header_internal(
+      results, ci = glue("**{style_percent(conf.level, symbol = TRUE)} CI**")
+    )
+  }
 
   # assigning a class of tbl_regression (for special printing in R markdown)
   class(results) <- c("tbl_regression", "gtsummary")
 
   results
 }
-
-# gt function calls ------------------------------------------------------------
-# quoting returns an expression to be evaluated later
-gt_tbl_regression <- quote(list(
-  # first call to the gt function
-  gt = "gt::gt(data = x$table_body)" %>%
-    glue(),
-
-  # label column indented and left just
-  cols_align = glue(
-    "gt::cols_align(align = 'center') %>% ",
-    "gt::cols_align(align = 'left', columns = gt::vars(label))"
-  ),
-
-  # NAs do not show in table
-  fmt_missing = "gt::fmt_missing(columns = gt::everything(), missing_text = '')" %>%
-    glue(),
-
-  # Show "---" for reference groups
-  fmt_missing_ref =
-    "gt::fmt_missing(columns = gt::vars(estimate, ci), rows = row_ref == TRUE, missing_text = '---')" %>%
-      glue(),
-
-  # indenting levels and missing rows
-  tab_style_text_indent = glue(
-    "gt::tab_style(",
-    "style = gt::cell_text(indent = gt::px(10), align = 'left'),",
-    "locations = gt::cells_body(",
-    "columns = gt::vars(label), ",
-    "rows = row_type != 'label'",
-    "))"
-  )
-))
-
-
-# kable function calls ---------------------------------------------------------
-# quoting returns an expression to be evaluated later
-kable_tbl_regression <- quote(list(
-  # first call to the gt function
-  kable = glue("x$table_body"),
-
-  #  placeholder, so the formatting calls are performed other calls below
-  fmt = NULL,
-
-  # Show "---" for reference groups
-  fmt_missing_ref = glue(
-    "dplyr::mutate_at(dplyr::vars(estimate, conf.low), ",
-    "~ dplyr::case_when(row_ref == TRUE ~ '---', TRUE ~ .))"
-  )
-))
-
-
 
 # identifies headers for common models (logistic, poisson, and PH regression)
 estimate_header <- function(x, exponentiate) {
@@ -323,6 +296,8 @@ estimate_header <- function(x, exponentiate) {
   if (inherits(x, c("glm", "geeglm")) &&
     x$family$family == "binomial" &&
     x$family$link == "logit") {
+    model_type <- "logistic"
+  } else if (inherits(x, "clogit")) {
     model_type <- "logistic"
   } else if (inherits(x, c("glm", "geeglm")) &&
     x$family$family == "poisson" &&

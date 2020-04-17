@@ -4,19 +4,9 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
-## ----exit_early, include = FALSE, eval = !requireNamespace("gt")--------------
-#  knitr::knit_exit()
-
-## ---- include=FALSE-----------------------------------------------------------
+## -----------------------------------------------------------------------------
 library(gtsummary)
 library(dplyr)
-
-## ---- eval=FALSE--------------------------------------------------------------
-#  install.packages("gtsummary")
-#  remotes::install_github("rstudio/gt", ref = gtsummary::gt_sha)
-#  
-#  library(gtsummary)
-#  library(dplyr)
 
 ## ---- message=FALSE-----------------------------------------------------------
 # build logistic regression model
@@ -47,18 +37,11 @@ m1 %>%
 tbl_regression(m1) %>% names()
 
 ## -----------------------------------------------------------------------------
-tbl_regression(m1) %>% purrr::pluck("gt_calls") %>% head(n = 5)
+tbl_regression(m1) %>% as_gt(return_calls = TRUE) %>% head(n = 3)
 
-## ----as_gt2, eval=FALSE-------------------------------------------------------
-#  tbl_regression(m1, exponentiate = TRUE) %>%
-#    as_gt(include = -tab_footnote)
-
-## ----as_gt1, echo=FALSE-------------------------------------------------------
-# this code chunk only works if gt is installed
-if (requireNamespace("gt", quietly = TRUE)) {
-  tbl_regression(m1, exponentiate = TRUE) %>%
-    as_gt(include = -tab_footnote)
-}
+## ----as_gt2-------------------------------------------------------------------
+tbl_regression(m1, exponentiate = TRUE) %>%
+  as_gt(include = -tab_footnote)
 
 ## ----tbl_uvregression---------------------------------------------------------
 trial %>%

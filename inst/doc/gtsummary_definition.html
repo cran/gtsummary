@@ -321,15 +321,14 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <div id="structure-of-a-gtsummary-object" class="section level2">
 <h2>Structure of a {gtsummary} object</h2>
 <p>Every {gtsummary} object is a list comprising of, at minimum, these elements:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1">.<span class="op">$</span>table_body       .<span class="op">$</span>gt_calls          .<span class="op">$</span>fmt_fun</a>
-<a class="sourceLine" id="cb2-2" title="2">.<span class="op">$</span>table_header     .<span class="op">$</span>kable_calls     </a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1">.<span class="op">$</span>table_body    .<span class="op">$</span>table_header         </a></code></pre></div>
 <div id="table_body" class="section level4">
 <h4>table_body</h4>
 <p>The <code>.$table_body</code> object is the data frame that will ultimately be printed as the output. The table must include columns <code>&quot;label&quot;</code>, <code>&quot;row_type&quot;</code>, and <code>&quot;variable&quot;</code>. The <code>&quot;label&quot;</code> column is printed, and the other two are hidden from the final output.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">tbl_summary_ex<span class="op">$</span>table_body</a>
 <a class="sourceLine" id="cb3-2" title="2"><span class="co">#&gt; # A tibble: 8 x 5</span></a>
 <a class="sourceLine" id="cb3-3" title="3"><span class="co">#&gt;   variable row_type label          stat_1      stat_2     </span></a>
-<a class="sourceLine" id="cb3-4" title="4"><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;          &lt;chr&gt;       &lt;chr&gt;      </span></a>
+<a class="sourceLine" id="cb3-4" title="4"><span class="co">#&gt; * &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;          &lt;chr&gt;       &lt;chr&gt;      </span></a>
 <a class="sourceLine" id="cb3-5" title="5"><span class="co">#&gt; 1 age      label    Age, yrs       46 (37, 59) 48 (39, 56)</span></a>
 <a class="sourceLine" id="cb3-6" title="6"><span class="co">#&gt; 2 age      missing  Unknown        7           4          </span></a>
 <a class="sourceLine" id="cb3-7" title="7"><span class="co">#&gt; 3 grade    label    Grade          &lt;NA&gt;        &lt;NA&gt;       </span></a>
@@ -363,16 +362,32 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <td align="left">Logical indicating whether the column is hidden in the output</td>
 </tr>
 <tr class="even">
+<td align="left">align</td>
+<td align="left">Specifies the alignment/justification of the column, e.g. ‘center’ or ‘left’</td>
+</tr>
+<tr class="odd">
+<td align="left">missing_emdash</td>
+<td align="left">Indicates the rows to include an em-dash for missing cells. For example <code>row_ref == TRUE</code> in <code>tbl_regression()</code></td>
+</tr>
+<tr class="even">
+<td align="left">indent</td>
+<td align="left">String of R code that results in a logical vector that specifies rows to indent, e.g. <code>row_type != &#39;label&#39;</code></td>
+</tr>
+<tr class="odd">
 <td align="left">text_interpret</td>
 <td align="left">the {gt} function that is used to interpret the column label</td>
 </tr>
-<tr class="odd">
-<td align="left">fmt_fun</td>
-<td align="left">If the column needs to be formatted, this list column contains the function that performs the formatting. Note, this is the function object; not the character name of a function.</td>
-</tr>
 <tr class="even">
 <td align="left">bold</td>
-<td align="left">For columns that bold row conditionally, the column includes the threshold to bold below. The most common use for this is to bold p-value below a threshold.</td>
+<td align="left">For columns that bold rows conditionally, the column includes a string of R code that results in a logical vector indicating the rows to bold For example, <code>row_type == &#39;label&#39;</code></td>
+</tr>
+<tr class="odd">
+<td align="left">italic</td>
+<td align="left">For columns that italicize rows conditionally, the column includes a string of R code that results in a logical vector indicating the rows to italicize. For example, <code>row_type == &#39;label&#39;</code></td>
+</tr>
+<tr class="even">
+<td align="left">fmt_fun</td>
+<td align="left">If the column needs to be formatted, this list column contains the function that performs the formatting. Note, this is the function object; not the character name of a function.</td>
 </tr>
 <tr class="odd">
 <td align="left">footnote_abbrev</td>
@@ -380,139 +395,92 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 </tr>
 <tr class="even">
 <td align="left">footnote</td>
-<td align="left">Lists the footnotes that will appear for each column. Duplicates abbreviations will appear once.</td>
+<td align="left">Lists the footnotes that will appear for each column.</td>
+</tr>
+<tr class="odd">
+<td align="left">spanning_header</td>
+<td align="left">Includes text printed above columns as spanning headers. See <code>tbl_merge(...)$table_header</code> output for example of use.</td>
 </tr>
 </tbody>
 </table>
+<p>NOTE: Columns ‘hide’, ‘align’, ‘missing_emdash’, ‘indent’, ‘bold’, and ‘italic’ MUST follow the tidyverse style guidelines and include spaces around any variable names, e.g. <code>row_type == &#39;label&#39;</code> (NOT <code>row_type==&#39;label&#39;</code>).</p>
+<p>Example from <code>tbl_regression()</code></p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1">tbl_regression_ex<span class="op">$</span>table_header</a>
-<a class="sourceLine" id="cb4-2" title="2"><span class="co">#&gt; # A tibble: 11 x 8</span></a>
-<a class="sourceLine" id="cb4-3" title="3"><span class="co">#&gt;    column  label     hide  text_interpret fmt_fun  bold footnote_abbrev footnote</span></a>
-<a class="sourceLine" id="cb4-4" title="4"><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;     &lt;lgl&gt; &lt;chr&gt;          &lt;list&gt;  &lt;dbl&gt; &lt;list&gt;          &lt;list&gt;  </span></a>
-<a class="sourceLine" id="cb4-5" title="5"><span class="co">#&gt;  1 variab~ variable  TRUE  gt::md         &lt;NULL&gt;   NA   &lt;NULL&gt;          &lt;NULL&gt;  </span></a>
-<a class="sourceLine" id="cb4-6" title="6"><span class="co">#&gt;  2 var_ty~ var_type  TRUE  gt::md         &lt;NULL&gt;   NA   &lt;NULL&gt;          &lt;NULL&gt;  </span></a>
-<a class="sourceLine" id="cb4-7" title="7"><span class="co">#&gt;  3 row_ref row_ref   TRUE  gt::md         &lt;NULL&gt;   NA   &lt;NULL&gt;          &lt;NULL&gt;  </span></a>
-<a class="sourceLine" id="cb4-8" title="8"><span class="co">#&gt;  4 row_ty~ row_type  TRUE  gt::md         &lt;NULL&gt;   NA   &lt;NULL&gt;          &lt;NULL&gt;  </span></a>
-<a class="sourceLine" id="cb4-9" title="9"><span class="co">#&gt;  5 label   **Charac~ FALSE gt::md         &lt;NULL&gt;   NA   &lt;NULL&gt;          &lt;NULL&gt;  </span></a>
-<a class="sourceLine" id="cb4-10" title="10"><span class="co">#&gt;  6 N       N         TRUE  gt::md         &lt;NULL&gt;   NA   &lt;NULL&gt;          &lt;NULL&gt;  </span></a>
-<a class="sourceLine" id="cb4-11" title="11"><span class="co">#&gt;  7 estima~ **Beta**  FALSE gt::md         &lt;fn&gt;     NA   &lt;NULL&gt;          &lt;NULL&gt;  </span></a>
-<a class="sourceLine" id="cb4-12" title="12"><span class="co">#&gt;  8 conf.l~ conf.low  TRUE  gt::md         &lt;fn&gt;     NA   &lt;NULL&gt;          &lt;NULL&gt;  </span></a>
-<a class="sourceLine" id="cb4-13" title="13"><span class="co">#&gt;  9 conf.h~ conf.high TRUE  gt::md         &lt;fn&gt;     NA   &lt;NULL&gt;          &lt;NULL&gt;  </span></a>
-<a class="sourceLine" id="cb4-14" title="14"><span class="co">#&gt; 10 ci      **95% CI~ FALSE gt::md         &lt;NULL&gt;   NA   &lt;chr [1]&gt;       &lt;NULL&gt;  </span></a>
-<a class="sourceLine" id="cb4-15" title="15"><span class="co">#&gt; 11 p.value **p-valu~ FALSE gt::md         &lt;fn&gt;      0.5 &lt;NULL&gt;          &lt;NULL&gt;</span></a></code></pre></div>
-</div>
-<div id="gt_calls" class="section level4">
-<h4>gt_calls</h4>
-<p>The <code>.$gt_calls</code> object is a list of {gt} calls saved as strings (this may be updated to be expressions at some point). Every {gt} is referred to with the double colon, <code>::</code>. The calls are executed in the order they appear in the list, and always begin with the <code>gt::gt()</code> call.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1">tbl_regression_ex<span class="op">$</span>gt_calls</a>
-<a class="sourceLine" id="cb5-2" title="2"><span class="co">#&gt; $gt</span></a>
-<a class="sourceLine" id="cb5-3" title="3"><span class="co">#&gt; gt::gt(data = x$table_body)</span></a>
-<a class="sourceLine" id="cb5-4" title="4"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb5-5" title="5"><span class="co">#&gt; $cols_align</span></a>
-<a class="sourceLine" id="cb5-6" title="6"><span class="co">#&gt; gt::cols_align(align = &#39;center&#39;) %&gt;% gt::cols_align(align = &#39;left&#39;, columns = gt::vars(label))</span></a>
-<a class="sourceLine" id="cb5-7" title="7"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb5-8" title="8"><span class="co">#&gt; $fmt_missing</span></a>
-<a class="sourceLine" id="cb5-9" title="9"><span class="co">#&gt; gt::fmt_missing(columns = gt::everything(), missing_text = &#39;&#39;)</span></a>
-<a class="sourceLine" id="cb5-10" title="10"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb5-11" title="11"><span class="co">#&gt; $fmt_missing_ref</span></a>
-<a class="sourceLine" id="cb5-12" title="12"><span class="co">#&gt; gt::fmt_missing(columns = gt::vars(estimate, ci), rows = row_ref == TRUE, missing_text = &#39;---&#39;)</span></a>
-<a class="sourceLine" id="cb5-13" title="13"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb5-14" title="14"><span class="co">#&gt; $tab_style_text_indent</span></a>
-<a class="sourceLine" id="cb5-15" title="15"><span class="co">#&gt; gt::tab_style(style = gt::cell_text(indent = gt::px(10), align = &#39;left&#39;),locations = gt::cells_body(columns = gt::vars(label), rows = row_type != &#39;label&#39;))</span></a>
-<a class="sourceLine" id="cb5-16" title="16"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb5-17" title="17"><span class="co">#&gt; $cols_label</span></a>
-<a class="sourceLine" id="cb5-18" title="18"><span class="co">#&gt; gt::cols_label(label = gt::md(&quot;**Characteristic**&quot;), estimate = gt::md(&quot;**Beta**&quot;), ci = gt::md(&quot;**95% CI**&quot;), p.value = gt::md(&quot;**p-value**&quot;))</span></a>
-<a class="sourceLine" id="cb5-19" title="19"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb5-20" title="20"><span class="co">#&gt; $cols_hide</span></a>
-<a class="sourceLine" id="cb5-21" title="21"><span class="co">#&gt; gt::cols_hide(columns = gt::vars(variable, var_type, row_ref, row_type, N, conf.low, conf.high))</span></a>
-<a class="sourceLine" id="cb5-22" title="22"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb5-23" title="23"><span class="co">#&gt; $fmt</span></a>
-<a class="sourceLine" id="cb5-24" title="24"><span class="co">#&gt; gt::fmt(columns = gt::vars(estimate), rows = !is.na(estimate), fns = x$fmt_fun$estimate) %&gt;% gt::fmt(columns = gt::vars(conf.low), rows = !is.na(conf.low), fns = x$fmt_fun$conf.low) %&gt;% gt::fmt(columns = gt::vars(conf.high), rows = !is.na(conf.high), fns = x$fmt_fun$conf.high) %&gt;% gt::fmt(columns = gt::vars(p.value), rows = !is.na(p.value), fns = x$fmt_fun$p.value) %&gt;% gt::tab_style(style = gt::cell_text(weight = &#39;bold&#39;), locations = gt::cells_body(columns = gt::vars(p.value), rows = p.value &lt;= 0.5))</span></a>
-<a class="sourceLine" id="cb5-25" title="25"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb5-26" title="26"><span class="co">#&gt; $tab_footnote</span></a>
-<a class="sourceLine" id="cb5-27" title="27"><span class="co">#&gt; gt::tab_footnote(footnote = &#39;CI = Confidence Interval&#39;, locations = gt::cells_column_labels(columns = gt::vars(ci)))</span></a></code></pre></div>
-</div>
-<div id="kable_calls" class="section level4">
-<h4>kable_calls</h4>
-<p>The <code>.$kable_calls</code> object is a list of data frame manipulation calls saved as strings (this may be updated later to be expressions). The calls are executed in the order they appear in the list.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1">tbl_regression_ex<span class="op">$</span>kable_calls</a>
-<a class="sourceLine" id="cb6-2" title="2"><span class="co">#&gt; $kable</span></a>
-<a class="sourceLine" id="cb6-3" title="3"><span class="co">#&gt; x$table_body</span></a>
-<a class="sourceLine" id="cb6-4" title="4"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb6-5" title="5"><span class="co">#&gt; $fmt</span></a>
-<a class="sourceLine" id="cb6-6" title="6"><span class="co">#&gt; dplyr::mutate(estimate = x$fmt_fun$estimate(estimate)) %&gt;% dplyr::mutate(conf.low = x$fmt_fun$conf.low(conf.low)) %&gt;% dplyr::mutate(conf.high = x$fmt_fun$conf.high(conf.high)) %&gt;% dplyr::mutate(p.value = dplyr::case_when(p.value &lt;= 0.5 ~ paste0(&#39;__&#39;, x$fmt_fun$p.value(p.value), &#39;__&#39;), TRUE ~ x$fmt_fun$p.value(p.value)))</span></a>
-<a class="sourceLine" id="cb6-7" title="7"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb6-8" title="8"><span class="co">#&gt; $fmt_missing_ref</span></a>
-<a class="sourceLine" id="cb6-9" title="9"><span class="co">#&gt; dplyr::mutate_at(dplyr::vars(estimate, conf.low), ~ dplyr::case_when(row_ref == TRUE ~ &#39;---&#39;, TRUE ~ .))</span></a>
-<a class="sourceLine" id="cb6-10" title="10"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb6-11" title="11"><span class="co">#&gt; $cols_hide</span></a>
-<a class="sourceLine" id="cb6-12" title="12"><span class="co">#&gt; dplyr::select(-c(&quot;variable&quot;, &quot;var_type&quot;, &quot;row_ref&quot;, &quot;row_type&quot;, &quot;N&quot;, &quot;conf.low&quot;, &quot;conf.high&quot;))</span></a></code></pre></div>
-</div>
-<div id="fmt_fun" class="section level4">
-<h4>fmt_fun</h4>
-<p><code>.$fmt_fun</code> is a named list. If formatting functions are applied to a column in <code>.$table_body</code>, the formatting function is saved in the list. The names of the list are the names of the columns of <code>.$table_body</code>. For example, the <code>&quot;p.value&quot;</code> column is often styled with <code>style_pvalue()</code>. In this case <code>.$fmt_fun$p.value =  style_pvalue</code>.<br />
-The list is generated from <code>.$table_header</code>.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1">tbl_regression_ex<span class="op">$</span>fmt_fun <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">names</span>()</a>
-<a class="sourceLine" id="cb7-2" title="2"><span class="co">#&gt; [1] &quot;estimate&quot;  &quot;conf.low&quot;  &quot;conf.high&quot; &quot;p.value&quot;</span></a></code></pre></div>
+<a class="sourceLine" id="cb4-2" title="2"><span class="co">#&gt; # A tibble: 11 x 13</span></a>
+<a class="sourceLine" id="cb4-3" title="3"><span class="co">#&gt;    column label hide  align missing_emdash indent text_interpret bold  italic</span></a>
+<a class="sourceLine" id="cb4-4" title="4"><span class="co">#&gt;    &lt;chr&gt;  &lt;chr&gt; &lt;lgl&gt; &lt;chr&gt; &lt;chr&gt;          &lt;chr&gt;  &lt;chr&gt;          &lt;chr&gt; &lt;chr&gt; </span></a>
+<a class="sourceLine" id="cb4-5" title="5"><span class="co">#&gt;  1 varia~ vari~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></a>
+<a class="sourceLine" id="cb4-6" title="6"><span class="co">#&gt;  2 var_t~ var_~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></a>
+<a class="sourceLine" id="cb4-7" title="7"><span class="co">#&gt;  3 row_r~ row_~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></a>
+<a class="sourceLine" id="cb4-8" title="8"><span class="co">#&gt;  4 row_t~ row_~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></a>
+<a class="sourceLine" id="cb4-9" title="9"><span class="co">#&gt;  5 label  **Ch~ FALSE left  &lt;NA&gt;           row_t~ gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></a>
+<a class="sourceLine" id="cb4-10" title="10"><span class="co">#&gt;  6 N      N     TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></a>
+<a class="sourceLine" id="cb4-11" title="11"><span class="co">#&gt;  7 estim~ **Be~ FALSE cent~ row_ref == TR~ &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></a>
+<a class="sourceLine" id="cb4-12" title="12"><span class="co">#&gt;  8 conf.~ conf~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></a>
+<a class="sourceLine" id="cb4-13" title="13"><span class="co">#&gt;  9 conf.~ conf~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></a>
+<a class="sourceLine" id="cb4-14" title="14"><span class="co">#&gt; 10 ci     **95~ FALSE cent~ row_ref == TR~ &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></a>
+<a class="sourceLine" id="cb4-15" title="15"><span class="co">#&gt; 11 p.val~ **p-~ FALSE cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         p.va~ &lt;NA&gt;  </span></a>
+<a class="sourceLine" id="cb4-16" title="16"><span class="co">#&gt; # ... with 4 more variables: fmt_fun &lt;list&gt;, footnote_abbrev &lt;chr&gt;,</span></a>
+<a class="sourceLine" id="cb4-17" title="17"><span class="co">#&gt; #   footnote &lt;chr&gt;, spanning_header &lt;chr&gt;</span></a></code></pre></div>
 </div>
 </div>
 <div id="constructing-a-gtsummary-object" class="section level2">
 <h2>Constructing a {gtsummary} object</h2>
 <div id="table_body-1" class="section level4">
 <h4>table_body</h4>
-<p>When constructing a {gtsummary} object, the author will begin with the <code>.$table_body</code> object. Recall the <code>.$table_body</code> data frame must include columns <code>&quot;label&quot;</code>, <code>&quot;row_type&quot;</code>, and <code>&quot;variable&quot;</code>. Of these columns, only the <code>&quot;label&quot;</code> column will be printed with the final results. The <code>&quot;row_type&quot;</code> column typically will control whether or not the label column is indented. The <code>&quot;variable&quot;</code> is often used in the <code>inline_text()</code> family of functions to select the rows to print in the body of an R markdown document.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1">tbl_regression_ex <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb8-2" title="2"><span class="st">  </span><span class="kw">pluck</span>(<span class="st">&quot;table_body&quot;</span>) <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb8-3" title="3"><span class="st">  </span><span class="kw">select</span>(variable, row_type, label)</a>
-<a class="sourceLine" id="cb8-4" title="4"><span class="co">#&gt; # A tibble: 5 x 3</span></a>
-<a class="sourceLine" id="cb8-5" title="5"><span class="co">#&gt;   variable row_type label              </span></a>
-<a class="sourceLine" id="cb8-6" title="6"><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;              </span></a>
-<a class="sourceLine" id="cb8-7" title="7"><span class="co">#&gt; 1 grade    label    Grade              </span></a>
-<a class="sourceLine" id="cb8-8" title="8"><span class="co">#&gt; 2 grade    level    I                  </span></a>
-<a class="sourceLine" id="cb8-9" title="9"><span class="co">#&gt; 3 grade    level    II                 </span></a>
-<a class="sourceLine" id="cb8-10" title="10"><span class="co">#&gt; 4 grade    level    III                </span></a>
-<a class="sourceLine" id="cb8-11" title="11"><span class="co">#&gt; 5 marker   label    Marker Level, ng/mL</span></a></code></pre></div>
-<p>The other columns in <code>.$table_body</code> are created by the user and are likely printed in the output. Formatting instructions for these columns is stored in <code>.$table_header</code>.</p>
+<p>When constructing a {gtsummary} object, the author will begin with the <code>.$table_body</code> object. Recall the <code>.$table_body</code> data frame must include columns <code>&quot;label&quot;</code>, <code>&quot;row_type&quot;</code>, and <code>&quot;variable&quot;</code>. Of these columns, only the <code>&quot;label&quot;</code> column will be printed with the final results. The <code>&quot;row_type&quot;</code> column typically will control whether or not the label column is indented. The <code>&quot;variable&quot;</code> column is often used in the <code>inline_text()</code> family of functions, and merging {gtsummary} tables with <code>tbl_merge()</code>.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1">tbl_regression_ex <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb5-2" title="2"><span class="st">  </span><span class="kw">pluck</span>(<span class="st">&quot;table_body&quot;</span>) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb5-3" title="3"><span class="st">  </span><span class="kw">select</span>(variable, row_type, label)</a>
+<a class="sourceLine" id="cb5-4" title="4"><span class="co">#&gt; # A tibble: 5 x 3</span></a>
+<a class="sourceLine" id="cb5-5" title="5"><span class="co">#&gt;   variable row_type label              </span></a>
+<a class="sourceLine" id="cb5-6" title="6"><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;              </span></a>
+<a class="sourceLine" id="cb5-7" title="7"><span class="co">#&gt; 1 grade    label    Grade              </span></a>
+<a class="sourceLine" id="cb5-8" title="8"><span class="co">#&gt; 2 grade    level    I                  </span></a>
+<a class="sourceLine" id="cb5-9" title="9"><span class="co">#&gt; 3 grade    level    II                 </span></a>
+<a class="sourceLine" id="cb5-10" title="10"><span class="co">#&gt; 4 grade    level    III                </span></a>
+<a class="sourceLine" id="cb5-11" title="11"><span class="co">#&gt; 5 marker   label    Marker Level, ng/mL</span></a></code></pre></div>
+<p>The other columns in <code>.$table_body</code> are created by the user and are likely printed in the output. Formatting and printing instructions for these columns is stored in <code>.$table_header</code>.</p>
 </div>
 <div id="table_header-1" class="section level3">
 <h3>table_header</h3>
 <p>The <code>.$table_header</code> has one row for every column in <code>.$table_body</code> containing instructions how to format each column, the column headers, and more. There are a few internal {gtsummary} functions to assist in constructing and modifying a <code>.$table_header</code> data frame.</p>
 <p>First is the <code>table_header_fill_missing()</code> function. This function ensures <code>.$table_header</code> contains a row for every column of <code>.$table_body</code>. If a column does not exist, it is populated with appropriate default values.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1">gtsummary<span class="op">:::</span><span class="kw">table_header_fill_missing</span>(</a>
-<a class="sourceLine" id="cb9-2" title="2">  <span class="dt">table_header =</span> <span class="kw">tibble</span>(<span class="dt">column =</span> <span class="kw">names</span>(tbl_regression_ex<span class="op">$</span>table_body))) </a>
-<a class="sourceLine" id="cb9-3" title="3"><span class="co">#&gt; # A tibble: 11 x 8</span></a>
-<a class="sourceLine" id="cb9-4" title="4"><span class="co">#&gt;    column    label   hide  text_interpret fmt_fun  bold footnote_abbrev footnote</span></a>
-<a class="sourceLine" id="cb9-5" title="5"><span class="co">#&gt;    &lt;chr&gt;     &lt;chr&gt;   &lt;lgl&gt; &lt;chr&gt;          &lt;list&gt;  &lt;dbl&gt; &lt;list&gt;          &lt;list&gt;  </span></a>
-<a class="sourceLine" id="cb9-6" title="6"><span class="co">#&gt;  1 variable  variab~ TRUE  gt::md         &lt;NULL&gt;     NA &lt;NULL&gt;          &lt;NULL&gt;  </span></a>
-<a class="sourceLine" id="cb9-7" title="7"><span class="co">#&gt;  2 var_type  var_ty~ TRUE  gt::md         &lt;NULL&gt;     NA &lt;NULL&gt;          &lt;NULL&gt;  </span></a>
-<a class="sourceLine" id="cb9-8" title="8"><span class="co">#&gt;  3 row_ref   row_ref TRUE  gt::md         &lt;NULL&gt;     NA &lt;NULL&gt;          &lt;NULL&gt;  </span></a>
-<a class="sourceLine" id="cb9-9" title="9"><span class="co">#&gt;  4 row_type  row_ty~ TRUE  gt::md         &lt;NULL&gt;     NA &lt;NULL&gt;          &lt;NULL&gt;  </span></a>
-<a class="sourceLine" id="cb9-10" title="10"><span class="co">#&gt;  5 label     label   TRUE  gt::md         &lt;NULL&gt;     NA &lt;NULL&gt;          &lt;NULL&gt;  </span></a>
-<a class="sourceLine" id="cb9-11" title="11"><span class="co">#&gt;  6 N         N       TRUE  gt::md         &lt;NULL&gt;     NA &lt;NULL&gt;          &lt;NULL&gt;  </span></a>
-<a class="sourceLine" id="cb9-12" title="12"><span class="co">#&gt;  7 estimate  estima~ TRUE  gt::md         &lt;NULL&gt;     NA &lt;NULL&gt;          &lt;NULL&gt;  </span></a>
-<a class="sourceLine" id="cb9-13" title="13"><span class="co">#&gt;  8 conf.low  conf.l~ TRUE  gt::md         &lt;NULL&gt;     NA &lt;NULL&gt;          &lt;NULL&gt;  </span></a>
-<a class="sourceLine" id="cb9-14" title="14"><span class="co">#&gt;  9 conf.high conf.h~ TRUE  gt::md         &lt;NULL&gt;     NA &lt;NULL&gt;          &lt;NULL&gt;  </span></a>
-<a class="sourceLine" id="cb9-15" title="15"><span class="co">#&gt; 10 ci        ci      TRUE  gt::md         &lt;NULL&gt;     NA &lt;NULL&gt;          &lt;NULL&gt;  </span></a>
-<a class="sourceLine" id="cb9-16" title="16"><span class="co">#&gt; 11 p.value   p.value TRUE  gt::md         &lt;NULL&gt;     NA &lt;NULL&gt;          &lt;NULL&gt;</span></a></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1">gtsummary<span class="op">:::</span><span class="kw">table_header_fill_missing</span>(</a>
+<a class="sourceLine" id="cb6-2" title="2">  <span class="dt">table_header =</span> <span class="kw">tibble</span>(<span class="dt">column =</span> <span class="kw">names</span>(tbl_regression_ex<span class="op">$</span>table_body))</a>
+<a class="sourceLine" id="cb6-3" title="3">) </a>
+<a class="sourceLine" id="cb6-4" title="4"><span class="co">#&gt; # A tibble: 11 x 13</span></a>
+<a class="sourceLine" id="cb6-5" title="5"><span class="co">#&gt;    column label hide  align missing_emdash indent text_interpret bold  italic</span></a>
+<a class="sourceLine" id="cb6-6" title="6"><span class="co">#&gt;    &lt;chr&gt;  &lt;chr&gt; &lt;lgl&gt; &lt;chr&gt; &lt;chr&gt;          &lt;chr&gt;  &lt;chr&gt;          &lt;chr&gt; &lt;chr&gt; </span></a>
+<a class="sourceLine" id="cb6-7" title="7"><span class="co">#&gt;  1 varia~ vari~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></a>
+<a class="sourceLine" id="cb6-8" title="8"><span class="co">#&gt;  2 var_t~ var_~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></a>
+<a class="sourceLine" id="cb6-9" title="9"><span class="co">#&gt;  3 row_r~ row_~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></a>
+<a class="sourceLine" id="cb6-10" title="10"><span class="co">#&gt;  4 row_t~ row_~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></a>
+<a class="sourceLine" id="cb6-11" title="11"><span class="co">#&gt;  5 label  label TRUE  left  &lt;NA&gt;           row_t~ gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></a>
+<a class="sourceLine" id="cb6-12" title="12"><span class="co">#&gt;  6 N      N     TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></a>
+<a class="sourceLine" id="cb6-13" title="13"><span class="co">#&gt;  7 estim~ esti~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></a>
+<a class="sourceLine" id="cb6-14" title="14"><span class="co">#&gt;  8 conf.~ conf~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></a>
+<a class="sourceLine" id="cb6-15" title="15"><span class="co">#&gt;  9 conf.~ conf~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></a>
+<a class="sourceLine" id="cb6-16" title="16"><span class="co">#&gt; 10 ci     ci    TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></a>
+<a class="sourceLine" id="cb6-17" title="17"><span class="co">#&gt; 11 p.val~ p.va~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></a>
+<a class="sourceLine" id="cb6-18" title="18"><span class="co">#&gt; # ... with 4 more variables: fmt_fun &lt;list&gt;, footnote_abbrev &lt;chr&gt;,</span></a>
+<a class="sourceLine" id="cb6-19" title="19"><span class="co">#&gt; #   footnote &lt;chr&gt;, spanning_header &lt;chr&gt;</span></a></code></pre></div>
 <p>The <code>modify_header_internal()</code> is useful for assigning column headers. The function accepts a complete {gtsummary} object as its input, and returns an updated version where the column labels have been added to <code>.$table_header</code>. The function also switches the default <code>.$table_header$hide</code> from <code>TRUE</code> to <code>FALSE</code>, resulting in column with labels being printed.</p>
-<p>Lastly, any time the <code>.$table_header</code> object is modified, it is critical the author also runs <code>update_calls_from_table_header()</code>. This function uses the information in <code>.$table_header</code> to update the gt and kable calls.</p>
-<div id="gt-and-kable-calls" class="section level4">
-<h4>gt and kable calls</h4>
-<p>Each {gtsummary} object must return calls for printing with either the gt package or the knit::kable function. A function author will write a basis of calls, for example, the the first gt call is always <code>gt::gt()</code>. After the basics are covered, more complex calls will be added via <code>update_calls_from_table_header()</code>. If the new function you’re writing is a cobbled together {gtsummary} object (for example, using <code>tbl_merge()</code> or <code>tbl_stack()</code>) the basic calls should already be covered.</p>
-</div>
 </div>
 </div>
 <div id="printing-a-gtsummary-object" class="section level2">
 <h2>Printing a {gtsummary} object</h2>
-<p>All {gtsummary} objects are printed with <code>print.gtsummary()</code>. Within the print function the {gtsummary} object is converted to either a gt object or a knitr::kable object depending on the chosen print engine. While the actual print function is slightly more involved it is basically this:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" title="1">print.gtsummary &lt;-<span class="st"> </span><span class="cf">function</span>(x) {</a>
-<a class="sourceLine" id="cb10-2" title="2">  <span class="cf">if</span> (<span class="kw">getOption</span>(<span class="st">&quot;gtsummary.print_engine&quot;</span>) <span class="op">==</span><span class="st"> &quot;gt&quot;</span>) {</a>
-<a class="sourceLine" id="cb10-3" title="3">    <span class="kw">return</span>(<span class="kw">as_gt</span>(x) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">print</span>())</a>
-<a class="sourceLine" id="cb10-4" title="4">  }</a>
-<a class="sourceLine" id="cb10-5" title="5">  <span class="cf">else</span> <span class="cf">if</span> (<span class="kw">getOption</span>(<span class="st">&quot;gtsummary.print_engine&quot;</span>) <span class="op">==</span><span class="st"> &quot;kable&quot;</span>) {</a>
-<a class="sourceLine" id="cb10-6" title="6">    <span class="kw">return</span>(<span class="kw">as_kable</span>(x) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">print</span>())</a>
-<a class="sourceLine" id="cb10-7" title="7">  }</a>
-<a class="sourceLine" id="cb10-8" title="8">}</a></code></pre></div>
-<p>The <code>as_gt()</code> and <code>as_kable()</code> function execute the calls saved in <code>.$gt_calls</code> and <code>.$kable_calls</code>, respectively, converting the object from {gtsummary} to the specified type.</p>
+<p>All {gtsummary} objects are printed with <code>print.gtsummary()</code>. But before a {gtsummary} object is printed, it is converted to a {gt} object using <code>as_gt()</code>. This function takes the {gtsummary} object as its sole input, and uses the information in <code>.$table_header</code> to construct a list of {gt} calls that will be executed on <code>.$table_body</code>. After the {gtsummary} object is converted to {gt}, it is then printed as any other {gt} object.</p>
+<p>In some cases, the package defaults to printing with <code>knitr::kable()</code> utilizing the <code>as_kable()</code> function.</p>
+<p>While the actual print function is slightly more involved, it is basically this:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1">print.gtsummary &lt;-<span class="st"> </span><span class="cf">function</span>(x) {</a>
+<a class="sourceLine" id="cb7-2" title="2">  <span class="cf">if</span> (<span class="kw">getOption</span>(<span class="st">&quot;gtsummary.print_engine&quot;</span>) <span class="op">==</span><span class="st"> &quot;gt&quot;</span>) {</a>
+<a class="sourceLine" id="cb7-3" title="3">    <span class="kw">return</span>(<span class="kw">as_gt</span>(x) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">print</span>())</a>
+<a class="sourceLine" id="cb7-4" title="4">  }</a>
+<a class="sourceLine" id="cb7-5" title="5">  <span class="cf">else</span> <span class="cf">if</span> (<span class="kw">getOption</span>(<span class="st">&quot;gtsummary.print_engine&quot;</span>) <span class="op">==</span><span class="st"> &quot;kable&quot;</span>) {</a>
+<a class="sourceLine" id="cb7-6" title="6">    <span class="kw">return</span>(<span class="kw">as_kable</span>(x) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">print</span>())</a>
+<a class="sourceLine" id="cb7-7" title="7">  }</a>
+<a class="sourceLine" id="cb7-8" title="8">}</a></code></pre></div>
 </div>
 
 

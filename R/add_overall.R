@@ -48,7 +48,8 @@ add_overall <- function(x, last = FALSE) {
     x$table_body %>%
       select(c("row_type", "variable", "label")),
     overall %>%
-      select(c("row_type", "variable", "label"))
+      select(c("row_type", "variable", "label")) %>%
+      as_tibble()
   )) {
     stop("An error occured in 'add_overall()', cannot merge overall statistics")
   }
@@ -76,9 +77,6 @@ add_overall <- function(x, last = FALSE) {
 
   # adding header
   x <- modify_header_internal(x, stat_0 = "**Overall**, N = {N}")
-
-  # updating gt and kable calls with data from table_header
-  x <- update_calls_from_table_header(x)
 
   x
 }

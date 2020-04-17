@@ -5,9 +5,6 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
-## ----exit_early, include = FALSE, eval = !requireNamespace("gt")--------------
-#  knitr::knit_exit()
-
 ## ----setup, message = FALSE---------------------------------------------------
 library(gtsummary); library(gt); library(survival)
 library(dplyr); library(stringr); library(purrr); library(forcats)
@@ -70,7 +67,7 @@ t2 <- trial %>%
 tbl_merge(list(t0, t1, t2)) %>%
   as_gt(include = -tab_spanner) %>%
   # hiding repeated summary columns
-  cols_hide(columns = vars(stat_1_2, stat_2_2, stat_1_3, stat_2_3)) %>%
+  cols_hide(columns = vars(stat_1_2, stat_2_2, stat_3_2, stat_1_3, stat_2_3, stat_3_3)) %>%
   # adding spanning headers for summary stats and pvalues
   tab_spanner(label = md("**Tumor Grade**"), columns = starts_with("stat_")) %>%
   tab_spanner(label = md("**p-value**"), columns = starts_with("p.value")) 
@@ -113,7 +110,7 @@ gt_eventn <-
   select(stage, grade) %>%
   tbl_summary(
     statistic = all_categorical() ~ "{n}",
-    label = list(vars(stage) ~ "T Stage", vars(grade) ~ "Grade")
+    label = list(stage ~ "T Stage", grade ~ "Grade")
   ) %>%
   modify_header(stat_0 = md("**Event N**"))
 

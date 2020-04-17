@@ -83,6 +83,14 @@ add_global_p.tbl_regression <- function(x,
     return(x)
   }
 
+  # vetted model geeglm not supported here.
+  if (inherits(x$inputs$x, "geeglm")) {
+    rlang::abort(paste(
+      "Model class `geeglm` not supported by `car::Anova()`,",
+      "and function could not calculate requested p-value."
+    ))
+  }
+
   # calculating global pvalues
   tryCatch(
     {
@@ -109,7 +117,23 @@ add_global_p.tbl_regression <- function(x,
     set_names(c("variable", "p.value_global")) %>%
     mutate(row_type = "label")
 
-  # merging in global pvalue
+  # merging in global pvalue ---------------------------------------------------
+  # adding p-value column, if it is not already there
+  if (!"p.value" %in% names(x$table_body)) {
+    # adding p.value to table_body
+    x$table_body <- mutate(x$table_body, p.value = NA_real_)
+    # adding to table_header
+    x$table_header <-
+      tibble(column = names(x$table_body)) %>%
+      left_join(x$table_header, by = "column") %>%
+      table_header_fill_missing() %>%
+      table_header_fmt_fun(
+        p.value = x$inputs$pvalue_fun %||%
+          getOption("gtsummary.pvalue_fun", default = style_pvalue)
+      )
+    x <- modify_header_internal(x, p.value = "**p-value**")
+  }
+  # adding global p-values
   x$table_body <-
     x$table_body %>%
     left_join(
@@ -117,7 +141,7 @@ add_global_p.tbl_regression <- function(x,
       by = c("row_type", "variable")
     ) %>%
     mutate(
-      p.value = coalesce(.data$p.value, .data$p.value_global)
+      p.value = coalesce(.data$p.value_global, .data$p.value)
     ) %>%
     select(-c("p.value_global"))
 
@@ -210,7 +234,22 @@ add_global_p.tbl_uvregression <- function(x, ...) {
       by = "variable"
     )
 
-  # merging in global pvalue
+  # merging in global pvalue ---------------------------------------------------
+  # adding p-value column, if it is not already there
+  if (!"p.value" %in% names(x$table_body)) {
+    # adding p.value to table_body
+    x$table_body <- mutate(x$table_body, p.value = NA_real_)
+    # adding to table_header
+    x$table_header <-
+      tibble(column = names(x$table_body)) %>%
+      left_join(x$table_header, by = "column") %>%
+      table_header_fill_missing() %>%
+      table_header_fmt_fun(
+        p.value = x$inputs$pvalue_fun %||%
+          getOption("gtsummary.pvalue_fun", default = style_pvalue)
+      )
+    x <- modify_header_internal(x, p.value = "**p-value**")
+  }
   x$table_body <-
     x$table_body %>%
     select(-c("p.value")) %>%

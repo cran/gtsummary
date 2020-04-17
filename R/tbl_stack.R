@@ -71,27 +71,9 @@ tbl_stack <- function(tbls) {
     stop("Expecting 'tbls' to be a list, e.g. 'tbls = list(tbl1, tbl2)'")
   }
 
-  # checking all inputs are class tbl_uvregression, tbl_regression, tbl_summary, or tbl_merge
-  if (!map_chr(tbls, ~class(.x)[1]) %in% c(
-    "tbl_regression", "tbl_uvregression",
-    "tbl_summary", "tbl_merge"
-  ) %>% any()) {
-    stop("All objects in 'tbls' must be class 'tbl_regression',
-         'tbl_uvregression', 'tbl_summary', or 'tbl_merge'")
-  }
-
-  # printing message if stacking tbl_summary and regression object
-  if ("tbl_summary" %in% map_chr(tbls, ~class(.x)[1]) &&
-    any(c("tbl_regression", "tbl_uvregression") %in% map_chr(tbls, ~class(.x)[1]))) {
-    message(paste(
-      "You are stacking a gtsummary regression table and a summary table,",
-      "which is not recommended. Consider revising the format of your table."
-    ))
-  }
-
-  # checking if there are multiple input types
-  if (map_chr(tbls, ~class(.x)[1]) %>% unique() %>% length() > 1) {
-    message("Multiple gtsummary object classes detected. Displayed results default to first input class type.")
+  # checking all inputs are class gtsummary
+  if (!purrr::every(tbls, ~inherits(.x, "gtsummary"))) {
+    stop("All objects in 'tbls' must be class 'gtsummary'", call. = FALSE)
   }
 
   # will return call, and all arguments passed to tbl_stack
@@ -99,7 +81,7 @@ tbl_stack <- function(tbls) {
 
   # stacking tables ------------------------------------------------------------
   # the table_body and call_list will be updated with the tbl_stack values
-  results <- tbls[[1]][c("gt_calls", "kable_calls")]
+  results <- list()
   results$table_body <-
     map_dfr(tbls, ~pluck(.x, "table_body"))
 
@@ -108,9 +90,6 @@ tbl_stack <- function(tbls) {
     group_by(.data$column) %>%
     filter(dplyr::row_number() == 1) %>%
     ungroup()
-
-  # writing additional gt and kable calls with data from table_header
-  results <- update_calls_from_table_header(results)
 
   # returning results ----------------------------------------------------------
   results$call_list <- list(tbl_stack = match.call())

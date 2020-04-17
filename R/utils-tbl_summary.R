@@ -395,9 +395,7 @@ assign_sort <- function(variable, summary_type, sort) {
 # function that checks the inputs to \code{\link{tbl_summary}}
 # this should include EVERY input of \code{\link{tbl_summary}} in the same order
 # copy and paste them from \code{\link{tbl_summary}}
-
-tbl_summary_input_checks <- function(data, by, label, type, value, statistic,
-                                     digits, missing, missing_text, sort) {
+tbl_summary_data_checks <- function(data) {
   # data -----------------------------------------------------------------------
   # data is a data frame
   if (!is.data.frame(data)) {
@@ -413,6 +411,12 @@ tbl_summary_input_checks <- function(data, by, label, type, value, statistic,
   if (ncol(data) == 0L) {
     stop("Expecting 'data' to have at least 1 column", call. = FALSE)
   }
+}
+
+tbl_summary_input_checks <- function(data, by, label, type, value, statistic,
+                                     digits, missing, missing_text, sort) {
+  # data -----------------------------------------------------------------------
+  tbl_summary_data_checks(data)
 
   # by -------------------------------------------------------------------------
   # no checks for by argument
@@ -426,7 +430,7 @@ tbl_summary_input_checks <- function(data, by, label, type, value, statistic,
         "'type' argument must be a list of formulas. ",
         "LHS of the formula is the variable specification, ",
         "and the RHS is the type specification: ",
-        "list(vars(age, marker) ~ \"continuous\")"
+        "list(c(age, marker) ~ \"continuous\")"
       ), call. = FALSE)
     }
     if (inherits(type, "list")) {
@@ -435,7 +439,7 @@ tbl_summary_input_checks <- function(data, by, label, type, value, statistic,
           "'type' argument must be a list of formulas. ",
           "LHS of the formula is the variable specification, ",
           "and the RHS is the type specification: ",
-          "list(vars(age, marker) ~ \"continuous\")"
+          "list(c(age, marker) ~ \"continuous\")"
         ), call. = FALSE)
       }
     }
@@ -460,7 +464,7 @@ tbl_summary_input_checks <- function(data, by, label, type, value, statistic,
         "'value' argument must be a list of formulas. ",
         "LHS of the formula is the variable specification, ",
         "and the RHS is the value specification: ",
-        "list(vars(stage) ~ \"T1\")"
+        "list(stage ~ \"T1\")"
       ), call. = FALSE)
     }
     if (inherits(value, "list")) {
@@ -469,7 +473,7 @@ tbl_summary_input_checks <- function(data, by, label, type, value, statistic,
           "'value' argument must be a list of formulas. ",
           "LHS of the formula is the variable specification, ",
           "and the RHS is the value specification: ",
-          "list(vars(stage) ~ \"T1\")"
+          "list(stage ~ \"T1\")"
         ), call. = FALSE)
       }
     }
@@ -541,7 +545,7 @@ tbl_summary_input_checks <- function(data, by, label, type, value, statistic,
         "'digits' argument must be a list of formulas. ",
         "LHS of the formula is the variable specification, ",
         "and the RHS is the digits specification: ",
-        "list(vars(age, marker) ~ 1)"
+        "list(c(age, marker) ~ 1)"
       ), call. = FALSE)
     }
     if (inherits(digits, "list")) {
@@ -550,7 +554,7 @@ tbl_summary_input_checks <- function(data, by, label, type, value, statistic,
           "'digits' argument must be a list of formulas. ",
           "LHS of the formula is the variable specification, ",
           "and the RHS is the digits specification: ",
-          "list(vars(age, marker) ~ 1)"
+          "list(c(age, marker) ~ 1)"
         ), call. = FALSE)
       }
     }
@@ -571,7 +575,7 @@ tbl_summary_input_checks <- function(data, by, label, type, value, statistic,
         "'sort' argument must be a list of formulas. ",
         "LHS of the formula is the variable specification, ",
         "and the RHS is the sort specification: ",
-        "list(vars(age, marker) ~ 1)"
+        "c(vars(age, marker) ~ 1)"
       ), call. = FALSE)
     }
     if (inherits(sort, "list")) {
@@ -580,7 +584,7 @@ tbl_summary_input_checks <- function(data, by, label, type, value, statistic,
           "'sort' argument must be a list of formulas. ",
           "LHS of the formula is the variable specification, ",
           "and the RHS is the sort specification: ",
-          "list(vars(stage, marker) ~ \"frequency\")"
+          "list(c(stage, marker) ~ \"frequency\")"
         ), call. = FALSE)
       }
     }

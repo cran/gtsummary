@@ -3,12 +3,10 @@
 
 <!-- badges: start -->
 
-[![Travis build
-status](https://travis-ci.com/ddsjoberg/gtsummary.svg?branch=master)](https://travis-ci.com/ddsjoberg/gtsummary)
-[![AppVeyor build
-status](https://ci.appveyor.com/api/projects/status/github/ddsjoberg/gtsummary?branch=master&svg=true)](https://ci.appveyor.com/project/ddsjoberg/gtsummary)
-[![Coverage
-status](https://codecov.io/gh/ddsjoberg/gtsummary/branch/master/graph/badge.svg)](https://codecov.io/github/ddsjoberg/gtsummary?branch=master)
+[![Codecov test
+coverage](https://codecov.io/gh/ddsjoberg/gtsummary/branch/master/graph/badge.svg)](https://codecov.io/gh/ddsjoberg/gtsummary?branch=master)
+[![R build
+status](https://github.com/ddsjoberg/gtsummary/workflows/R-CMD-check/badge.svg)](https://github.com/ddsjoberg/gtsummary/actions)
 [![CRAN
 status](https://www.r-pkg.org/badges/version/gtsummary)](https://cran.r-project.org/package=gtsummary)
 [![](https://cranlogs.r-pkg.org/badges/gtsummary)](https://cran.r-project.org/package=gtsummary)
@@ -78,24 +76,12 @@ for various customization examples.
 ## Installation
 
 The {gtsummary} package was written as a companion to the
-[{gt}](https://gt.rstudio.com/) package from RStudio, and it is
-recommended to install both {gt} and {gtsummary}. The {gt} package is
-not automatically installed. If {gt} is not installed, `knitr::kable()`
-will be used to produce the summary tables. You can install {gtsummary}
-and {gt} with the following code.
+[{gt}](https://gt.rstudio.com/) package from RStudio. You can install
+{gtsummary} with the following code.
 
-1.  Install {gtsummary}
-    
-    ``` r
-    install.packages("gtsummary")
-    ```
-
-2.  Install {gt} from GitHub (recommended)
-    
-    ``` r
-    install.packages("remotes")
-    remotes::install_github("rstudio/gt", ref = gtsummary::gt_sha)
-    ```
+``` r
+install.packages("gtsummary")
+```
 
 Install the development version of {gtsummary} with:
 
@@ -185,28 +171,22 @@ tbl_merge_ex1 <-
 
 <img src="man/figures/README-tbl_merge_ex1-1.png" width="60%" />
 
-Review even more output options in the [table
-gallery](http://www.danieldsjoberg.com/gtsummary/articles/gallery.html).
+Review even more output options in the **[table
+gallery](http://www.danieldsjoberg.com/gtsummary/articles/gallery.html)**.
 
-## Print Engine
+## gtsummary + R Markdown
 
-{gtsummary} uses the {gt} package to print all summary tables. In
-addition to supporting {gt}, the {gtsummary} package works well with
-`knitr::kable()`. This is particularly useful when outputting documents
-to Microsoft Word. If the {gt} package is not installed, {gtsummary}
-will fall back to `knitr::kable()`. To explicitly set the printing
-engine, set the option in the script or in the user- or project R
-profile, `.Rprofile`.
+The **{gtsummary}** package was written to be a companion to the
+**{gt}** package from RStudio. But not all output types are supported by
+the **{gt}** package. Therefore, we have made it possible to print
+**{gtsummary}** tables with various engines.
 
-    options(gtsummary.print_engine = "kable") 
+Review the **[gtsummary + R
+Markdown](http://www.danieldsjoberg.com/gtsummary/articles/rmarkdown.html)**
+vignette for details.
 
-or
-
-    options(gtsummary.print_engine = "gt")
-
-Output from {kable} is less full featured compared to summary tables
-produced with {gt}. For example, {kable} summary tables do not include
-indentation, footnotes, and spanning header rows.
+<a href="http://www.danieldsjoberg.com/gtsummary/articles/rmarkdown.html">
+<img src="man/figures/gt_output_formats.PNG" width="55%" /> </a>
 
 ## Contributing
 
@@ -217,17 +197,23 @@ By contributing to this project, you agree to abide by its terms. A big
 thank you to all contributors\!  
 [@ablack3](https://github.com/ablack3),
 [@ahinton-mmc](https://github.com/ahinton-mmc),
+[@davidkane9](https://github.com/davidkane9),
 [@ddsjoberg](https://github.com/ddsjoberg),
 [@emilyvertosick](https://github.com/emilyvertosick),
+[@GuiMarthe](https://github.com/GuiMarthe),
 [@jeanmanguy](https://github.com/jeanmanguy),
 [@jennybc](https://github.com/jennybc),
 [@jflynn264](https://github.com/jflynn264),
 [@jwilliman](https://github.com/jwilliman),
 [@karissawhiting](https://github.com/karissawhiting),
+[@leejasme](https://github.com/leejasme),
 [@ltin1214](https://github.com/ltin1214),
 [@margarethannum](https://github.com/margarethannum),
 [@michaelcurry1123](https://github.com/michaelcurry1123),
+[@MyKo101](https://github.com/MyKo101),
 [@oranwutang](https://github.com/oranwutang),
+[@ryzhu75](https://github.com/ryzhu75),
 [@sammo3182](https://github.com/sammo3182),
-[@slobaugh](https://github.com/slobaugh), and
+[@slobaugh](https://github.com/slobaugh),
+[@tormodb](https://github.com/tormodb), and
 [@zabore](https://github.com/zabore)

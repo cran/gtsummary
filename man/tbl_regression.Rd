@@ -55,7 +55,7 @@ and return a string that is the rounded/formatted p-value (e.g.
 \code{purrr::partial(style_pvalue, digits = 2)}).}
 
 \item{tidy_fun}{Option to specify a particular tidier function if the
-model is not a \link[=tidy_vetted]{vetted model} or you need to implement a
+model is not a \link[=vetted_models]{vetted model} or you need to implement a
 custom method. Default is \code{NULL}}
 
 \item{show_yesno}{DEPRECATED}
@@ -142,13 +142,11 @@ See tbl_regression \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_re
 Other tbl_regression tools: 
 \code{\link{add_global_p.tbl_regression}()},
 \code{\link{add_nevent.tbl_regression}()},
+\code{\link{add_q}()},
 \code{\link{bold_italicize_labels_levels}},
-\code{\link{bold_p.tbl_regression}()},
-\code{\link{bold_p.tbl_stack}()},
 \code{\link{combine_terms}()},
 \code{\link{inline_text.tbl_regression}()},
 \code{\link{modify_header}()},
-\code{\link{sort_p.tbl_regression}()},
 \code{\link{tbl_merge}()},
 \code{\link{tbl_stack}()}
 }

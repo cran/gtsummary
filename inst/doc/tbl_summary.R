@@ -4,16 +4,9 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
-## ---- include=FALSE-----------------------------------------------------------
+## -----------------------------------------------------------------------------
 library(gtsummary)
 library(dplyr)
-
-## ---- eval=FALSE--------------------------------------------------------------
-#  install.packages("gtsummary")
-#  remotes::install_github("rstudio/gt", ref = gtsummary::gt_sha)
-#  
-#  library(gtsummary)
-#  library(dplyr)
 
 ## ---- message=FALSE-----------------------------------------------------------
 head(trial)
@@ -86,22 +79,13 @@ trial %>%
 tbl_summary(trial2) %>% names()
 
 ## -----------------------------------------------------------------------------
-tbl_summary(trial2) %>% purrr::pluck("gt_calls") %>% head(n = 5)
+tbl_summary(trial2) %>% as_gt(return_calls = TRUE) %>% head(n = 4)
 
-## ----as_gt2, eval=FALSE-------------------------------------------------------
-#  tbl_summary(trial2, by = trt) %>%
-#    as_gt(include = -tab_footnote) %>%
-#    gt::tab_spanner(label = gt::md("**Treatment Group**"),
-#                    columns = gt::starts_with("stat_"))
-
-## ----as_gt1, echo=FALSE-------------------------------------------------------
-# this code chunk only works if gt is installed
-if (requireNamespace("gt", quietly = TRUE)) {
-  tbl_summary(trial2, by = trt) %>%
-    as_gt(include = -tab_footnote) %>%
-    gt::tab_spanner(label = gt::md("**Treatment Group**"),
-                    columns = gt::starts_with("stat_"))
-}
+## ----as_gt2-------------------------------------------------------------------
+tbl_summary(trial2, by = trt) %>%
+  as_gt(include = -tab_footnote) %>%
+  gt::tab_spanner(label = gt::md("**Treatment Group**"),
+                  columns = gt::starts_with("stat_"))
 
 ## ---- eval=FALSE--------------------------------------------------------------
 #  help("Rprofile")

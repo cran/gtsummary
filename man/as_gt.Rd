@@ -2,9 +2,15 @@
 % Please edit documentation in R/as_gt.R
 \name{as_gt}
 \alias{as_gt}
-\title{Convert gtsummary object to a gt_tbl object}
+\title{Convert gtsummary object to a gt object}
 \usage{
-as_gt(x, include = everything(), exclude = NULL, omit = NULL)
+as_gt(
+  x,
+  include = everything(),
+  return_calls = FALSE,
+  exclude = NULL,
+  omit = NULL
+)
 }
 \arguments{
 \item{x}{Object created by a function from the gtsummary package
@@ -13,7 +19,10 @@ as_gt(x, include = everything(), exclude = NULL, omit = NULL)
 \item{include}{Commands to include in output. Input may be a vector of
 quoted or unquoted names. tidyselect and gtsummary select helper
 functions are also accepted.
-Default is \code{everything()}, which includes all commands in \code{x$gt_calls}.}
+Default is \code{everything()}.}
+
+\item{return_calls}{Logical. Default is \code{FALSE}. If \code{TRUE}, the calls are returned
+as a list of expressions.}
 
 \item{exclude}{DEPRECATED.}
 
@@ -27,7 +36,6 @@ Function converts a gtsummary object to a gt_tbl object.
 Function is used in the background when the results are printed or knit.
 A user can use this function if they wish to add customized formatting
 available via the \href{https://gt.rstudio.com/index.html}{gt package}.
-You can install gt with \code{remotes::install_github("rstudio/gt", ref = gtsummary::gt_sha)}.
 
 Review the
 \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html#advanced}{tbl_summary vignette}
@@ -42,18 +50,19 @@ for detailed examples in the 'Advanced Customization' section.
 }
 
 \examples{
-# Requires the gt package
-# remotes::install_github("rstudio/gt", ref = gtsummary::gt_sha)
-\donttest{
 as_gt_ex <-
   trial[c("trt", "age", "response", "grade")] \%>\%
   tbl_summary(by = trt) \%>\%
   as_gt()
 }
-}
 \seealso{
-\link{tbl_summary} \link{tbl_regression} \link{tbl_uvregression} \link{tbl_survival}
+Other gtsummary output types: 
+\code{\link{as_flextable}()},
+\code{\link{as_kable_extra}()},
+\code{\link{as_kable}()},
+\code{\link{as_tibble.gtsummary}()}
 }
 \author{
 Daniel D. Sjoberg
 }
+\concept{gtsummary output types}

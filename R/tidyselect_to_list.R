@@ -127,6 +127,7 @@ tidyselect_to_list <- function(.data, x, .meta_data = NULL,
 #' var_input_to_string(mtcars, select_input = c(hp, mpg))
 #' var_input_to_string(mtcars, select_input = NULL)
 #' var_input_to_string(mtcars, select_input = vars(everything(), -mpg))
+#' var_input_to_string(mtcars, select_input = c(everything(), -mpg))
 var_input_to_string <- function(data, meta_data = NULL, arg_name = NULL,
                                 select_single = FALSE, select_input) {
 
@@ -167,7 +168,7 @@ tidyselect_to_string <- function(...data..., ...meta_data... = NULL,
 
   tryCatch({
     result <-
-      rlang::call2(dplyr::select, .data = ...data...[0, ], !!!dots_enquo) %>%
+      rlang::call2(dplyr::select, .data = ...data...[0, , drop = FALSE], !!!dots_enquo) %>%
       rlang::eval_tidy() %>%
       colnames()
 

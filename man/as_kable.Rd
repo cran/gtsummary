@@ -2,9 +2,9 @@
 % Please edit documentation in R/as_kable.R
 \name{as_kable}
 \alias{as_kable}
-\title{Convert to knitr_kable object}
+\title{Convert gtsummary object to a kable object}
 \usage{
-as_kable(x, include = everything(), exclude = NULL, ...)
+as_kable(x, include = everything(), return_calls = FALSE, exclude = NULL, ...)
 }
 \arguments{
 \item{x}{Object created by a function from the gtsummary package
@@ -14,6 +14,9 @@ as_kable(x, include = everything(), exclude = NULL, ...)
 quoted or unquoted names. tidyselect and gtsummary select helper
 functions are also accepted.
 Default is \code{everything()}, which includes all commands in \code{x$kable_calls}.}
+
+\item{return_calls}{Logical. Default is \code{FALSE}. If \code{TRUE}, the calls are returned
+as a list of expressions.}
 
 \item{exclude}{DEPRECATED}
 
@@ -31,8 +34,7 @@ available via \link[knitr:kable]{knitr::kable}.
 Output from \link[knitr:kable]{knitr::kable} is less full featured compared to
 summary tables produced with \href{https://gt.rstudio.com/index.html}{gt}.
 For example, kable summary tables do not include indentation, footnotes,
-or spanning header rows. To use these features, install gt with
-\code{remotes::install_github("rstudio/gt", ref = gtsummary::gt_sha)}.
+or spanning header rows.
 }
 \details{
 Tip: To better distinguish variable labels and level labels when
@@ -45,8 +47,13 @@ trial \%>\%
   as_kable()
 }
 \seealso{
-\link{tbl_summary} \link{tbl_regression} \link{tbl_uvregression} \link{tbl_survival}
+Other gtsummary output types: 
+\code{\link{as_flextable}()},
+\code{\link{as_gt}()},
+\code{\link{as_kable_extra}()},
+\code{\link{as_tibble.gtsummary}()}
 }
 \author{
 Daniel D. Sjoberg
 }
+\concept{gtsummary output types}

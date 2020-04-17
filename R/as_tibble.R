@@ -1,38 +1,28 @@
-#' Convert gtsummary object to tibble
+#' Convert gtsummary object to a tibble
 #'
 #' Function converts gtsummary objects tibbles. The formatting stored in
 #' `x$kable_calls` is applied.
 #'
-#' @name as_tibbleS3
 #' @inheritParams as_kable
 #' @param col_labels Logical argument adding column labels to output tibble.
 #' Default is `TRUE`.
 #' @param ... Not used
 #' @return a [tibble][tibble::tibble-package]
-#' @seealso [tbl_summary] [tbl_regression] [tbl_uvregression] [tbl_survival]
+#' @family gtsummary output types
 #' @author Daniel D. Sjoberg
+#' @export
 #' @examples
 #' tbl <-
 #'   trial %>%
+#'   dplyr::select(trt, age, grade, response) %>%
 #'   tbl_summary(by = trt)
 #'
 #' as_tibble(tbl)
 #'
 #' # without column labels
-#' as_tibble(tbl, col_names = FALSE)
-NULL
-
-#' @rdname as_tibbleS3
-#' @export
+#' as_tibble(tbl, col_labels = FALSE)
 as_tibble.gtsummary <- function(x, include = everything(), col_labels = TRUE,
-                                  exclude = NULL,  ...) {
-  # Printing message that spanning headers and footnotes will be lost
-  message(glue(
-    "Results printed using 'knitr::kable()' do not support footers \n",
-    "or spanning headers. \n",
-    "Tables styled by the gt package support footers and spanning headers."
-  ))
-
+                                  return_calls = FALSE, exclude = NULL,  ...) {
   # DEPRECATION notes ----------------------------------------------------------
   if (!rlang::quo_is_null(rlang::enquo(exclude))) {
     lifecycle::deprecate_warn(
@@ -47,40 +37,101 @@ as_tibble.gtsummary <- function(x, include = everything(), col_labels = TRUE,
     )
   }
 
+  # creating list of gt calls --------------------------------------------------
+  tibble_calls <- table_header_to_tibble_calls(x = x, col_labels = col_labels)
+  if (return_calls == TRUE) return(tibble_calls)
+
   # converting to charcter vector ----------------------------------------------
-  include <- var_input_to_string(data = vctr_2_tibble(names(x$kable_calls)),
+  include <- var_input_to_string(data = vctr_2_tibble(names(tibble_calls)),
                                  select_input = !!rlang::enquo(include))
-  exclude <- var_input_to_string(data = vctr_2_tibble(names(x$kable_calls)),
+  exclude <- var_input_to_string(data = vctr_2_tibble(names(tibble_calls)),
                                  select_input = !!rlang::enquo(exclude))
 
   # making list of commands to include -----------------------------------------
   # this ensures list is in the same order as names(x$kable_calls)
-  include <- names(x$kable_calls) %>% intersect(include)
+  include <- names(tibble_calls) %>% intersect(include)
 
   # user cannot exclude the first 'kable' command
   include <- include %>% setdiff(exclude)
-  include <- "kable" %>% union(include)
+  include <- "tibble" %>% union(include)
 
-  # saving vector of column labels
-  column_labels <-
-    x$table_header %>%
-    filter(.data$hide == FALSE) %>%
-    pull(.data$label)
-
-  # taking each kable function call, concatenating them with %>% separating them
-  tbl <-
-    x$kable_calls[include] %>%
+  # taking each gt function call, concatenating them with %>% separating them
+  tibble_calls[include] %>%
     # removing NULL elements
+    unlist() %>%
     compact() %>%
-    glue_collapse(sep = " %>% ") %>%
-    # converting strings into expressions to run
-    parse(text = .) %>%
-    eval() %>%
-    # performing final modifcations prior to returning kable object
-    mutate_all(~ ifelse(is.na(.), "", .))
+    # concatenating expressions with %>% between each of them
+    reduce(function(x, y) expr(!!x %>% !!y)) %>%
+    # evaluating expressions
+    eval()
+}
 
-  # setting column labels
-  if (col_labels == TRUE) tbl <- set_names(tbl, column_labels)
 
-  tbl
+table_header_to_tibble_calls <- function(x, col_labels =  TRUE) {
+  table_header <- x$table_header
+  tibble_calls <- list()
+
+  # tibble ---------------------------------------------------------------------
+  tibble_calls[["tibble"]] <- expr(x$table_body)
+
+  # ungroup (this is just here for temp support of tbl_survival) ---------------
+  group_var <- select(x$table_body, dplyr::group_cols()) %>% names()
+  if (length(group_var) > 0) {
+    tibble_calls[["ungroup"]] <- list(
+      expr(ungroup()),
+      expr(mutate(...new_group_var... = !!sym(group_var))),
+      expr(group_by(.data$...new_group_var...)),
+      expr(mutate_at(vars(!!sym(group_var)), ~ifelse(dplyr::row_number() == 1, ., NA))),
+      expr(ungroup()),
+      expr(select(-.data$...new_group_var...))
+    )
+  }
+
+  # fmt ------------------------------------------------------------------------
+  df_fmt <- table_header %>%
+    filter(map_lgl(.data$fmt_fun, ~!is.null(.x)))
+
+  tibble_calls[["fmt"]] <- map(
+    seq_len(nrow(df_fmt)),
+    ~ expr(mutate_at(vars(!!!syms(df_fmt$column[[.x]])), !!df_fmt$fmt_fun[[.x]]))
+  )
+
+  # tab_style_bold -------------------------------------------------------------
+  df_tab_style_bold <- table_header %>%
+    filter(!is.na(.data$bold))
+
+  tibble_calls[["tab_style_bold"]] <-
+    map(
+      seq_len(nrow(df_tab_style_bold)),
+      ~ expr(mutate_at(gt::vars(!!!syms(df_tab_style_bold$column[[.x]])),
+                       ~ifelse(!!parse_expr(df_tab_style_bold$bold[[.x]]), paste0("__", ., "__"), .)))
+    )
+
+  # tab_style_italic -------------------------------------------------------------
+  df_tab_style_italic <- table_header %>%
+    filter(!is.na(.data$italic))
+
+  tibble_calls[["tab_style_italic"]] <-
+    map(
+      seq_len(nrow(df_tab_style_italic)),
+      ~ expr(mutate_at(gt::vars(!!!syms(df_tab_style_italic$column[[.x]])),
+                       ~ifelse(!!parse_expr(df_tab_style_italic$italic[[.x]]), paste0("_", ., "_"), .)))
+    )
+
+  # cols_hide ------------------------------------------------------------------
+  cols_to_keep <-
+    dplyr::filter(table_header, .data$hide == FALSE) %>%
+    pull(.data$column)
+  tibble_calls[["cols_hide"]] <- expr(dplyr::select(!!!syms(cols_to_keep)))
+
+  # cols_label -----------------------------------------------------------------
+  if (col_labels) {
+    df_col_labels <-
+      dplyr::filter(table_header, .data$hide == FALSE)
+
+    tibble_calls[["cols_label"]] <-
+      expr(rlang::set_names(!!df_col_labels$label))
+  }
+
+  tibble_calls
 }

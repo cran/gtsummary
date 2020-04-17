@@ -1,4 +1,4 @@
-context("test-add_p")
+context("test-add_p.tbl_summary")
 
 test_that("add_p creates output without error/warning", {
   expect_error(
@@ -50,3 +50,35 @@ test_that("add_p defaults to clustered data with `group=` arg", {
     c("lme4", "lme4")
   )
 })
+
+
+context("test-add_p.tbl_cross")
+
+test_that("add_p.tbl_cross", {
+  expect_error(
+    trial %>% tbl_cross(response, death) %>% add_p(),
+    NA
+  )
+  expect_error(
+    trial[c("trt", "grade")] %>% tbl_cross() %>% add_p(),
+    NA
+  )
+  expect_error(
+    trial[c("trt", "grade")] %>% tbl_cross() %>% add_p(source_note = TRUE),
+    NA
+  )
+  expect_error(
+    mtcars %>%
+      tbl_cross(gear, carb) %>%
+      add_p(test = "fisher.test"),
+    NA
+  )
+})
+
+
+
+
+
+
+
+

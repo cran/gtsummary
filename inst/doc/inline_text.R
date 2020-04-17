@@ -4,19 +4,9 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
-## ----exit_early, include = FALSE, eval = !requireNamespace("gt")--------------
-#  knitr::knit_exit()
-
-## ---- include=FALSE-----------------------------------------------------------
+## -----------------------------------------------------------------------------
 library(gtsummary)
 library(dplyr)
-
-## ---- eval=FALSE--------------------------------------------------------------
-#  install.packages("gtsummary")
-#  remotes::install_github("rstudio/gt", ref = gtsummary::gt_sha)
-#  
-#  library(gtsummary)
-#  library(dplyr)
 
 ## -----------------------------------------------------------------------------
 trial2 =

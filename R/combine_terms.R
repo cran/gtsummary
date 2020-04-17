@@ -108,7 +108,7 @@ combine_terms <- function(x, formula_update, label = NULL, ...) {
   # extracting p-value from anova object ---------------------------------------
   df_anova <- as_tibble(anova) %>%
     select(starts_with("Pr(>"),  starts_with("P(>"))
-  # if not column was selected, print error
+  # if no column was selected, print error
   if (ncol(df_anova) == 0) {
     stop(paste(
       "The output from `anova()` did not contain a p-value.\n",
@@ -122,15 +122,44 @@ combine_terms <- function(x, formula_update, label = NULL, ...) {
     slice(n()) %>%
     pull()
 
+  # if no p-value returned in p-value column
+  if (is.na(anova_p)) {
+    stop("The output from `anova()` did not contain a p-value.", call. = FALSE)
+  }
+
   # tbl'ing the new model object -----------------------------------------------
-  # getting call from original tbl_regression call, and updating with new model object
-  call_aslist <- x$inputs
-  # replacing model with updated model in call
-  call_aslist$x <- new_model_obj
-  # running tbl_regression with new model
-  new_model_tbl <- do.call(tbl_regression, call_aslist)
+  new_model_tbl <-
+    rlang::call2(
+      "tbl_regression",
+      x = new_model_obj, # updated model object
+      label = x$inputs$label,
+      exponentiate = x$inputs$exponentiate,
+      include = rlang::expr(intersect(any_of(!!x$inputs$include), everything())),
+      show_single_row = rlang::expr(intersect(any_of(!!x$inputs$show_single_row), everything())),
+      conf.level = x$inputs$conf.level,
+      intercept = x$inputs$intercept,
+      estimate_fun = x$inputs$estimate_fun,
+      pvalue_fun = x$inputs$pvalue_fun,
+      tidy_fun = x$inputs$tidy_fun
+    ) %>%
+    eval()
 
   # updating original tbl object -----------------------------------------------
+  # adding p-value column, if it is not already there
+  if (!"p.value" %in% names(x$table_body)) {
+    # adding p.value to table_body
+    x$table_body <- mutate(x$table_body, p.value = NA_real_)
+    # adding to table_header
+    x$table_header <-
+      tibble(column = names(x$table_body)) %>%
+      left_join(x$table_header, by = "column") %>%
+      table_header_fill_missing() %>%
+      table_header_fmt_fun(
+        p.value = x$inputs$pvalue_fun %||%
+          getOption("gtsummary.pvalue_fun", default = style_pvalue)
+      )
+    x <- modify_header_internal(x, p.value = "**p-value**")
+  }
   # replacing the combined rows with a single row
   table_body <-
     x$table_body %>%

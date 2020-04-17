@@ -155,7 +155,13 @@ tbl_summary <- function(data, by = NULL, label = NULL, statistic = NULL,
   percent <- match.arg(percent)
 
   # ungrouping data ------------------------------------------------------------
+  tbl_summary_data_checks(data)
   data <- data %>% ungroup()
+
+  # removing orderered class from factor by variables --------------------------
+  if (!is.null(by) && inherits(data[[by]], "ordered") && inherits(data[[by]], "factor")) {
+    data[[by]] <- factor(data[[by]], ordered = FALSE)
+  }
 
   # deleting obs with missing by values ----------------------------------------
   # saving variable labels
@@ -307,21 +313,13 @@ tbl_summary <- function(data, by = NULL, label = NULL, statistic = NULL,
     tibble(column = names(table_body)) %>%
     table_header_fill_missing() %>%
     mutate(
-      footnote = map2(
-        .data$column, .data$footnote,
-        function(x, y) {
-          if (startsWith(x, "stat_")) {
-            return(c(y, footnote_stat_label(meta_data)))
-          }
-          return(y)
-        }
-      )
+      footnote = ifelse(startsWith(.data$column, "stat_"),
+                        footnote_stat_label(meta_data),
+                        .data$footnote)
     )
 
   # returning all results in a list --------------------------------------------
   results <- list(
-    gt_calls = eval(gt_tbl_summary),
-    kable_calls = eval(kable_tbl_summary),
     table_body = table_body,
     table_header = table_header,
     meta_data = meta_data,
@@ -346,40 +344,5 @@ tbl_summary <- function(data, by = NULL, label = NULL, statistic = NULL,
                                       label = "**Characteristic**")
   }
 
-  # writing additional gt and kable calls with data from table_header
-  results <- update_calls_from_table_header(results)
-
   return(results)
 }
-
-# gt function calls ------------------------------------------------------------
-# quoting returns an expression to be evaluated later
-gt_tbl_summary <- quote(list(
-  # first call to the gt function
-  gt = glue("gt::gt(data = x$table_body)"),
-
-  # label column indented and left just
-  cols_align = glue(
-    "gt::cols_align(align = 'center') %>% ",
-    "gt::cols_align(align = 'left', columns = gt::vars(label))"
-  ),
-
-  # NAs do not show in table
-  fmt_missing = glue("gt::fmt_missing(columns = gt::everything(), missing_text = '')"),
-
-  # indenting levels and missing rows
-  tab_style_text_indent = glue(
-    "gt::tab_style(",
-    "style = gt::cell_text(indent = gt::px(10), align = 'left'),",
-    "locations = gt::cells_body(",
-    "columns = gt::vars(label),",
-    "rows = row_type != 'label'",
-    "))"
-  )
-))
-
-# kable function calls ---------------------------------------------------------
-kable_tbl_summary <- quote(list(
-  # first call
-  kable = glue("x$table_body")
-))

@@ -25,33 +25,20 @@ NULL
 #' @export
 bold_labels <- function(x) {
   # input checks ---------------------------------------------------------------
-  if (!class(x)[1] %in% c(
-    "tbl_summary", "tbl_regression", "tbl_uvregression",
-    "tbl_stack", "tbl_merge"
-  ) %>% all()) {
-    stop(paste0(
-      "Class of 'x' must be 'tbl_summary', 'tbl_regression', ",
-      "'tbl_uvregression', 'tbl_stack', or 'tbl_merge'"
-    ))
+  if (!inherits(x, "gtsummary")) {
+    stop("Class of 'x' must be 'gtsummary'", call. = FALSE)
   }
 
   # bold labels ----------------------------------------------------------------
-  # adding p-value formatting
-  x[["gt_calls"]][["bold_labels"]] <- glue(
-    "gt::tab_style(style = gt::cell_text(weight = 'bold'), ",
-    "locations = gt::cells_body(columns = gt::vars(label),",
-    "rows = row_type == 'label'))"
-  )
-
-  x[["kable_calls"]][["bold_labels"]] <- glue(
-    "dplyr::mutate(label = dplyr::case_when(",
-    "row_type == 'label' ~ paste0('__', label, '__'), ",
-    "TRUE ~ label",
-    "))"
-  )
-
-  # updating gt and kable calls with data from table_header
-  x <- update_calls_from_table_header(x)
+  x$table_header <-
+    x$table_header %>%
+    mutate(
+      bold = case_when(
+        .data$column == "label" & is.na(bold) ~ "row_type == 'label'",
+        .data$column == "label" & !is.na(bold) ~ paste(bold, "row_type == 'label'", sep = " | "),
+        TRUE ~ bold
+      )
+    )
 
   x$call_list <- c(x$call_list, list(bold_labels = match.call()))
 
@@ -62,33 +49,21 @@ bold_labels <- function(x) {
 #' @export
 bold_levels <- function(x) {
   # input checks ---------------------------------------------------------------
-  if (!class(x)[1] %in% c(
-    "tbl_summary", "tbl_regression", "tbl_uvregression",
-    "tbl_stack", "tbl_merge"
-  ) %>% all()) {
-    stop(paste0(
-      "Class of 'x' must be 'tbl_summary', 'tbl_regression', ",
-      "'tbl_uvregression', 'tbl_stack', or 'tbl_merge'"
-    ))
+  if (!inherits(x, "gtsummary")) {
+    stop("Class of 'x' must be 'gtsummary'", call. = FALSE)
   }
 
   # bold levels ----------------------------------------------------------------
-  # adding p-value formatting
-  x[["gt_calls"]][["bold_levels"]] <- glue(
-    "gt::tab_style(style = gt::cell_text(weight = 'bold'), ",
-    "locations = gt::cells_body(columns = gt::vars(label),",
-    "rows = row_type %in% c('level', 'missing')))"
-  )
-
-  x[["kable_calls"]][["bold_levels"]] <- glue(
-    "dplyr::mutate(label = dplyr::case_when(",
-    "row_type %in% c('level', 'missing') ~ paste0('__', label, '__'), ",
-    "TRUE ~ label",
-    "))"
-  )
-
-  # updating gt and kable calls with data from table_header
-  x <- update_calls_from_table_header(x)
+  x$table_header <-
+    x$table_header %>%
+    mutate(
+      bold = case_when(
+        .data$column == "label" & is.na(bold) ~ "row_type != 'label'",
+        # appending condition to existing condition
+        .data$column == "label" & !is.na(bold) ~ paste(bold, "row_type != 'label'", sep = " | "),
+        TRUE ~ bold
+      )
+    )
 
   x$call_list <- c(x$call_list, list(bold_levels = match.call()))
 
@@ -100,34 +75,20 @@ bold_levels <- function(x) {
 #' @export
 italicize_labels <- function(x) {
   # input checks ---------------------------------------------------------------
-  if (!class(x)[1] %in%
-    c(
-      "tbl_summary", "tbl_regression", "tbl_uvregression",
-      "tbl_stack", "tbl_merge"
-    ) %>% all()) {
-    stop(paste0(
-      "Class of 'x' must be 'tbl_summary', 'tbl_regression', ",
-      "'tbl_uvregression', 'tbl_stack', or 'tbl_merge'"
-    ))
+  if (!inherits(x, "gtsummary")) {
+    stop("Class of 'x' must be 'gtsummary'", call. = FALSE)
   }
 
   # italicize labels -----------------------------------------------------------
-  # adding p-value formatting
-  x[["gt_calls"]][["italicize_labels"]] <- glue(
-    "gt::tab_style(style = gt::cell_text(style = 'italic'), ",
-    "locations = gt::cells_body(columns = gt::vars(label),",
-    "rows = row_type == 'label'))"
-  )
-
-  x[["kable_calls"]][["italicize_labels"]] <- glue(
-    "dplyr::mutate(label = dplyr::case_when(",
-    "row_type == 'label' ~ paste0('_', label, '_'), ",
-    "TRUE ~ label",
-    "))"
-  )
-
-  # updating gt and kable calls with data from table_header
-  x <- update_calls_from_table_header(x)
+  x$table_header <-
+    x$table_header %>%
+    mutate(
+      italic = case_when(
+        .data$column == "label" & is.na(italic) ~ "row_type == 'label'",
+        .data$column == "label" & !is.na(italic) ~ paste(italic, "row_type == 'label'", sep = " | "),
+        TRUE ~ italic
+      )
+    )
 
   x$call_list <- c(x$call_list, list(italicize_labels = match.call()))
 
@@ -139,34 +100,21 @@ italicize_labels <- function(x) {
 #' @export
 italicize_levels <- function(x) {
   # input checks ---------------------------------------------------------------
-  if (!class(x)[1] %in% c(
-    "tbl_summary", "tbl_regression", "tbl_uvregression",
-    "tbl_stack", "tbl_merge", "tbl_stack", "tbl_merge"
-  ) %>% all()
-  ) {
-    stop(paste0(
-      "Class of 'x' must be 'tbl_summary', 'tbl_regression', ",
-      "'tbl_uvregression', 'tbl_stack', or 'tbl_merge'"
-    ))
+  if (!inherits(x, "gtsummary")) {
+    stop("Class of 'x' must be 'gtsummary'", call. = FALSE)
   }
 
   # italicize levels -----------------------------------------------------------
-  # adding p-value formatting
-  x[["gt_calls"]][["italicize_levels"]] <- glue(
-    "gt::tab_style(style = gt::cell_text(style = 'italic'), ",
-    "locations = gt::cells_body(columns = gt::vars(label),",
-    "rows = row_type %in% c('level', 'missing')))"
-  )
-
-  x[["kable_calls"]][["italicize_levels"]] <- glue(
-    "dplyr::mutate(label = dplyr::case_when(",
-    "row_type %in% c('level', 'missing') ~ paste0('_', label, '_'), ",
-    "TRUE ~ label",
-    "))"
-  )
-
-  # updating gt and kable calls with data from table_header
-  x <- update_calls_from_table_header(x)
+  x$table_header <-
+    x$table_header %>%
+    mutate(
+      italic = case_when(
+        .data$column == "label" & is.na(italic) ~ "row_type != 'label'",
+        # appending condition to existing condition
+        .data$column == "label" & !is.na(italic) ~ paste(italic, "row_type != 'label'", sep = " | "),
+        TRUE ~ italic
+      )
+    )
 
   x$call_list <- c(x$call_list, list(italicize_levels = match.call()))
 
