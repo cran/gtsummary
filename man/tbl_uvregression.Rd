@@ -150,6 +150,7 @@ This list is not exhaustive, and care should be taken for each number reported.
 }
 
 \examples{
+# Example 1 ----------------------------------
 tbl_uv_ex1 <-
   tbl_uvregression(
     trial[c("response", "age", "grade")],
@@ -159,6 +160,7 @@ tbl_uv_ex1 <-
     exponentiate = TRUE
   )
 
+# Example 2 ----------------------------------
 # rounding pvalues to 2 decimal places
 library(survival)
 tbl_uv_ex2 <-
@@ -179,7 +181,9 @@ Other tbl_uvregression tools:
 \code{\link{add_q}()},
 \code{\link{bold_italicize_labels_levels}},
 \code{\link{inline_text.tbl_uvregression}()},
+\code{\link{modify_footnote}()},
 \code{\link{modify_header}()},
+\code{\link{modify_spanning_header}()},
 \code{\link{tbl_merge}()},
 \code{\link{tbl_stack}()}
 }

@@ -28,11 +28,11 @@ of events is accessible via the \link{inline_text} function for printing in a re
 }
 \section{Example Output}{
 
-\if{html}{\figure{tbl_reg_nevent_ex.png}{options: width=50\%}}
+\if{html}{\figure{add_nevent_ex.png}{options: width=50\%}}
 }
 
 \examples{
-tbl_reg_nevent_ex <-
+add_nevent_ex <-
   glm(response ~ trt, trial, family = binomial) \%>\%
   tbl_regression() \%>\%
   add_nevent()
@@ -44,7 +44,9 @@ Other tbl_regression tools:
 \code{\link{bold_italicize_labels_levels}},
 \code{\link{combine_terms}()},
 \code{\link{inline_text.tbl_regression}()},
+\code{\link{modify_footnote}()},
 \code{\link{modify_header}()},
+\code{\link{modify_spanning_header}()},
 \code{\link{tbl_merge}()},
 \code{\link{tbl_regression}()},
 \code{\link{tbl_stack}()}

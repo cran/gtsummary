@@ -38,12 +38,12 @@ add_nevent <- function(x, ...) UseMethod("add_nevent")
 #' @export
 #' @return A `tbl_regression` object
 #' @examples
-#' tbl_reg_nevent_ex <-
+#' add_nevent_ex <-
 #'   glm(response ~ trt, trial, family = binomial) %>%
 #'   tbl_regression() %>%
 #'   add_nevent()
 #' @section Example Output:
-#' \if{html}{\figure{tbl_reg_nevent_ex.png}{options: width=50\%}}
+#' \if{html}{\figure{add_nevent_ex.png}{options: width=50\%}}
 
 add_nevent.tbl_regression <- function(x, ...) {
   # if model is a cox model, adding number of events as well
@@ -110,6 +110,12 @@ add_nevent.tbl_regression <- function(x, ...) {
     tibble(column = names(x$table_body)) %>%
     left_join(x$table_header, by = "column") %>%
     table_header_fill_missing()
+
+  # adding a format function to the N event column
+  x$table_header <- table_header_fmt_fun(
+    x$table_header,
+    nevent = function(x) ifelse(is.na(x), NA_character_, sprintf("%.0f", x))
+  )
 
   x$call_list <- c(x$call_list, list(add_nevent = match.call()))
 
@@ -183,6 +189,11 @@ add_nevent.tbl_uvregression <- function(x, ...) {
     table_header_fill_missing()
   x <- modify_header_internal(x, nevent = "**Event N**")
 
+  # adding a format function to the N event column
+  x$table_header <- table_header_fmt_fun(
+    x$table_header,
+    nevent = function(x) ifelse(is.na(x), NA_character_, sprintf("%.0f", x))
+  )
 
   x
 }

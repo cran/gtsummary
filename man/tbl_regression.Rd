@@ -117,24 +117,23 @@ This list is not exhaustive, and care should be taken for each number reported.
 }
 
 \examples{
+# Example 1 ----------------------------------
 library(survival)
 tbl_regression_ex1 <-
   coxph(Surv(ttdeath, death) ~ age + marker, trial) \%>\%
   tbl_regression(exponentiate = TRUE)
 
+# Example 2 ----------------------------------
 tbl_regression_ex2 <-
   glm(response ~ age + grade, trial, family = binomial(link = "logit")) \%>\%
   tbl_regression(exponentiate = TRUE)
 
-library(lme4)
+# Example 3 ----------------------------------
+library(lme4, warn.conflicts = FALSE, quietly = TRUE)
 tbl_regression_ex3 <-
   glmer(am ~ hp + (1 | gear), mtcars, family = binomial) \%>\%
   tbl_regression(exponentiate = TRUE)
 
-# for convenience, you can also pass named lists to any arguments
-# that accept formulas (e.g label, etc.)
-glm(response ~ age + grade, trial, family = binomial(link = "logit")) \%>\%
-  tbl_regression(exponentiate = TRUE, label = list(age = "Patient Age"))
 }
 \seealso{
 See tbl_regression \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html}{vignette} for detailed examples
@@ -146,7 +145,9 @@ Other tbl_regression tools:
 \code{\link{bold_italicize_labels_levels}},
 \code{\link{combine_terms}()},
 \code{\link{inline_text.tbl_regression}()},
+\code{\link{modify_footnote}()},
 \code{\link{modify_header}()},
+\code{\link{modify_spanning_header}()},
 \code{\link{tbl_merge}()},
 \code{\link{tbl_stack}()}
 }

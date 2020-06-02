@@ -48,6 +48,7 @@
 #' @export
 #' @return A `tbl_uvregression` object
 #' @examples
+#' # Example 1 ----------------------------------
 #' tbl_uv_ex1 <-
 #'   tbl_uvregression(
 #'     trial[c("response", "age", "grade")],
@@ -57,6 +58,7 @@
 #'     exponentiate = TRUE
 #'   )
 #'
+#' # Example 2 ----------------------------------
 #' # rounding pvalues to 2 decimal places
 #' library(survival)
 #' tbl_uv_ex2 <-
@@ -284,10 +286,17 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
         tbl = map(
           .data$tbl,
           function(tbl) {
-            tbl <- modify_header(tbl, N = "**N**")
+            tbl <- modify_header(tbl, N ~ "**N**")
             # only display N on label row
             tbl$table_body$N <- ifelse(tbl$table_body$row_type == "label",
                                        tbl$table_body$N, NA)
+
+            # adding a format function to the N column
+            tbl$table_header <- table_header_fmt_fun(
+              tbl$table_header,
+              N = function(x) ifelse(is.na(x), NA_character_, sprintf("%.0f", x))
+            )
+
             tbl
           }
         )

@@ -11,12 +11,15 @@ library(dplyr); library(stringr); library(purrr); library(forcats)
 
 ## -----------------------------------------------------------------------------
 trial[c("trt", "age", "grade")] %>%
-  tbl_summary(by = trt, missing = "no") %>%
-  modify_header(stat_by = md("**{level}** N =  {n} ({style_percent(p)}%)")) %>%
+  tbl_summary(
+    by = trt, 
+    missing = "no",
+    statistic = all_continuous() ~ "{median} ({p25}, {p75}) [N = {N_nonmiss}]"
+  ) %>%
+  modify_header(stat_by = md("**{level}**<br>N =  {n} ({style_percent(p)}%)")) %>%
   add_n() %>%
   bold_labels() %>%
-  as_gt() %>%
-  tab_spanner(columns = starts_with("stat_"), md("**Chemotherapy Treatment**"))
+  modify_spanning_header(starts_with("stat_") ~ "**Chemotherapy Treatment**")
 
 ## -----------------------------------------------------------------------------
 trial[!is.na(trial$response), c("response", "age", "grade")] %>%
@@ -53,7 +56,7 @@ t1 <- trial %>%
   filter(grade %in% c("I", "II")) %>%
   tbl_summary(by = grade, missing = "no") %>%
   add_p() %>%
-  modify_header(p.value = md("**I vs. II**"))
+  modify_header(p.value ~ md("**I vs. II**"))
 
 # table comparing grade I and II
 t2 <- trial %>%
@@ -61,16 +64,40 @@ t2 <- trial %>%
   filter(grade %in% c("I", "III")) %>%
   tbl_summary(by = grade, missing = "no") %>%
   add_p()  %>%
-  modify_header(p.value = md("**I vs. III**"))
+  modify_header(p.value ~ md("**I vs. III**"))
 
 # merging the 3 tables together, and adding additional gt formatting
 tbl_merge(list(t0, t1, t2)) %>%
+  modify_spanning_header(
+    list(
+      starts_with("stat_") ~ "**Tumor Grade**",
+      starts_with("p.value") ~ "**p-value**"
+    )
+  ) %>%
   as_gt(include = -tab_spanner) %>%
   # hiding repeated summary columns
-  cols_hide(columns = vars(stat_1_2, stat_2_2, stat_3_2, stat_1_3, stat_2_3, stat_3_3)) %>%
-  # adding spanning headers for summary stats and pvalues
-  tab_spanner(label = md("**Tumor Grade**"), columns = starts_with("stat_")) %>%
-  tab_spanner(label = md("**p-value**"), columns = starts_with("p.value")) 
+  cols_hide(columns = vars(stat_1_2, stat_2_2, stat_3_2, stat_1_3, stat_2_3, stat_3_3))
+
+## -----------------------------------------------------------------------------
+# define function for lower and upper bounds of the mean CI
+ll <- function(x) t.test(x)$conf.int[1]
+ul <- function(x) t.test(x)$conf.int[2]
+
+t1 <-
+  trial %>%
+  select(age, marker) %>%
+  tbl_summary(statistic = all_continuous() ~ "{mean} ({sd})", missing = "no") %>%
+  modify_header(stat_0 ~ "**Mean (SD)**")
+
+t2 <-
+  trial %>%
+  select(age, marker) %>%
+  tbl_summary(statistic = all_continuous() ~ "{ll}, {ul}", missing = "no") %>%
+  modify_header(stat_0 ~ "**95% CI for Mean**")
+
+tbl_merge(list(t1, t2)) %>%
+  modify_footnote(everything() ~ NA_character_) %>%
+  modify_spanning_header(everything() ~ NA_character_)
 
 ## -----------------------------------------------------------------------------
 trial[c("response", "age", "grade")] %>%
@@ -112,12 +139,13 @@ gt_eventn <-
     statistic = all_categorical() ~ "{n}",
     label = list(stage ~ "T Stage", grade ~ "Grade")
   ) %>%
-  modify_header(stat_0 = md("**Event N**"))
+  modify_header(stat_0 ~ "**Event N**") %>%
+  modify_footnote(everything() ~ NA_character_)
 
 tbl_merge(list(gt_eventn, gt_model)) %>%
   bold_labels() %>%
   italicize_levels() %>%
-  as_gt(include = -tab_spanner)
+  modify_spanning_header(everything() ~ NA_character_)
 
 ## -----------------------------------------------------------------------------
 tbl_reg <-
@@ -128,17 +156,13 @@ tbl_reg <-
     show_single_row = "trt",
     hide_n = TRUE
   ) %>%
-  modify_header(
-    label = md("**Model Outcome**"),
-    estimate = md("**Treatment Coef.**")
-  ) 
+  modify_header(list(
+    label ~"**Model Outcome**",
+    estimate ~ "**Treatment Coef.**"
+  )) 
 
 tbl_reg %>%
-  as_gt() %>%
-  tab_footnote(
-    footnote = "Values larger than 0 indicate larger values in the Drug group.", 
-    locations = cells_column_labels(columns = vars(estimate))
-  )
+  modify_footnote(estimate ~ "Values larger than 0 indicate larger values in the Drug group.")
 
 ## -----------------------------------------------------------------------------
 gt_sum <- 
@@ -152,8 +176,8 @@ gt_sum <-
 
 
 tbl_merge(list(gt_sum, tbl_reg))  %>%
-  modify_header(estimate_2 = md("**Difference**")) %>%
-  as_gt(include = -tab_spanner)
+  modify_header(estimate_2 ~ "**Difference**") %>%
+  modify_spanning_header(everything() ~ NA_character_)
 
 ## -----------------------------------------------------------------------------
 my_tidy <- function(x, exponentiate =  FALSE, conf.level = 0.95, ...) {

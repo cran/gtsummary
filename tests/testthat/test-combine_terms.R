@@ -1,4 +1,6 @@
 context("test-combine_terms")
+testthat::skip_on_cran()
+
 library(Hmisc)
 mod1 <- lm(age ~ marker + I(marker^2) + stage,
            trial[c("age", "marker", "stage")] %>% na.omit())
@@ -112,6 +114,22 @@ test_that("combine_terms works without error", {
         formula_update = . ~ . -Time -sp2Time -sp3Time
       ),
     NA
+  )
+
+  expect_message(
+    tbl_regression(mod1, label = stage ~ "Stage") %>%
+      combine_terms(formula_update = . ~ . -marker -I(marker^2),
+                    label = "Marker (non-linear terms)",
+                    quiet = TRUE),
+    NA
+  )
+
+  expect_message(
+    tbl_regression(mod1, label = stage ~ "Stage") %>%
+      combine_terms(formula_update = . ~ . -marker -I(marker^2),
+                    label = "Marker (non-linear terms)",
+                    quiet = FALSE),
+    "*"
   )
 
 })

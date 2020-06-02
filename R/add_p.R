@@ -56,11 +56,13 @@ add_p <- function(x, ...) {
 #' @return A `tbl_summary` object
 #' @author Emily C. Zabor, Daniel D. Sjoberg
 #' @examples
+#' # Example 1 ----------------------------------
 #' add_p_ex1 <-
 #'   trial[c("age", "grade", "response", "trt")] %>%
 #'   tbl_summary(by = trt) %>%
 #'   add_p()
 #'
+#' # Example 2 ----------------------------------
 #' # Conduct a custom McNemar test for response,
 #' # Function must return a named list of the p-value and the
 #' # test name: list(p = 0.123, test = "McNemar's test")
@@ -103,26 +105,37 @@ add_p.tbl_summary <- function(x, test = NULL, pvalue_fun = NULL,
     )
   }
 
+  # setting defaults from gtsummary theme --------------------------------------
+  test <- test %||% get_theme_element("add_p.tbl_summary-arg:test")
+  pvalue_fun <-
+    pvalue_fun %||%
+    get_theme_element("add_p.tbl_summary-arg:pvalue_fun") %||%
+    get_theme_element("pkgwide-fn:pvalue_fun")
+
+
   # converting bare arguments to string ----------------------------------------
   group <- var_input_to_string(data = x$inputs$data,
                                select_input = !!rlang::enquo(group),
                                arg_name = "group", select_single = TRUE)
-  include <- var_input_to_string(data = x$inputs$data,
+  include <- var_input_to_string(data = select(x$inputs$data, any_of(x$meta_data$variable)),
                                  select_input = !!rlang::enquo(include),
                                  arg_name = "include")
-  exclude <- var_input_to_string(data = x$inputs$data,
+  exclude <- var_input_to_string(data = select(x$inputs$data, any_of(x$meta_data$variable)),
                                  select_input = !!rlang::enquo(exclude),
                                  arg_name = "exclude")
 
   # group argument -------------------------------------------------------------
   if (!is.null(group)) {
     # checking group is in the data frame
-    if (!group %in% x$meta_data$variable) {
+    if (!group %in% names(x$inputs$data)) {
       stop(glue("'{group}' is not a column name in the input data frame."), call. = FALSE)
     }
-    # dropping group variable from table_body and meta_data
-    x$table_body <- x$table_body %>% filter(.data$variable != group)
-    x$meta_data <- x$meta_data %>% filter(.data$variable != group)
+    if (group %in% x$meta_data$variable) {
+      rlang::inform(glue::glue(
+        "The `group=` variable is no longer auto-removed from the summary table as of v1.3.1.\n",
+        "The following syntax is now preferred:\n",
+        "tbl_summary(..., include = -{group}) %>% add_p(..., group = {group})"))
+    }
   }
 
   # setting defaults -----------------------------------------------------------
@@ -148,21 +161,9 @@ add_p.tbl_summary <- function(x, test = NULL, pvalue_fun = NULL,
   # test -----------------------------------------------------------------------
   # parsing into a named list
   test <- tidyselect_to_list(
-    x$inputs$data, test,
-    .meta_data = x$meta_data, arg_name = "test"
+    select(x$inputs$data, any_of(x$meta_data$variable)),
+    test, .meta_data = x$meta_data, arg_name = "test"
   )
-
-  if (!is.null(test)) {
-    # checking that all inputs are named
-    if ((names(test) %>%
-         purrr::discard(. == "") %>%
-         length()) != length(test)) {
-      stop(glue(
-        "Each element in 'test' must be named. ",
-        "For example, 'test = list(age = \"t.test\", ptstage = \"fisher.test\")'"
-      ), call. = FALSE)
-    }
-  }
 
   # checking pvalue_fun are functions
   if (!is.function(pvalue_fun)) {
@@ -172,6 +173,8 @@ add_p.tbl_summary <- function(x, test = NULL, pvalue_fun = NULL,
   # Getting p-values only for included variables
   include <- include %>% setdiff(exclude)
 
+  # caller_env for add_p
+  caller_env <- rlang::caller_env()
 
   # getting the test name and pvalue
   meta_data <-
@@ -184,7 +187,8 @@ add_p.tbl_summary <- function(x, test = NULL, pvalue_fun = NULL,
         var_summary_type = .data$summary_type,
         by_var = x$by,
         test = test,
-        group = group
+        group = group,
+        env = caller_env
       ),
       # calculating pvalue
       test_result = calculate_pvalue(
@@ -199,7 +203,7 @@ add_p.tbl_summary <- function(x, test = NULL, pvalue_fun = NULL,
       # grabbing p-value and test label from test_result
       p.value = map_dbl(
         .data$test_result,
-        ~ pluck(.x, "p") %||% NA_real_
+        ~ pluck(.x, "p") %||% switch(is.numeric(.x), .x[1]) %||% NA_real_
       ),
       stat_test_lbl = map_chr(
         .data$test_result,
@@ -258,6 +262,7 @@ footnote_add_p <- function(meta_data) {
 #'
 #' \Sexpr[results=rd, stage=render]{lifecycle::badge("experimental")}
 #' Calculate and add a p-value comparing the two variables in the cross table.
+#' Missing values are included in p-value calculations.
 #'
 #' @param x Object with class `tbl_cross` from the [tbl_cross] function
 #' @param pvalue_fun Function to round and format p-value.
@@ -293,13 +298,31 @@ footnote_add_p <- function(meta_data) {
 #' \if{html}{\figure{add_p_cross_ex2.png}{options: width=45\%}}
 add_p.tbl_cross <- function(x, test = NULL, pvalue_fun = NULL,
                             source_note = FALSE, ...) {
+  # setting defaults -----------------------------------------------------------
+  test <- test %||% get_theme_element("add_p.tbl_cross-arg:test")
+  if (source_note == FALSE)
+    pvalue_fun <-
+      pvalue_fun %||%
+      getOption("gtsummary.pvalue_fun", default = style_pvalue)  %||%
+      get_theme_element("add_p.tbl_cross-arg:pvalue_fun") %||%
+      get_theme_element("pkgwide-fn:pvalue_fun")
+  else
+    pvalue_fun <-
+      pvalue_fun %||%
+      get_theme_element("pkgwide-fn:prependpvalue_fun") %||%
+      (function(x) style_pvalue(x, prepend_p = TRUE))
 
   # adding test name if supplied (NULL otherwise)
   input_test <- switch(!is.null(test),
                        rlang::expr(everything() ~ !!test))
 
   # running add_p to add the p-value to the output
-  x <- expr(add_p.tbl_summary(x, test = !!input_test)) %>% eval()
+  x_copy <- x
+  # passing the data frame after missing values have been transformed to factor/observed levels
+  x$inputs$data <- x$tbl_data
+  x <- expr(add_p.tbl_summary(x, test = !!input_test, include = -any_of("..total.."))) %>% eval()
+  # replacing the input dataset with the original from the `tbl_cross()` call
+  x$inputs$data <- x_copy$inputs$data
 
   # updating footnote
   test_name <- x$meta_data$stat_test_lbl %>% discard(is.na)
@@ -320,9 +343,6 @@ add_p.tbl_cross <- function(x, test = NULL, pvalue_fun = NULL,
         hide = ifelse(.data$column == "p.value", TRUE, .data$hide),
         footnote = ifelse(.data$column == "p.value", NA_character_, .data$footnote),
       )
-
-    # adding source note
-    if(is.null(pvalue_fun)) pvalue_fun <- function(x) style_pvalue(x, prepend_p = TRUE)
 
     x$list_output$source_note <-
       paste(test_name, pvalue_fun(discard(x$meta_data$p.value, is.na)), sep = ", ")

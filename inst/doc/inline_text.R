@@ -11,7 +11,7 @@ library(dplyr)
 ## -----------------------------------------------------------------------------
 trial2 =
   trial %>%
-  dplyr::select(trt, marker, stage)
+  select(trt, marker, stage)
 
 ## -----------------------------------------------------------------------------
 tab1 <- tbl_summary(trial2, by = trt)

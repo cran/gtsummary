@@ -15,6 +15,7 @@
 #' 1. [flextable::add_header_row()], if applicable, to set spanning column header
 #' 1. [flextable::align()] to set column alignment
 #' 1. [flextable::padding()] to indent variable levels
+#' 1. [flextable::fontsize()] to set font size
 #' 1. [flextable::autofit()] to estimate the column widths
 #' 1. [flextable::footnote()] to add table footnotes and source notes
 #' 1. [flextable::bold()] to bold cells in data frame
@@ -36,7 +37,7 @@
 #' @author Daniel D. Sjoberg
 #' @examples
 #' trial %>%
-#'   dplyr::select(trt, age, grade) %>%
+#'   select(trt, age, grade) %>%
 #'   tbl_summary(by = trt) %>%
 #'   add_p() %>%
 #'   as_flextable()
@@ -47,36 +48,41 @@ as_flextable <- function(x, ...) {
 #' @rdname as_flextable
 #' @export
 as_flextable.gtsummary <- function(x, include = everything(), return_calls = FALSE,
-                         strip_md_bold = TRUE, ...) {
+                                   strip_md_bold = TRUE, ...) {
   # must have flextable package installed to use this function -----------------
-  if (!requireNamespace("flextable", quietly = TRUE)) {
-    stop(paste0(
-      "The 'flextable' package is required for 'as_flextable'.\n",
-      "Install with install.packages('flextable')"
-    ), call. = FALSE)
-  }
+  assert_package("flextable", "as_flextable")
 
   # stripping markdown asterisk ------------------------------------------------
   if (strip_md_bold == TRUE) {
     x$table_header <-
       x$table_header %>%
-      mutate(
-        label = str_replace_all(
-          .data$label, pattern = fixed("**"), replacement = fixed("")
-        ),
-        spanning_header = str_replace_all(
-          .data$spanning_header, pattern = fixed("**"), replacement = fixed("")
-        )
+      mutate_at(
+        vars(.data$label, .data$spanning_header),
+        ~str_replace_all(., pattern = fixed("**"), replacement = fixed(""))
       )
   }
 
   # creating list of flextable calls -------------------------------------------
   flextable_calls <- table_header_to_flextable_calls(x = x)
-  if (return_calls == TRUE) return(flextable_calls)
+
+  # adding user-specified calls ------------------------------------------------
+  insert_expr_after <- get_theme_element("as_flextable.gtsummary-lst:addl_cmds")
+  flextable_calls <-
+    purrr::reduce(
+      .x = seq_along(insert_expr_after),
+      .f = function(x, y) add_expr_after(calls = x,
+                                         add_after = names(insert_expr_after[y]),
+                                         expr = insert_expr_after[[y]],
+                                         new_name = paste0("user_added", y)),
+      .init = flextable_calls
+    )
 
   # converting to charcter vector ----------------------------------------------
   include <- var_input_to_string(data = vctr_2_tibble(names(flextable_calls)),
                                  select_input = !!rlang::enquo(include))
+
+  # return calls, if requested -------------------------------------------------
+  if (return_calls == TRUE) return(flextable_calls[include])
 
   # taking each kable function call, concatenating them with %>% separating them
   flextable_calls[include] %>%
@@ -98,11 +104,11 @@ table_header_to_flextable_calls <- function(x, ...) {
     ungroup()
 
   # tibble ---------------------------------------------------------------------
-  # getting flextable calls
+  # flextable doesn't use the markdown language `__` or `**`
+  # to bold and italicize text, so removing them here
   flextable_calls <-
-    table_header_to_tibble_calls(x = x, col_labels = FALSE)
-  flextable_calls[["tab_style_bold"]] <- NULL
-  flextable_calls[["tab_style_italic"]] <- NULL
+    as_tibble(x, return_calls = TRUE,
+              include = -c("cols_label", "tab_style_bold", "tab_style_italic"))
 
   # flextable ------------------------------------------------------------------
   flextable_calls[["flextable"]] <- expr(flextable::flextable())
@@ -130,13 +136,25 @@ table_header_to_flextable_calls <- function(x, ...) {
                                       " ",
                                       .data$spanning_header)) %>%
       group_by(.data$spanning_header) %>%
-      dplyr::summarise(width = n()) %>%
+      mutate(width = n()) %>%
+      distinct() %>%
       ungroup()
 
-    flextable_calls[["add_header_row"]] <- expr(
-      flextable::add_header_row(
-        values = !!df_header$spanning_header,
-        colwidths = !!df_header$width
+    flextable_calls[["add_header_row"]] <- list(
+      expr(
+        # add the header row with the spanning headers
+        flextable::add_header_row(
+          values = !!df_header$spanning_header,
+          colwidths = !!df_header$width
+        )
+      ),
+      expr(
+        # add border above that matches border below
+        flextable::border(
+          i = 1,
+          border.top = officer::fp_border(width=2),
+          part = "header"
+        )
       )
     )
   }
@@ -170,6 +188,11 @@ table_header_to_flextable_calls <- function(x, ...) {
   flextable_calls[["padding"]] <- map2(
     df_padding$id, df_padding$i_index,
     ~expr(flextable::padding(i = !!.y, j = !!.x, padding.left = 15))
+  )
+
+  # fontsize -------------------------------------------------------------------
+  flextable_calls[["fontsize"]] <- list(
+    expr(flextable::fontsize(part = "header", size = 11))
   )
 
   # autofit --------------------------------------------------------------------

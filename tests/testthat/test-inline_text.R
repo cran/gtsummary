@@ -1,4 +1,5 @@
 context("test-inline_text")
+testthat::skip_on_cran()
 
 
 # inline_text.tbl_summary tests --------------
@@ -78,6 +79,17 @@ test_that("inline_text.tbl_summary: with by -  expect errors", {
   expect_error(
     inline_text(test_inline2, variable = "st55age", level = "T1", column = "Drug B"),
     "*"
+  )
+})
+
+test_that("inline_text.tbl_summary: no errors with empty string selection", {
+  expect_error(
+    trial %>%
+      select(grade) %>%
+      mutate(grade = ifelse(grade == "I", "", as.character(grade))) %>%
+      tbl_summary() %>%
+      inline_text(variable = grade, level = "III"),
+    NA
   )
 })
 
@@ -231,7 +243,7 @@ test_that("inline_text.tbl_survfit", {
 test_that("inline_text.tbl_cross", {
   tbl_cross <-
     tbl_cross(trial, row = trt, col = response) %>%
-    add_p()
+    add_p(percent = "cell")
 
   expect_equal(
     inline_text(tbl_cross, row_level = "Drug A", col_level = "1"),
@@ -243,8 +255,31 @@ test_that("inline_text.tbl_cross", {
   )
   expect_equal(
     inline_text(tbl_cross, col_level = "p.value"),
-    "p=0.6"
+    "p=0.7"
   )
 })
+
+
+
+test_that("inline_text.tbl_cross- expect error args aren't present", {
+  tbl_cross <-
+    tbl_cross(trial, row = trt, col = response) %>%
+    add_p(percent = "cell")
+
+  expect_error(
+    inline_text(tbl_cross, row_level = "Drug A"),
+    "*"
+  )
+  expect_error(
+    inline_text(tbl_cross, col_level = "0"),
+    "*"
+  )
+
+    expect_error(
+      inline_text(tbl_cross),
+      "*"
+  )
+})
+
 
 

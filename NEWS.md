@@ -1,12 +1,71 @@
+# gtsummary 1.3.1
+
+### New Functions
+
+* Introducing themes in {gtsummary}. Use the function `set_gtsummary_theme()` to set new themes, and review the themes vignette for details on setting and creating personalized themes. (#424)
+
+* New functions `modify_footnote()` and `modify_spanning_header()` give users control over table footnotes and spanning headers. (#464)
+
+* Introducing `as_huxtable()`! The function converts gtsummary objects to {huxtable} objects. {huxtable} supports indentation, footnotes, and spanning headers with Word, HTML, and PDF output. (#469)
+
+* New function `add_stat()`! Add a new column of any statistic to a `tbl_summary()` table (#495)
+
+### User-facing Updates
+
+* The following columns in `tbl_summary()` are now available to print for both continuous and categorical variables: total number of observations `{N_obs}`, number of missing observations `{N_miss}`, number of non-missing observations `{N_nomiss}`, proportion of missing observations `{p_miss}`, proportion of non-missing observations `{p_nomiss}`. (#473)
+
+* Improved appearance of default `as_flextable()` output (#499)
+
+* Added `tbl_cross(margin=)` argument to control which margins are shown in the output table. (#444)
+
+* The missing values are now included in the calculation of p-values in `tbl_cross()`.
+
+* Messaging about statistical methods used has been added for `add_global_p()`, `add_q()`, and `combine_terms()`. (#471)
+
+* Added `include=` argument to `tbl_summary()`. The preferred syntax for p-values with correlated data is now `tbl_summary(..., include = -group_var) %>% add_p(group = group_var)`. The group variable is now no longer removed from the table summary. (#477)
+
+* `add_stat_label()` function updated with `location=` and `label=` arguments to change the location of the statistic labels and to modify the text of the labels. `location = "row"` is now the default. (#467)
+
+* `tbl_stack()` function added the `group_header=` argument that groups the stacked tables and adds a horizontal header row between them. (#468)
+
+* Updated handling for interaction terms in `tbl_regression()`. Interaction terms may now be specified in the `show_single_row=` and `label=` arguments. (#451, #452)
+
+### Internal Updates
+
+* Improved error messaging when invalid statistics are requested in `tbl_summary(statistic=)` (#502)
+
+* All columns in `as_tibble()` are now styled and converted to character. Previously, styling was applied to most columns, but there were a few that relied on default printing for the type of underlying data.  This was ok to rely on this default behavior for `as_kable()`, but with the introduction of `as_flextable()` we needed to style and format each column to character. Potential to break some code in edge cases. (#493)
+
+* Handling of passed custom p-value functions in `add_p.tbl_summary()` has been improved with more careful handling of the environments from which the functions were passed. Other related updates were also made:
+    - Users may pass their custom p-value function as a quoted string or bare.
+    - The basic functions for calculating p-values, such as `t.test()` can now be passed directly e.g. `test = age ~ t.test`. We now perform a check match check for functions passed. If it is passed, we replace it with our internal version that returns the p-value and assigns the test name.
+    - If a user passes a custom function, and it's not the proper form (i.e. a named list return object) AND the function returns a single numeric value, we assume that is the p-value and it's added to the gtsummary table.
+
+* Updated the gtsummary core script, `utils-gtsummary_core.R`, to refer to all non-base R functions with the `pkg::` prefix, so other packages that copy the file don't need to import the same functions as {gtsummary} in the NAMESPACE. Now they just need to depend on the same packages. (#454)
+
+### Bug Fixes
+
+* Bug fix for `inline_text.tbl_summary()` when categorical variable contained levels with empty strings. There is still an issue if a user tries to select the empty string, however.
+
+* Fixed bug where some variables in `tbl_cross()` defaulted to dichotomous instead of showing as categorical (#506)
+
+* Bug fix when using a `tbl_summary(by=)` with missing observations in `by=` followed by `add_overall()`
+
+* Bug fix where values `">0.9"` were incorrectly made bold using `bold_p()`. (#489)
+
+* Bug fix for `as_flextable()`. (#482)
+  - Added a formatting function to all numeric columns to force conversion to character.
+  - Spanning headers were being printed in alphabetical order! Update to preserve the ordering.
+
 # gtsummary 1.3.0
 
 ### New Functions
 
 * Introducing `tbl_cross()`, `add_p.tbl_cross()`, and `inline_text.tbl_cross()`! Easily construct cross tabulations of two variables.
 
-* Introducing `tbl_survfit()` and `inline_text.tbl_survfit()`!  These will eventually replace `tbl_survival()`, which will no longer be encouraged. The new functions follow the structural guidelines of a {gtsummary} object and can be merged and stacked with any over {gtsummary} object (#280)
+* Introducing `tbl_survfit()` and `inline_text.tbl_survfit()`!  These will eventually replace `tbl_survival()`, which will no longer be encouraged. The new functions follow the structural guidelines of a {gtsummary} object and can be merged and stacked with any other {gtsummary} object (#280)
 
-* Introducing `as_flextable()`! The function converts gtsummary objects to {flextable} objects, which is a great option when using R markdown with Microsoft Word output. {flextable} supports indentation, footnotes, and spanning headers with Word, HTML, and PDF output.
+* Introducing `as_flextable()`! The function converts gtsummary objects to {flextable} objects. {flextable} is a great option when using R markdown with Microsoft Word output. {flextable} supports indentation, footnotes, and spanning headers with Word, HTML, and PDF output.
 
 *  Introducing `as_kable_extra()`! The function converts gtsummary objects to {kableExtra} objects. {kableExtra} supports indentation, footnotes, and spanning headers with HTML and PDF output. (#394)
 
@@ -135,7 +194,7 @@
 
 # gtsummary 1.2.2
 
-## New Features
+### New Features
 
 * `tbl_summary` objects may be stacked and merged with `tbl_stack()` and `tbl_merge()` (#230, #255)
 
@@ -153,7 +212,7 @@
 
 * New `show_single_row` argument in `tbl_regression()` and `tbl_uvregression()` allows any binary variable to be printed on a single row.  Previous argument `show_yesno` is now deprecated. (#220)
 
-## Documentation 
+### Documentation 
 
 * Added a gallery of tables possible by merging, stacking, and modifying {gtsummary} arguments (#258)
 
@@ -161,7 +220,7 @@
 
 * Added {lifecycle} badges to mark deprecated and experimental functions (#225)
 
-## Other Updates
+### Other Updates
 
 * The `by = ` column in `tbl_summary()` now has missing variables dropped rather than halting with error (#279)
 

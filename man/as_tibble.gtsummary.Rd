@@ -42,7 +42,7 @@ Function converts gtsummary objects tibbles. The formatting stored in
 \examples{
 tbl <-
   trial \%>\%
-  dplyr::select(trt, age, grade, response) \%>\%
+  select(trt, age, grade, response) \%>\%
   tbl_summary(by = trt)
 
 as_tibble(tbl)
@@ -54,6 +54,7 @@ as_tibble(tbl, col_labels = FALSE)
 Other gtsummary output types: 
 \code{\link{as_flextable}()},
 \code{\link{as_gt}()},
+\code{\link{as_huxtable.gtsummary}()},
 \code{\link{as_kable_extra}()},
 \code{\link{as_kable}()}
 }

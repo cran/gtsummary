@@ -10,7 +10,7 @@
   prob = NULL,
   level = NULL,
   estimate_fun = NULL,
-  pvalue_fun = function(x) style_pvalue(x, prepend_p = TRUE),
+  pvalue_fun = NULL,
   ...
 )
 }
@@ -79,7 +79,9 @@ Other tbl_summary tools:
 \code{\link{add_stat_label}()},
 \code{\link{bold_italicize_labels_levels}},
 \code{\link{inline_text.tbl_summary}()},
+\code{\link{modify_footnote}()},
 \code{\link{modify_header}()},
+\code{\link{modify_spanning_header}()},
 \code{\link{tbl_merge}()},
 \code{\link{tbl_stack}()},
 \code{\link{tbl_summary}()}

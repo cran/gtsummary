@@ -4,7 +4,7 @@
 \alias{combine_terms}
 \title{Combine terms in a regression model}
 \usage{
-combine_terms(x, formula_update, label = NULL, ...)
+combine_terms(x, formula_update, label = NULL, quiet = NULL, ...)
 }
 \arguments{
 \item{x}{a \code{tbl_regression} object}
@@ -16,6 +16,9 @@ group of removed terms.  See the \link[stats:update]{stats::update} help file fo
 function's \verb{formula.=} argument}
 
 \item{label}{Option string argument labeling the combined rows}
+
+\item{quiet}{Logical indicating whether to print messages in console. Default is
+\code{FALSE}}
 
 \item{...}{Additional arguments passed to \link[stats:anova]{stats::anova}}
 }
@@ -44,6 +47,7 @@ with a single row in the output table.  The p-value is calculated using
 }
 
 \examples{
+# Example 1 ----------------------------------
 # fit model with nonlinear terms for marker
 nlmod1 <- lm(
   age ~ marker + I(marker^2) + grade,
@@ -58,8 +62,9 @@ combine_terms_ex1 <-
     label = "Marker (non-linear terms)"
   )
 
+# Example 2 ----------------------------------
 # Example with Cubic Splines
-library(Hmisc)
+library(Hmisc, warn.conflicts = FALSE, quietly = TRUE)
 mod2 <- lm(
   age ~ rcspline.eval(marker, inclx = TRUE) + grade,
   trial[c("age", "marker", "grade")] \%>\% na.omit() # keep complete cases only!
@@ -72,6 +77,7 @@ combine_terms_ex2 <-
     label = "Marker (non-linear terms)"
   )
 
+# Example 3 ----------------------------------
 # Logistic Regression Example, LRT p-value
 combine_terms_ex3 <-
   glm(
@@ -95,7 +101,9 @@ Other tbl_regression tools:
 \code{\link{add_q}()},
 \code{\link{bold_italicize_labels_levels}},
 \code{\link{inline_text.tbl_regression}()},
+\code{\link{modify_footnote}()},
 \code{\link{modify_header}()},
+\code{\link{modify_spanning_header}()},
 \code{\link{tbl_merge}()},
 \code{\link{tbl_regression}()},
 \code{\link{tbl_stack}()}

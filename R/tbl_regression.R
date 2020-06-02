@@ -64,24 +64,23 @@
 #' @export
 #' @return A `tbl_regression` object
 #' @examples
+#' # Example 1 ----------------------------------
 #' library(survival)
 #' tbl_regression_ex1 <-
 #'   coxph(Surv(ttdeath, death) ~ age + marker, trial) %>%
 #'   tbl_regression(exponentiate = TRUE)
 #'
+#' # Example 2 ----------------------------------
 #' tbl_regression_ex2 <-
 #'   glm(response ~ age + grade, trial, family = binomial(link = "logit")) %>%
 #'   tbl_regression(exponentiate = TRUE)
 #'
-#' library(lme4)
+#' # Example 3 ----------------------------------
+#' library(lme4, warn.conflicts = FALSE, quietly = TRUE)
 #' tbl_regression_ex3 <-
 #'   glmer(am ~ hp + (1 | gear), mtcars, family = binomial) %>%
 #'   tbl_regression(exponentiate = TRUE)
 #'
-#' # for convenience, you can also pass named lists to any arguments
-#' # that accept formulas (e.g label, etc.)
-#' glm(response ~ age + grade, trial, family = binomial(link = "logit")) %>%
-#'   tbl_regression(exponentiate = TRUE, label = list(age = "Patient Age"))
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
@@ -125,16 +124,23 @@ tbl_regression <- function(x, label = NULL, exponentiate = FALSE,
   # setting defaults -----------------------------------------------------------
   pvalue_fun <-
     pvalue_fun %||%
+    get_theme_element("tbl_regression-arg:pvalue_fun") %||%
+    get_theme_element("pkgwide-fn:pvalue_fun") %||%
     getOption("gtsummary.pvalue_fun", default = style_pvalue)
   estimate_fun <-
     estimate_fun %||%
+    get_theme_element("tbl_regression-arg:estimate_fun") %||%
     getOption(
       "gtsummary.tbl_regression.estimate_fun",
       default = ifelse(exponentiate == TRUE, style_ratio, style_sigfig)
     )
   conf.level <-
     conf.level %||%
+    get_theme_element("tbl_regression-arg:conf.level") %||%
     getOption("gtsummary.conf.level", default = 0.95)
+  tidy_fun <-
+    tidy_fun %||%
+    get_theme_element("tbl_regression-arg:tidy_fun")
 
   # checking estimate_fun and pvalue_fun are functions
   if (!purrr::every(list(estimate_fun, pvalue_fun, tidy_fun %||% pvalue_fun), is.function)) {
@@ -226,6 +232,13 @@ tbl_regression <- function(x, label = NULL, exponentiate = FALSE,
     table_header_fill_missing() %>%
     table_header_fmt_fun(estimate = estimate_fun)
 
+  if ("N" %in% names(table_body)) {
+    table_header <-
+      table_header_fmt_fun(
+        table_header,
+        N = function(x) ifelse(is.na(x), NA_character_, sprintf("%.0f", x))
+      )
+  }
   if ("p.value" %in% names(table_body)) {
     table_header <- table_header_fmt_fun(table_header, p.value = pvalue_fun)
   }
@@ -333,7 +346,10 @@ estimate_header <- function(x, exponentiate) {
     attr(header, "footnote") <- "HR = Hazard Ratio"
   }
   else {
-    header <- ifelse(exponentiate == TRUE, "exp(Beta)", "Beta")
+    header <-
+      get_theme_element("tbl_regression-str:coef_header") %||%
+      ifelse(exponentiate == TRUE, "exp(Beta)", "Beta") %>%
+      as.character()
   }
 
   header

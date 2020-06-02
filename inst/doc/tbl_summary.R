@@ -14,7 +14,7 @@ head(trial)
 ## -----------------------------------------------------------------------------
 trial2 =
   trial %>%
-  dplyr::select(trt, marker, stage)
+  select(trt, marker, stage)
 
 ## ---- message=FALSE-----------------------------------------------------------
 tbl_summary(trial2)
@@ -65,7 +65,7 @@ trial2 %>%
 
 ## -----------------------------------------------------------------------------
 trial %>%
-  dplyr::select(trt, response, age, stage, marker, grade) %>%
+  select(trt, response, age, stage, marker, grade) %>%
   tbl_summary(
     by = trt,
     type = list(c(response, grade) ~ "categorical"), # select by variables in c()
@@ -86,26 +86,4 @@ tbl_summary(trial2, by = trt) %>%
   as_gt(include = -tab_footnote) %>%
   gt::tab_spanner(label = gt::md("**Treatment Group**"),
                   columns = gt::starts_with("stat_"))
-
-## ---- eval=FALSE--------------------------------------------------------------
-#  help("Rprofile")
-#  
-#  usethis::edit_r_profile()
-
-## ---- echo=FALSE--------------------------------------------------------------
-data.frame(
-  `Description` = c("Formatting and rounding p-values", 
-                    "Formatting and rounding percentages",
-                    "Print tables with `gt` or `kable`"),
-  `Example` = c("`options(gtsummary.pvalue_fun = function(x) gtsummary::style_pvalue(x, digits = 2))`",
-                '`options(gtsummary.tbl_summary.percent_fun = function(x) sprintf("%.2f", 100 * x))`',
-                '`options(gtsummary.print_engine = "kable")`   `options(gtsummary.print_engine = "gt")`'),
-  `Functions` = c("`add_p()`, `tbl_regression()`, `tbl_uvregression()`",
-                  "`tbl_summary()`",
-                  "All `tbl_*()` functions")
-) %>% 
-  knitr::kable()
-
-## ----eval=FALSE---------------------------------------------------------------
-#  options(gtsummary.tbl_summary.percent_fun = function(x) sigfig(x, digits = 3))
 

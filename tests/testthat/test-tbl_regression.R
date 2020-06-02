@@ -1,4 +1,5 @@
 context("test-tbl_regression")
+testthat::skip_on_cran()
 library(survival)
 library(lme4)
 
@@ -79,6 +80,7 @@ test_that("tbl_regression creates errors when non-function in input", {
   )
 })
 
+
 test_that("tbl_regression creates errors when inputs are wrong", {
   expect_error(
     tbl_regression(mod_lm_interaction, label = "Age"),
@@ -97,7 +99,6 @@ test_that("tbl_regression creates errors when inputs are wrong", {
     "*"
   )
 })
-
 
 test_that("No errors/warnings when data is labelled using Hmisc", {
   expect_error(tbl_regression(cox_hmisclbl), NA)
@@ -141,6 +142,32 @@ test_that("Testing lme4 results", {
   expect_equivalent(
     coef(mod_glmer)[[1]] %>% {.[1, 2:ncol(.)]} %>% map_dbl(exp),
     tbl_lme4$table_body %>% pull(estimate) %>% discard(is.na)
+  )
+})
+
+
+test_that("Interaction modifications", {
+  # no error with interaction
+  expect_error(
+    tbl_i <- lm(age ~ factor(response) * marker, trial) %>%
+      tbl_regression(
+        show_single_row = `factor(response):marker`,
+        label = `factor(response):marker` ~ "Interaction"
+      ),
+    NA
+  )
+
+  # checking modifications to table
+  expect_equal(
+    dplyr::filter(tbl_i$table_body, variable == "factor(response):marker") %>%
+      dplyr::pull(label),
+    "Interaction"
+  )
+
+  expect_equal(
+    dplyr::filter(tbl_i$table_body, variable == "factor(response):marker") %>%
+      nrow(),
+    1L
   )
 })
 

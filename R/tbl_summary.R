@@ -17,9 +17,9 @@
 #' attribute label is `NULL`, the variable name will be used.
 #' @param type List of formulas specifying variable types. Accepted values
 #' are `c("continuous", "categorical", "dichotomous")`,
-#' e.g. `type = list(starts_with(age) ~ "continuous", female ~ "dichotomous")`.
+#' e.g. `type = list(age ~ "continuous", female ~ "dichotomous")`.
 #' If type not specified for a variable, the function
-#' will default to an appropriate summary type.  See below for details.
+#' will default to an appropriate summary type. See below for details.
 #' @param value List of formulas specifying the value to display for dichotomous
 #' variables.  See below for details.
 #' @param statistic List of formulas specifying types of summary statistics to
@@ -45,6 +45,7 @@
 #' e.g. `sort = list(everything() ~ "frequency")`
 #' @param percent Indicates the type of percentage to return. Must be one of
 #' `"column"`, `"row"`, or `"cell"`. Default is `"column"`.
+#' @param include variables to include in the summary table. Default is `everything()`
 #' @param group DEPRECATED. Migrated to [add_p]
 #'
 #' @section select helpers:
@@ -90,6 +91,21 @@
 #'   \item `{foo}` any function of the form `foo(x)` is accepted where `x` is a numeric vector
 #' }
 #'
+#' For both categorical and continuous variables, statistics on the number of
+#' missing and non-missing observations and their proportions are available to
+#' display.
+#' \itemize{
+#'   \item `{N_obs}` total number of observations
+#'   \item `{N_miss}` number of missing observations
+#'   \item `{N_nonmiss}` number of non-missing observations
+#'   \item `{p_miss}` percentage of observations missing
+#'   \item `{p_nonmiss}` percentage of observations not missing
+#' }
+#'
+#' Note that for categorical variables, `{N_obs}`, `{N_miss}` and `{N_nonmiss}` refer
+#' to the total number, number missing and number non missing observations
+#' in the denominator, not at each level of the categorical variable.
+#'
 #' @section type argument:
 #' tbl_summary displays summary statistics for three types of data:
 #' continuous, categorical, and dichotomous. If the type is not specified,
@@ -103,13 +119,16 @@
 #' @export
 #' @return A `tbl_summary` object
 #' @family tbl_summary tools
-#' @seealso See tbl_summary \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html}{vignette} for detailed examples
+#' @seealso See tbl_summary \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html}{vignette} for detailed tutorial
+#' @seealso See \href{http://www.danieldsjoberg.com/gtsummary/articles/gallery.html}{table gallery} for additional examples
 #' @author Daniel D. Sjoberg
 #' @examples
+#' # Example 1 ----------------------------------
 #' tbl_summary_ex1 <-
 #'   trial[c("age", "grade", "response")] %>%
 #'   tbl_summary()
 #'
+#' # Example 2 ----------------------------------
 #' tbl_summary_ex2 <-
 #'   trial[c("age", "grade", "response", "trt")] %>%
 #'   tbl_summary(
@@ -119,6 +138,7 @@
 #'     digits = list(age ~ c(0, 1))
 #'   )
 #'
+#' # Example 3 ----------------------------------
 #' # for convenience, you can also pass named lists to any arguments
 #' # that accept formulas (e.g label, digits, etc.)
 #' tbl_summary_ex3 <-
@@ -142,21 +162,37 @@
 
 tbl_summary <- function(data, by = NULL, label = NULL, statistic = NULL,
                         digits = NULL, type = NULL, value = NULL,
-                        missing = c("ifany", "always", "no"),
-                        missing_text = "Unknown", sort = NULL,
-                        percent = c("column", "row", "cell"), group = NULL) {
+                        missing = NULL, missing_text = NULL, sort = NULL,
+                        percent = NULL, include = everything(), group = NULL) {
+  # eval -----------------------------------------------------------------------
+  include <- select(data, {{ include }}) %>% names()
+
+  # setting defaults from gtsummary theme --------------------------------------
+  label <- label %||% get_theme_element("tbl_summary-arg:label")
+  statistic <- statistic %||% get_theme_element("tbl_summary-arg:statistic")
+  digits <- digits %||% get_theme_element("tbl_summary-arg:digits")
+  type <- type %||% get_theme_element("tbl_summary-arg:type")
+  value <- value %||% get_theme_element("tbl_summary-arg:value")
+  missing <- missing %||% get_theme_element("tbl_summary-arg:missing",
+                                            default = "ifany")
+  missing_text <- missing_text %||% get_theme_element("tbl_summary-arg:missing_text",
+                                                      default = "Unknown")
+  sort <- sort %||% get_theme_element("tbl_summary-arg:sort")
+  percent <- percent %||% get_theme_element("tbl_summary-arg:percent",
+                                            default = "column")
+  # ungrouping data ------------------------------------------------------------
+  data <- data %>% ungroup()
 
   # converting bare arguments to string ----------------------------------------
   by <- var_input_to_string(data = data, select_input = !!rlang::enquo(by),
                             arg_name = "by", select_single = TRUE)
 
   # matching arguments ---------------------------------------------------------
-  missing <- match.arg(missing)
-  percent <- match.arg(percent)
+  missing <- match.arg(missing, choices = c("ifany", "always", "no"))
+  percent <- match.arg(percent, choices = c("column", "row", "cell"))
 
-  # ungrouping data ------------------------------------------------------------
+  # checking input data --------------------------------------------------------
   tbl_summary_data_checks(data)
-  data <- data %>% ungroup()
 
   # removing orderered class from factor by variables --------------------------
   if (!is.null(by) && inherits(data[[by]], "ordered") && inherits(data[[by]], "factor")) {
@@ -178,6 +214,8 @@ tbl_summary <- function(data, by = NULL, label = NULL, statistic = NULL,
     for (i in names(lbls)) {
       attr(data[[i]], "label") <- lbls[[i]]
     }
+
+    rm(lbls, i)
   }
 
   # deprecation note about group -----------------------------------------------
@@ -194,12 +232,13 @@ tbl_summary <- function(data, by = NULL, label = NULL, statistic = NULL,
   tbl_summary_inputs <- as.list(environment())
 
   # removing variables with unsupported variable types from data ---------------
+  data <- select(data, !!include)
   classes_expected <- c("character", "factor", "numeric", "logical", "integer", "difftime")
   var_to_remove <-
     map_lgl(data, ~ class(.x) %in% classes_expected %>% any()) %>%
     discard(. == TRUE) %>%
     names()
-  data <- dplyr::select(data, -var_to_remove)
+  data <- select(data, -var_to_remove)
   if (length(var_to_remove) > 0) {
     message(glue(
       "Column(s) {glue_collapse(paste(sQuote(var_to_remove)), sep = ', ', last = ', and ')} ",
@@ -268,24 +307,13 @@ tbl_summary <- function(data, by = NULL, label = NULL, statistic = NULL,
       ),
       sort = assign_sort(.data$variable, .data$summary_type, sort),
       df_stats = pmap(
-        list(.data$summary_type, .data$variable, .data$class, .data$dichotomous_value,
+        list(.data$summary_type, .data$variable,
+             .data$class, .data$dichotomous_value,
              .data$sort, .data$stat_display, .data$digits),
-        function(summary_type, variable, class, dichotomous_value, sort, stat_display, digits) {
-          switch(
-            summary_type,
-            "continuous" = summarize_continuous(data = data, variable = variable,
-                                                 by = by, stat_display = stat_display,
-                                                 digits = digits),
-            "categorical" = summarize_categorical(data = data, variable = variable,
-                                                   by = by, class = class,
-                                                   dichotomous_value = dichotomous_value,
-                                                   sort = sort, percent = percent),
-            "dichotomous" = summarize_categorical(data = data, variable = variable,
-                                                   by = by, class = class,
-                                                   dichotomous_value = dichotomous_value,
-                                                   sort = sort, percent = percent)
-          )
-        }
+        ~ df_stats_fun(summary_type = ..1, variable = ..2,
+                       class = ..3, dichotomous_value = ..4,
+                       sort = ..5, stat_display = ..6, digits = ..7,
+                       data = data, by = by, percent = percent)
       )
     )
 
@@ -313,9 +341,12 @@ tbl_summary <- function(data, by = NULL, label = NULL, statistic = NULL,
     tibble(column = names(table_body)) %>%
     table_header_fill_missing() %>%
     mutate(
-      footnote = ifelse(startsWith(.data$column, "stat_"),
-                        footnote_stat_label(meta_data),
-                        .data$footnote)
+      # adding footnote of statistics on display (unless theme indicates a no print)
+      footnote = ifelse(
+        startsWith(.data$column, "stat_"),
+        footnote_stat_label(meta_data),
+        .data$footnote
+      )
     )
 
   # returning all results in a list --------------------------------------------

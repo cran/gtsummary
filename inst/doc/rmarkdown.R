@@ -18,7 +18,7 @@ path_figure <- list(
 
 # making table with gt
 list(
-  printer = c("gt", "kable", "flextable", "kableExtra", "tibble"),
+  printer = c("gt", "kable", "flextable", "kableExtra", "huxtable", "tibble"),
   output = c("HTML", "PDF", "RTF", "Word")
 ) %>%
   purrr::cross_df() %>%
@@ -32,6 +32,7 @@ list(
       printer == "flextable" & output == "RTF" ~ 4, # not supported
       printer == "kableExtra" & output %in% c("PDF", "HTML") ~ 1, # good output
       printer == "kableExtra" & output %in% c("RTF", "Word") ~ 4, # not supported
+      printer == "huxtable" ~ 1, # good output
       printer == "tibble" ~ 3 # not great
     ) %>%
       factor()
@@ -47,14 +48,17 @@ list(
         "[flextable](https://davidgohel.github.io/flextable/articles/overview.html)",
       printer == "kableExtra" ~ 
         "[kableExtra](http://haozhu233.github.io/kableExtra/)",
+      printer == "huxtable" ~ 
+        "[huxtable](https://hughjonesd.github.io/huxtable/)",
       printer == "tibble" ~ 
         "[tibble](https://tibble.tidyverse.org/)"
-    ),
+    ),  
     fns = dplyr::case_when(
       printer == "gt" ~ "`as_gt()`",
       printer == "kable" ~ "`as_kable()`",
       printer == "flextable" ~ "`as_flextable()`",
       printer == "kableExtra" ~ "`as_kable_extra()`",
+      printer == "huxtable" ~ "`as_huxtable()`",
       printer == "tibble" ~ "`as_tibble()`"
     )
   ) %>%

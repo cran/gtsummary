@@ -100,6 +100,7 @@ depending on the stratum.  Other quantities available to print are:
 }
 
 \examples{
+# Example 1 ----------------------------------
 library(survival)
 fit1 <- survfit(Surv(ttdeath, death) ~ trt, trial)
 tbl_strata_ex1 <-
@@ -109,6 +110,7 @@ tbl_strata_ex1 <-
     label = "{time} Months"
   )
 
+# Example 2 ----------------------------------
 fit2 <- survfit(Surv(ttdeath, death) ~ 1, trial)
 tbl_nostrata_ex2 <-
   tbl_survival(
@@ -119,8 +121,7 @@ tbl_nostrata_ex2 <-
 }
 \seealso{
 Other tbl_survival tools: 
-\code{\link{inline_text.tbl_survival}()},
-\code{\link{modify_header}()}
+\code{\link{inline_text.tbl_survival}()}
 }
 \author{
 Daniel D. Sjoberg

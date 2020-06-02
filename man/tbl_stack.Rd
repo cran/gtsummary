@@ -4,10 +4,13 @@
 \alias{tbl_stack}
 \title{Stacks two or more gtsummary objects}
 \usage{
-tbl_stack(tbls)
+tbl_stack(tbls, group_header = NULL)
 }
 \arguments{
 \item{tbls}{List of gtsummary objects}
+
+\item{group_header}{Character vector with table headers where length matches
+the length of \verb{tbls=}}
 }
 \value{
 A \code{tbl_stack} object
@@ -30,7 +33,8 @@ table.
 }
 
 \examples{
-# Example 1 - stacking two tbl_regression objects
+# Example 1 ----------------------------------
+# stacking two tbl_regression objects
 t1 <-
   glm(response ~ trt, trial, family = binomial) \%>\%
   tbl_regression(
@@ -48,7 +52,8 @@ t2 <-
 
 tbl_stack_ex1 <- tbl_stack(list(t1, t2))
 
-# Example 2 - stacking two tbl_merge objects
+# Example 2 ----------------------------------
+# stacking two tbl_merge objects
 library(survival)
 t3 <-
   coxph(Surv(ttdeath, death) ~ trt, trial) \%>\%
@@ -70,7 +75,7 @@ t4 <-
 row1 <- tbl_merge(list(t1, t3), tab_spanner = c("Tumor Response", "Death"))
 row2 <- tbl_merge(list(t2, t4))
 tbl_stack_ex2 <-
-  tbl_stack(list(row1, row2))
+  tbl_stack(list(row1, row2), group_header = c("Unadjusted Analysis", "Adjusted Analysis"))
 }
 \seealso{
 \link{tbl_merge}
@@ -84,7 +89,9 @@ Other tbl_summary tools:
 \code{\link{bold_italicize_labels_levels}},
 \code{\link{inline_text.tbl_summary}()},
 \code{\link{inline_text.tbl_survfit}()},
+\code{\link{modify_footnote}()},
 \code{\link{modify_header}()},
+\code{\link{modify_spanning_header}()},
 \code{\link{tbl_merge}()},
 \code{\link{tbl_summary}()}
 
@@ -95,7 +102,9 @@ Other tbl_regression tools:
 \code{\link{bold_italicize_labels_levels}},
 \code{\link{combine_terms}()},
 \code{\link{inline_text.tbl_regression}()},
+\code{\link{modify_footnote}()},
 \code{\link{modify_header}()},
+\code{\link{modify_spanning_header}()},
 \code{\link{tbl_merge}()},
 \code{\link{tbl_regression}()}
 
@@ -105,7 +114,9 @@ Other tbl_uvregression tools:
 \code{\link{add_q}()},
 \code{\link{bold_italicize_labels_levels}},
 \code{\link{inline_text.tbl_uvregression}()},
+\code{\link{modify_footnote}()},
 \code{\link{modify_header}()},
+\code{\link{modify_spanning_header}()},
 \code{\link{tbl_merge}()},
 \code{\link{tbl_uvregression}()}
 }

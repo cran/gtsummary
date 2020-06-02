@@ -12,6 +12,8 @@ geeglm
 geepack
 glm
 glmer
+huxtable
+JAMA
 kable
 kableExtra
 Kaplan
@@ -36,6 +38,7 @@ SHA
 sig
 survfit
 tbl
+th
 tibble
 tibbles
 tidiers

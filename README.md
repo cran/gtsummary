@@ -104,7 +104,7 @@ Example basic table:
 ``` r
 library(gtsummary)
 # make dataset with a few variables to summarize
-trial2 <- trial %>% dplyr::select(trt, age, grade, response)
+trial2 <- trial %>% select(trt, age, grade, response)
 
 # summarize the data with our package
 table1 <- tbl_summary(trial2)
@@ -119,13 +119,15 @@ table. See the
 tutorial for many more options, or below for one example.
 
 ``` r
-table2 <- tbl_summary(
-  trial2,
-  by = trt, # split table by group
-  missing = "no" # don't list missing data separately
-) %>%
+table2 <- 
+  tbl_summary(
+    trial2,
+    by = trt, # split table by group
+    missing = "no" # don't list missing data separately
+  ) %>%
   add_n() %>% # add column with total number of non-missing observations
-  add_p() %>% # test if there's difference between groups
+  add_p() %>% # test for a difference between groups
+  modify_header(label = "**Variable**") %>% # update the column header
   bold_labels() 
 ```
 
@@ -197,23 +199,33 @@ By contributing to this project, you agree to abide by its terms. A big
 thank you to all contributors\!  
 [@ablack3](https://github.com/ablack3),
 [@ahinton-mmc](https://github.com/ahinton-mmc),
+[@barthelmes](https://github.com/barthelmes),
+[@calebasaraba](https://github.com/calebasaraba),
+[@davidgohel](https://github.com/davidgohel),
 [@davidkane9](https://github.com/davidkane9),
+[@dax44](https://github.com/dax44),
 [@ddsjoberg](https://github.com/ddsjoberg),
 [@emilyvertosick](https://github.com/emilyvertosick),
 [@GuiMarthe](https://github.com/GuiMarthe),
+[@hughjonesd](https://github.com/hughjonesd),
 [@jeanmanguy](https://github.com/jeanmanguy),
 [@jennybc](https://github.com/jennybc),
 [@jflynn264](https://github.com/jflynn264),
+[@joelgautschi](https://github.com/joelgautschi),
 [@jwilliman](https://github.com/jwilliman),
 [@karissawhiting](https://github.com/karissawhiting),
+[@khizzr](https://github.com/khizzr),
+[@larmarange](https://github.com/larmarange),
 [@leejasme](https://github.com/leejasme),
 [@ltin1214](https://github.com/ltin1214),
 [@margarethannum](https://github.com/margarethannum),
 [@michaelcurry1123](https://github.com/michaelcurry1123),
+[@moleps](https://github.com/moleps),
 [@MyKo101](https://github.com/MyKo101),
 [@oranwutang](https://github.com/oranwutang),
 [@ryzhu75](https://github.com/ryzhu75),
 [@sammo3182](https://github.com/sammo3182),
+[@simonpcouch](https://github.com/simonpcouch),
 [@slobaugh](https://github.com/slobaugh),
 [@tormodb](https://github.com/tormodb), and
 [@zabore](https://github.com/zabore)
