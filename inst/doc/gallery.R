@@ -183,8 +183,10 @@ tbl_merge(list(gt_sum, tbl_reg))  %>%
 my_tidy <- function(x, exponentiate =  FALSE, conf.level = 0.95, ...) {
   dplyr::bind_cols(
     broom::tidy(x, exponentiate = exponentiate, conf.int = FALSE),
-    broom::confint_tidy(x, func = stats::confint.default, conf.level = conf.level)
-  )
+    # calculate the confidence intervals, and save them in a tibble
+    stats::confint.default(x) %>%
+      tibble::as_tibble() %>%
+      rlang::set_names(c("conf.low", "conf.high"))  )
 }
 
 lm(age ~ grade + marker, trial) %>%
