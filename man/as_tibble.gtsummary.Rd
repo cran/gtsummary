@@ -20,7 +20,7 @@
 \item{include}{Commands to include in output. Input may be a vector of
 quoted or unquoted names. tidyselect and gtsummary select helper
 functions are also accepted.
-Default is \code{everything()}, which includes all commands in \code{x$kable_calls}.}
+Default is \code{everything()}.}
 
 \item{col_labels}{Logical argument adding column labels to output tibble.
 Default is \code{TRUE}.}
@@ -36,8 +36,7 @@ as a list of expressions.}
 a \link[tibble:tibble-package]{tibble}
 }
 \description{
-Function converts gtsummary objects tibbles. The formatting stored in
-\code{x$kable_calls} is applied.
+Function converts a gtsummary object to a tibble.
 }
 \examples{
 tbl <-
@@ -52,8 +51,9 @@ as_tibble(tbl, col_labels = FALSE)
 }
 \seealso{
 Other gtsummary output types: 
-\code{\link{as_flextable}()},
+\code{\link{as_flex_table}()},
 \code{\link{as_gt}()},
+\code{\link{as_hux_table}()},
 \code{\link{as_kable_extra}()},
 \code{\link{as_kable}()}
 }

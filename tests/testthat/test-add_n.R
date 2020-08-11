@@ -32,3 +32,48 @@ test_that("no errors/warnings with standard use", {
   ), NA)
 })
 
+
+test_that("no errors/warnings with standard use for tbl_svysummary", {
+  t <- trial %>%
+    survey::svydesign(data = ., ids = ~ 1, weights = ~ 1) %>%
+    tbl_svysummary(by = trt)
+
+  expect_error(t %>% add_n(), NA)
+  expect_warning(t %>% add_n(), NA)
+
+  expect_error(t %>% add_n(last = TRUE), NA)
+  expect_warning(t %>% add_n(last = TRUE), NA)
+
+  t <- Titanic %>%
+    as.data.frame() %>%
+    survey::svydesign(data = ., ids = ~ 1, weights = ~ Freq) %>%
+    tbl_svysummary(by = Survived)
+
+  expect_error(t %>% add_n(
+    statistic = "{N}{n}{n_miss}{p}{p_miss}",
+    footnote = TRUE
+  ), NA)
+  expect_warning(t %>% add_n(
+    statistic = "{N}{n}{n_miss}{p}{p_miss}",
+    footnote = TRUE
+  ), NA)
+})
+
+
+# add_nevent.tbl_surfit --------------------------------------------------------
+
+test_that("add_n.tbl_surfit", {
+  library(survival)
+
+  tbl_survfit <-
+    list(
+      survfit(Surv(ttdeath, death) ~ 1, trial),
+      survfit(Surv(ttdeath, death) ~ trt, trial)
+    ) %>%
+    tbl_survfit(times = c(12, 24))
+
+  expect_error(
+    add_n(tbl_survfit),
+    NA
+  )
+})

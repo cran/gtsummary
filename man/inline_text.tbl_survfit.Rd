@@ -8,8 +8,10 @@
   x,
   time = NULL,
   prob = NULL,
+  variable = NULL,
   level = NULL,
-  estimate_fun = NULL,
+  pattern = x$inputs$statistic,
+  estimate_fun = x$inputs$estimate_fun,
   pvalue_fun = NULL,
   ...
 )
@@ -21,8 +23,12 @@
 
 \item{prob}{probability with values in (0,1)}
 
+\item{variable}{Variable name of statistic to present.}
+
 \item{level}{Level of the variable to display for categorical variables.
 Can also specify the 'Unknown' row.  Default is \code{NULL}}
+
+\item{pattern}{String indicating the statistics to return.}
 
 \item{estimate_fun}{Function to round and format coefficient estimates.
 Default is \link{style_sigfig} when the coefficients are not transformed, and
@@ -72,16 +78,14 @@ inline_text(tbl2, prob = 0.5)
 }
 \seealso{
 Other tbl_summary tools: 
-\code{\link{add_n}()},
+\code{\link{add_n.tbl_summary}()},
 \code{\link{add_overall}()},
 \code{\link{add_p.tbl_summary}()},
 \code{\link{add_q}()},
 \code{\link{add_stat_label}()},
 \code{\link{bold_italicize_labels_levels}},
 \code{\link{inline_text.tbl_summary}()},
-\code{\link{modify_footnote}()},
-\code{\link{modify_header}()},
-\code{\link{modify_spanning_header}()},
+\code{\link{modify}},
 \code{\link{tbl_merge}()},
 \code{\link{tbl_stack}()},
 \code{\link{tbl_summary}()}

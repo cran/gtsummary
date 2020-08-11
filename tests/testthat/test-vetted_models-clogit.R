@@ -61,13 +61,13 @@ test_that("vetted_models clogit()", {
     tbl_clogit_lin$table_body %>%
       filter(row_type == "label") %>%
       pull(label),
-    c("Age, yrs", "Chemotherapy Treatment", "Grade")
+    c("Age", "Chemotherapy Treatment", "Grade")
   )
   expect_equivalent(
     tbl_clogit_int$table_body %>%
       filter(row_type == "label") %>%
       pull(label),
-    c("Age, yrs", "Chemotherapy Treatment", "Grade", "Chemotherapy Treatment * Grade")
+    c("Age", "Chemotherapy Treatment", "Grade", "Chemotherapy Treatment * Grade")
   )
   # 2.  If applicable, runs as expected with logit and log link
   expect_equivalent(
@@ -108,7 +108,7 @@ test_that("vetted_models clogit()", {
   }
 
   expect_error(
-    tbl_clogit_lin4 <- tbl_clogit_lin %>% add_nevent(), "*"
+    tbl_clogit_lin4 <- tbl_clogit_lin %>% add_nevent(), NULL
   )
   #       - numbers in table are correct
   # clogit models fail in car::Anova on old versions

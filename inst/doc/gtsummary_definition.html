@@ -14,6 +14,22 @@
 
 <title>Definition of a gtsummary Object</title>
 
+<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
+// v0.0.1
+// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+
+document.addEventListener('DOMContentLoaded', function() {
+  const codeList = document.getElementsByClassName("sourceCode");
+  for (var i = 0; i < codeList.length; i++) {
+    var linkList = codeList[i].getElementsByTagName('a');
+    for (var j = 0; j < linkList.length; j++) {
+      if (linkList[j].innerHTML === "") {
+        linkList[j].setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+});
+</script>
 
 
 <style type="text/css">code{white-space: pre;}</style>
@@ -309,16 +325,17 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <p>Every {gtsummary} object has a few characteristics common among all objects. Here, we review those characteristics, and provide instructions on how to construct a {gtsummary} object.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">library</span>(gtsummary)</span>
 <span id="cb1-2"><a href="#cb1-2"></a><span class="kw">library</span>(purrr); <span class="kw">library</span>(dplyr); <span class="kw">library</span>(tibble)</span>
-<span id="cb1-3"><a href="#cb1-3"></a></span>
-<span id="cb1-4"><a href="#cb1-4"></a>tbl_regression_ex &lt;-</span>
-<span id="cb1-5"><a href="#cb1-5"></a><span class="st">  </span><span class="kw">lm</span>(age <span class="op">~</span><span class="st"> </span>grade <span class="op">+</span><span class="st"> </span>marker, trial) <span class="op">%&gt;%</span></span>
-<span id="cb1-6"><a href="#cb1-6"></a><span class="st">  </span><span class="kw">tbl_regression</span>() <span class="op">%&gt;%</span></span>
-<span id="cb1-7"><a href="#cb1-7"></a><span class="st">  </span><span class="kw">bold_p</span>(<span class="dt">t =</span> <span class="fl">0.5</span>) </span>
-<span id="cb1-8"><a href="#cb1-8"></a></span>
-<span id="cb1-9"><a href="#cb1-9"></a>tbl_summary_ex &lt;-</span>
-<span id="cb1-10"><a href="#cb1-10"></a><span class="st">  </span>trial <span class="op">%&gt;%</span></span>
-<span id="cb1-11"><a href="#cb1-11"></a><span class="st">  </span><span class="kw">select</span>(trt, age, grade, response) <span class="op">%&gt;%</span></span>
-<span id="cb1-12"><a href="#cb1-12"></a><span class="st">  </span><span class="kw">tbl_summary</span>(<span class="dt">by =</span> trt)</span></code></pre></div>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="co">#&gt; Warning: package &#39;tibble&#39; was built under R version 4.0.2</span></span>
+<span id="cb1-4"><a href="#cb1-4"></a></span>
+<span id="cb1-5"><a href="#cb1-5"></a>tbl_regression_ex &lt;-</span>
+<span id="cb1-6"><a href="#cb1-6"></a><span class="st">  </span><span class="kw">lm</span>(age <span class="op">~</span><span class="st"> </span>grade <span class="op">+</span><span class="st"> </span>marker, trial) <span class="op">%&gt;%</span></span>
+<span id="cb1-7"><a href="#cb1-7"></a><span class="st">  </span><span class="kw">tbl_regression</span>() <span class="op">%&gt;%</span></span>
+<span id="cb1-8"><a href="#cb1-8"></a><span class="st">  </span><span class="kw">bold_p</span>(<span class="dt">t =</span> <span class="fl">0.5</span>) </span>
+<span id="cb1-9"><a href="#cb1-9"></a></span>
+<span id="cb1-10"><a href="#cb1-10"></a>tbl_summary_ex &lt;-</span>
+<span id="cb1-11"><a href="#cb1-11"></a><span class="st">  </span>trial <span class="op">%&gt;%</span></span>
+<span id="cb1-12"><a href="#cb1-12"></a><span class="st">  </span><span class="kw">select</span>(trt, age, grade, response) <span class="op">%&gt;%</span></span>
+<span id="cb1-13"><a href="#cb1-13"></a><span class="st">  </span><span class="kw">tbl_summary</span>(<span class="dt">by =</span> trt)</span></code></pre></div>
 </div>
 <div id="structure-of-a-gtsummary-object" class="section level2">
 <h2>Structure of a {gtsummary} object</h2>
@@ -331,7 +348,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb3-2"><a href="#cb3-2"></a><span class="co">#&gt; # A tibble: 8 x 5</span></span>
 <span id="cb3-3"><a href="#cb3-3"></a><span class="co">#&gt;   variable row_type label          stat_1      stat_2     </span></span>
 <span id="cb3-4"><a href="#cb3-4"></a><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;          &lt;chr&gt;       &lt;chr&gt;      </span></span>
-<span id="cb3-5"><a href="#cb3-5"></a><span class="co">#&gt; 1 age      label    Age, yrs       46 (37, 59) 48 (39, 56)</span></span>
+<span id="cb3-5"><a href="#cb3-5"></a><span class="co">#&gt; 1 age      label    Age            46 (37, 59) 48 (39, 56)</span></span>
 <span id="cb3-6"><a href="#cb3-6"></a><span class="co">#&gt; 2 age      missing  Unknown        7           4          </span></span>
 <span id="cb3-7"><a href="#cb3-7"></a><span class="co">#&gt; 3 grade    label    Grade          &lt;NA&gt;        &lt;NA&gt;       </span></span>
 <span id="cb3-8"><a href="#cb3-8"></a><span class="co">#&gt; 4 grade    level    I              35 (36%)    33 (32%)   </span></span>
@@ -344,6 +361,10 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h4>table_header</h4>
 <p>The <code>.$table_header</code> object is a data frame containing information about each of the columns in <code>.$table_body</code> (one row per column in <code>.$table_body</code>). The table header has the following columns:</p>
 <table>
+<colgroup>
+<col width="7%"></col>
+<col width="92%"></col>
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">Column</th>
@@ -437,13 +458,13 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb5-2"><a href="#cb5-2"></a><span class="st">  </span><span class="kw">pluck</span>(<span class="st">&quot;table_body&quot;</span>) <span class="op">%&gt;%</span></span>
 <span id="cb5-3"><a href="#cb5-3"></a><span class="st">  </span><span class="kw">select</span>(variable, row_type, label)</span>
 <span id="cb5-4"><a href="#cb5-4"></a><span class="co">#&gt; # A tibble: 5 x 3</span></span>
-<span id="cb5-5"><a href="#cb5-5"></a><span class="co">#&gt;   variable row_type label              </span></span>
-<span id="cb5-6"><a href="#cb5-6"></a><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;              </span></span>
-<span id="cb5-7"><a href="#cb5-7"></a><span class="co">#&gt; 1 grade    label    Grade              </span></span>
-<span id="cb5-8"><a href="#cb5-8"></a><span class="co">#&gt; 2 grade    level    I                  </span></span>
-<span id="cb5-9"><a href="#cb5-9"></a><span class="co">#&gt; 3 grade    level    II                 </span></span>
-<span id="cb5-10"><a href="#cb5-10"></a><span class="co">#&gt; 4 grade    level    III                </span></span>
-<span id="cb5-11"><a href="#cb5-11"></a><span class="co">#&gt; 5 marker   label    Marker Level, ng/mL</span></span></code></pre></div>
+<span id="cb5-5"><a href="#cb5-5"></a><span class="co">#&gt;   variable row_type label               </span></span>
+<span id="cb5-6"><a href="#cb5-6"></a><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;               </span></span>
+<span id="cb5-7"><a href="#cb5-7"></a><span class="co">#&gt; 1 grade    label    Grade               </span></span>
+<span id="cb5-8"><a href="#cb5-8"></a><span class="co">#&gt; 2 grade    level    I                   </span></span>
+<span id="cb5-9"><a href="#cb5-9"></a><span class="co">#&gt; 3 grade    level    II                  </span></span>
+<span id="cb5-10"><a href="#cb5-10"></a><span class="co">#&gt; 4 grade    level    III                 </span></span>
+<span id="cb5-11"><a href="#cb5-11"></a><span class="co">#&gt; 5 marker   label    Marker Level (ng/mL)</span></span></code></pre></div>
 <p>The other columns in <code>.$table_body</code> are created by the user and are likely printed in the output. Formatting and printing instructions for these columns is stored in <code>.$table_header</code>.</p>
 </div>
 <div id="table_header-1" class="section level3">

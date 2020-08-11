@@ -18,8 +18,7 @@ path_figure <- list(
 
 # making table with gt
 list(
-  printer = c("gt", "kable", "flextable", "kableExtra", "tibble"),
-  # printer = c("gt", "kable", "flextable", "kableExtra", "huxtable", "tibble"),
+  printer = c("gt", "kable", "flextable", "kableExtra", "huxtable", "tibble"),
   output = c("HTML", "PDF", "RTF", "Word")
 ) %>%
   purrr::cross_df() %>%
@@ -57,9 +56,9 @@ list(
     fns = dplyr::case_when(
       printer == "gt" ~ "`as_gt()`",
       printer == "kable" ~ "`as_kable()`",
-      printer == "flextable" ~ "`as_flextable()`",
+      printer == "flextable" ~ "`as_flex_table()`",
       printer == "kableExtra" ~ "`as_kable_extra()`",
-      printer == "huxtable" ~ "`as_huxtable()`",
+      printer == "huxtable" ~ "`as_hux_table()`",
       printer == "tibble" ~ "`as_tibble()`"
     )
   ) %>%
@@ -134,12 +133,12 @@ tibble::tibble(
 
 ## ---- eval=FALSE--------------------------------------------------------------
 #  tbl_summary(trial) %>%
-#    as_kable()
+#    as_flex_table()
 
 ## ---- echo = FALSE------------------------------------------------------------
 tibble::tibble(
   output = c("**HTML**", "**PDF**", "**RTF**", "**Word**"),
-  default_printer = c("**{gt}**", "**kable**", "**kable**", "**kable**"),
+  default_printer = c("**{gt}**", "**kable**", "**kable**", "**flextable**"),
   desc = c(
     "**{gt}** output is fully supported with **HTML** output.",
     paste("You may force printing with **{gt}** by converting a **{gtsummary}**",
@@ -150,8 +149,9 @@ tibble::tibble(
           "object to **{gt}** with `as_gt()`, e.g. `tbl_summary(trial) %>% as_gt()`.",
           "**RTF** output is under development in the **{gt}** package.",
           "You may get a gorgeous table, but you may also get an error or a malformed table."),
-    paste("**kable** is the default print engine for **Word** output,",
-          "as **{gt}** does not support **Word**.")
+    paste("**{flextable}** is the default print engine for **Word** output,",
+          "as **{gt}** does not support **Word**. If **{flextable}** is not installed,",
+          "**kable** is used.")
   )
 ) %>%
   gt() %>%

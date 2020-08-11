@@ -1,3 +1,69 @@
+# gtsummary 1.3.3
+
+### New Functions
+
+* The {flextable} has graduated from Experimental status! Introducing `as_flex_table()`, which replaces `as_flextable()`. The updated function includes improvements to the default ascetics of the tables, and improved consistency for spanning header rows.
+
+* Added `tbl_svysummary()` function to summarize complex and weighted survey designs. `tbl_svysummary` is now its own class that works with `add_n()`, `add_p()`, `add_q()`, `add_stat_label()`, `add_overall()`, `inline_text()`, `tbl_merge()` and `tbl_stack()` (#460).
+
+* The family of `tbl_survfit()` functions has been greatly expanded! 
+  - `tbl_survfit.survfit()`, `tbl_survfit.list()`, and `tbl_survfit.data.frame()` have been added that accept a single survfit object, list of survfit objects, or a data frame for more flexible creation of univariate survival tables.
+  - `add_p.tbl_survfit()`, `add_n.tbl_survfit()`, `add_nevent.tbl_survfit()` have been added to include additional information in `tbl_survfit()` tables.
+  
+* Adding `as_hux_table()` after the huxtable 5.0.0 release.
+
+* Added `show_header_names()` function to assist when updating table headers, footnotes, and spanning headers. The function prints the current underlying column names along with their labels easing the process of identifying the column names needed to make updates. (#539)
+
+* Added a language theme, `theme_gtsummary_language()` for translating tables into Spanish, French, Portuguese, German, Chinese (Traditional and Simplified), Hindi, Marathi, Gujarati, Japanese and Swedish (#511)
+
+* Added `style_number()`  function which allows for granular control of how numbers are formatted throughout the package. The `style_percent()`, `style_pvalue()`, `style_sigfig()`, and `style_ratio()` functions have been updated to use `style_number()` in the background. The implication is that users can now control how every number in a gtsummary table appears. For example, formatting can be updated to use the comma as the decimal mark and also specify the big mark using the gtsummary themes. (#458)
+
+### User-facing Updates
+
+* Added support for competing risk cumulative incidence estimates to `tbl_survfit()` (#64, #448) 
+
+* Updated API for `set_gtsummary_theme()`. Users no longer need call `set_gtsummary_theme(theme_gtsummary_journal())`; rather, they call `theme_gtsummary_journal()`. Each built-in theme now has an argument `set_theme = TRUE`. When `FALSE`, the theme function will invisibly return the named list the theme elements, and the theme will not be set. (#522)
+
+* Users can now specify how many decimal places to round statistics for categorical variables in `tbl_summary()`, e.g. `45 / 100 (45.0%)`. (#458)
+
+* Added the 'The Lancet' theme to `theme_gtsummary_journal()`
+
+* Updated the handling for arguments that accept functions to allow users to pass anonymous functions using the tidyverse shortcut notation, e.g. `~style_pvalue(.x, digits = 2)`.
+
+* The header for the `tbl_stack(group_header=)` column is now integrated into a typical gtsummary framework, meaning that all standard functions can be executed on it, e.g. `modify_header()` for non-gt output.
+
+* Added `type=` argument to `add_global_p()`, and added `include=` and `keep=` arguments to `add_global_p.tbl_uvregression()` (#554)
+
+### Internal Updates
+
+* Updated `add_n()` internals to be more efficient without recalculating statistics previously saved in `tbl_summary()`
+
+* {survival} package moved from Imports to Suggests
+
+* The `add_overall()` function is now a method function, and `add_overall.tbl_summary` and `add_overall.tbl_svysummary` added (#460).
+
+* Updated the variable labels for age and marker in the trial dataset. 
+
+* Removed large *.gif files out of the package to reduce build size (#485)
+
+### Bug Fixes
+
+* Fixed bug where source note was not made smaller font size with compact theme when table was printed with {flextable} (#584)
+
+* Bug fix for `tbl_summary()` when a data frame contained an ordered factor column (#567)
+
+* Bug fix when only categorical summary statistics were requested for continuous variables in `tbl_summary()` and `tbl_svysummary()` (#528)
+
+* Bug fix when _named_ list of {gtsummary} objects is passed to `tbl_merge(x=)` (#541)
+
+* Bug fix when for `tbl_uvregression()` when adjustment variables were included in `formula = "{y} ~ {x} + age"`.  The adjustment variables were being printed in the resulting table. (#555)
+
+### Breaking Changes
+
+* All `lifecycle::deprecate_warn()` have been upgraded to `lifecycle::deprecate_stop()` for <= v1.2.0 (released Aug 2019)
+
+* Removing `as_flextable()` and replacing with `as_flex_table()` due to a name conflict with `flextable::as_flextable` (#462)
+
 # gtsummary 1.3.2
 
 * Now returning all columns from `broom::tidy()` in `.$table_body()` (#516)

@@ -69,7 +69,7 @@ Adds p-values to tables created by \code{tbl_summary} by comparing values across
 
 If you like to consistently use a different function to format p-values or
 estimates, you can set options in the script or in the user- or
-project-level startup file, '.Rprofile'.  The default confidence level can
+project-level start-up file, '.Rprofile'.  The default confidence level can
 also be set. Please note the default option for the estimate is the same
 as it is for \code{tbl_regression()}.
 \itemize{
@@ -117,16 +117,14 @@ add_p_ex2 <-
 See tbl_summary \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html}{vignette} for detailed examples
 
 Other tbl_summary tools: 
-\code{\link{add_n}()},
+\code{\link{add_n.tbl_summary}()},
 \code{\link{add_overall}()},
 \code{\link{add_q}()},
 \code{\link{add_stat_label}()},
 \code{\link{bold_italicize_labels_levels}},
 \code{\link{inline_text.tbl_summary}()},
 \code{\link{inline_text.tbl_survfit}()},
-\code{\link{modify_footnote}()},
-\code{\link{modify_header}()},
-\code{\link{modify_spanning_header}()},
+\code{\link{modify}},
 \code{\link{tbl_merge}()},
 \code{\link{tbl_stack}()},
 \code{\link{tbl_summary}()}

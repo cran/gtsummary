@@ -10,7 +10,7 @@ library(gtsummary)
 #  options(gtsummary.pvalue_fun = function(x) style_pvalue(x, digits = 2))
 
 ## -----------------------------------------------------------------------------
-#  options(gtsummary.tbl_summary.percent_fun = function(x) sprintf(x * 100, fmt='%#.1f'))
+#  options(gtsummary.tbl_summary.percent_fun = function(x) style_number(x * 100, digits = 1))
 
 ## -----------------------------------------------------------------------------
 #  options(gtsummary.print_engine = "kable")

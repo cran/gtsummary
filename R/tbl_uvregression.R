@@ -79,12 +79,11 @@
 #' \if{html}{\figure{tbl_uv_ex2.png}{options: width=50\%}}
 
 tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NULL,
-                             formula = "{y} ~ {x}",
                              exponentiate = FALSE, label = NULL,
-                             include = everything(), exclude = NULL,
+                             include = everything(), tidy_fun = NULL,
                              hide_n = FALSE, show_single_row = NULL, conf.level = NULL,
-                             estimate_fun = NULL, pvalue_fun = NULL, show_yesno = NULL,
-                             tidy_fun = NULL) {
+                             estimate_fun = NULL, pvalue_fun = NULL, formula = "{y} ~ {x}",
+                             show_yesno = NULL, exclude = NULL) {
   # deprecated arguments -------------------------------------------------------
   if (!is.null(show_yesno)) {
     lifecycle::deprecate_stop(
@@ -109,13 +108,17 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
   # setting defaults -----------------------------------------------------------
   pvalue_fun <-
     pvalue_fun %||%
-    getOption("gtsummary.pvalue_fun", default = style_pvalue)
+    get_theme_element("tbl_regression-arg:pvalue_fun") %||%
+    get_theme_element("pkgwide-fn:pvalue_fun") %||%
+    getOption("gtsummary.pvalue_fun", default = style_pvalue) %>%
+    gts_mapper("tbl_uvregression(pvalue_fun=)")
   estimate_fun <-
     estimate_fun %||%
     getOption(
       "gtsummary.tbl_regression.estimate_fun",
       default = ifelse(exponentiate == TRUE, style_ratio, style_sigfig)
-    )
+    ) %>%
+    gts_mapper("tbl_uvregression(estimate_fun=)")
   conf.level <-
     conf.level %||%
     getOption("gtsummary.conf.level", default = 0.95)
@@ -220,7 +223,7 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
     stop("There were no covariates selected.", call. = FALSE)
   }
 
-  # bulding regression models --------------------------------------------------
+  # building regression models -------------------------------------------------
   df_model <-
     tibble(vars = all_vars) %>%
     set_names(ifelse(!is.null(y), "x", "y")) %>%
@@ -247,6 +250,7 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
             exponentiate = exponentiate,
             conf.level = conf.level,
             label = label,
+            include = .y, # only include the covariate of interest in output
             show_single_row = intersect(.y, show_single_row),
             tidy_fun = tidy_fun
           )
@@ -294,7 +298,7 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
             # adding a format function to the N column
             tbl$table_header <- table_header_fmt_fun(
               tbl$table_header,
-              N = function(x) ifelse(is.na(x), NA_character_, sprintf("%.0f", x))
+              N = function(x) style_number(x, digits = 0)
             )
 
             tbl

@@ -87,3 +87,52 @@ tbl_summary(trial2, by = trt) %>%
   gt::tab_spanner(label = gt::md("**Treatment Group**"),
                   columns = gt::starts_with("stat_"))
 
+## -----------------------------------------------------------------------------
+# loading the api data set
+data(api, package = "survey")
+
+## -----------------------------------------------------------------------------
+svy_apiclus1 <- 
+  survey::svydesign(
+    id = ~dnum, 
+    weights = ~pw, 
+    data = apiclus1, 
+    fpc = ~fpc
+  ) 
+
+## -----------------------------------------------------------------------------
+svy_apiclus1 %>%
+  tbl_svysummary(
+    # stratify summary statistics by the "both" column
+    by = both, 
+    # summarize a subset of the columns
+    include = c(cname, api00, api99, both),
+    # adding labels to table
+    label = list(
+      cname ~ "County",
+      api00 ~ "API in 2000",
+      api99 ~ "API in 1999"
+    )
+  ) %>%
+  # comparing values by "both" column
+  add_p() %>%
+  add_overall() %>%
+  # adding spanning header
+  modify_spanning_header(starts_with("stat_") ~ "**Met Both Targets**")
+
+## -----------------------------------------------------------------------------
+d <- dplyr::as_tibble(Titanic)
+head(d, n = 10)
+
+## -----------------------------------------------------------------------------
+d %>%
+  survey::svydesign(data = ., ids = ~ 1, weights = ~ n) %>%
+  tbl_svysummary()
+
+## -----------------------------------------------------------------------------
+trial %>%
+  tbl_cross(row = stage,
+    col = trt,
+    percent = "cell") %>%
+  add_p()
+

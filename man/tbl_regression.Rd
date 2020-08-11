@@ -23,7 +23,7 @@ tbl_regression(
 \item{x}{Regression model object}
 
 \item{label}{List of formulas specifying variables labels,
-e.g. \code{list(age ~ "Age, yrs", stage ~ "Path T Stage")}}
+e.g. \code{list(age ~ "Age", stage ~ "Path T Stage")}}
 
 \item{exponentiate}{Logical indicating whether to exponentiate the
 coefficient estimates. Default is \code{FALSE}.}
@@ -129,7 +129,7 @@ tbl_regression_ex2 <-
   tbl_regression(exponentiate = TRUE)
 
 # Example 3 ----------------------------------
-library(lme4, warn.conflicts = FALSE, quietly = TRUE)
+suppressMessages(library(lme4))
 tbl_regression_ex3 <-
   glmer(am ~ hp + (1 | gear), mtcars, family = binomial) \%>\%
   tbl_regression(exponentiate = TRUE)
@@ -145,9 +145,7 @@ Other tbl_regression tools:
 \code{\link{bold_italicize_labels_levels}},
 \code{\link{combine_terms}()},
 \code{\link{inline_text.tbl_regression}()},
-\code{\link{modify_footnote}()},
-\code{\link{modify_header}()},
-\code{\link{modify_spanning_header}()},
+\code{\link{modify}},
 \code{\link{tbl_merge}()},
 \code{\link{tbl_stack}()}
 }

@@ -22,9 +22,9 @@ knitr::opts_chunk$set(
 
 The [`tbl_regression()`](http://www.danieldsjoberg.com/gtsummary/reference/tbl_regression.html) function takes a **regression model object** in **R** and returns a **formatted table of regression model results** that is publication-ready. It is a simple way to summarize and present your analysis results using **R**! Like [`tbl_summary()`](http://www.danieldsjoberg.com/gtsummary/reference/tbl_summary.html), `tbl_regression()` creates highly customizable analytic tables with sensible defaults. 
 
-This vignette will walk a reader through the `tbl_regression()` function, and the various functions available to modify and make additions to an existing formatted regression table. 
+This vignette will walk a reader through the `tbl_regression()` function, and the various functions available to modify and make additions to an existing formatted regression table.
 
-<img src = "../man/figures/tbl_mvregression_demo.gif" alt = "animated" width = "100%">
+<img src = "https://github.com/ddsjoberg/gtsummary/raw/master/data-raw/misc_files/tbl_mvregression_demo.gif" alt = "animated" width = "100%">
 
 *Behind the scenes:* `tbl_regression()` uses `broom::tidy()` to perform the initial model formatting, and can accommodate many different model types (e.g. `lm()`, `glm()`, `survival::coxph()`, `survival::survreg()` and more are [vetted tidy models](http://www.danieldsjoberg.com/gtsummary/reference/vetted_models.html) that are known to work with our package). It is also possible to specify your own function to tidy the model results if needed.  
 
@@ -58,8 +58,8 @@ In this vignette we'll be using the [**`trial`**](http://www.danieldsjoberg.com/
 
 
         trt      Chemotherapy Treatment
-        age      Age, yrs
-        marker   Marker Level, ng/mL
+        age      Age
+        marker   Marker Level (ng/mL)
         stage    T Stage
         grade    Grade
         response Tumor Response
@@ -220,9 +220,7 @@ tbl_regression(m1, exponentiate = TRUE) %>%
 
 ## Univariate Regression {#tbl_uvregression}
 
-The `tbl_uvregression()` produces a table of univariate regression results.  The function is a wrapper for `tbl_regression()`, and as a result, accepts nearly identical function arguments.  The function's results can be modified in similar ways to `tbl_regression()` and the results reported inline similarly to `tbl_regression()`.
-
-<img src = "../man/figures/tbl_mvregression_demo.gif" alt = "animated" width = "100%">
+The `tbl_uvregression()` produces a table of univariate regression results.  The function is a wrapper for `tbl_regression()`, and as a result, accepts nearly identical function arguments.  The function's results can be modified in similar ways to `tbl_regression()` and the results reported inline similarly to `tbl_regression()`. 
 
 ```{r tbl_uvregression}
 trial %>%
@@ -252,4 +250,4 @@ If you, however, would like to change the defaults there are a few options.
 The default options can be changed using the {gtsummary} themes function `set_gtsummary_theme()`.
 The package includes pre-specified themes, and you can also create your own.
 Themes can control baseline behavior, for example, how p-values are rounded, coefficients are rounded, default headers, confidence levels, etc.
-For details on creating a theme and setting personal defaults, visit the [themes vignette](http://www.danieldsjoberg.com/gtsummary/dev/articles/themes.html).
+For details on creating a theme and setting personal defaults, visit the [themes vignette](http://www.danieldsjoberg.com/gtsummary/articles/themes.html).

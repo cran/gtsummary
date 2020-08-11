@@ -2,9 +2,20 @@
 % Please edit documentation in R/inline_text.R
 \name{inline_text.tbl_summary}
 \alias{inline_text.tbl_summary}
+\alias{inline_text.tbl_svysummary}
 \title{Report statistics from summary tables inline}
 \usage{
 \method{inline_text}{tbl_summary}(
+  x,
+  variable,
+  column = NULL,
+  level = NULL,
+  pattern = NULL,
+  pvalue_fun = NULL,
+  ...
+)
+
+\method{inline_text}{tbl_svysummary}(
   x,
   variable,
   column = NULL,
@@ -53,16 +64,14 @@ inline_text(t1, variable = grade, column = "p.value")
 }
 \seealso{
 Other tbl_summary tools: 
-\code{\link{add_n}()},
+\code{\link{add_n.tbl_summary}()},
 \code{\link{add_overall}()},
 \code{\link{add_p.tbl_summary}()},
 \code{\link{add_q}()},
 \code{\link{add_stat_label}()},
 \code{\link{bold_italicize_labels_levels}},
 \code{\link{inline_text.tbl_survfit}()},
-\code{\link{modify_footnote}()},
-\code{\link{modify_header}()},
-\code{\link{modify_spanning_header}()},
+\code{\link{modify}},
 \code{\link{tbl_merge}()},
 \code{\link{tbl_stack}()},
 \code{\link{tbl_summary}()}

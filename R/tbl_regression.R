@@ -32,7 +32,7 @@
 #' @param exponentiate Logical indicating whether to exponentiate the
 #' coefficient estimates. Default is `FALSE`.
 #' @param label List of formulas specifying variables labels,
-#' e.g. `list(age ~ "Age, yrs", stage ~ "Path T Stage")`
+#' e.g. `list(age ~ "Age", stage ~ "Path T Stage")`
 #' @param include Variables to include in output. Input may be a vector of
 #' quoted variable names, unquoted variable names, or tidyselect select helper
 #' functions. Default is `everything()`.
@@ -76,7 +76,7 @@
 #'   tbl_regression(exponentiate = TRUE)
 #'
 #' # Example 3 ----------------------------------
-#' library(lme4, warn.conflicts = FALSE, quietly = TRUE)
+#' suppressMessages(library(lme4))
 #' tbl_regression_ex3 <-
 #'   glmer(am ~ hp + (1 | gear), mtcars, family = binomial) %>%
 #'   tbl_regression(exponentiate = TRUE)
@@ -126,14 +126,16 @@ tbl_regression <- function(x, label = NULL, exponentiate = FALSE,
     pvalue_fun %||%
     get_theme_element("tbl_regression-arg:pvalue_fun") %||%
     get_theme_element("pkgwide-fn:pvalue_fun") %||%
-    getOption("gtsummary.pvalue_fun", default = style_pvalue)
+    getOption("gtsummary.pvalue_fun", default = style_pvalue) %>%
+    gts_mapper("tbl_regression(pvalue_fun=)")
   estimate_fun <-
     estimate_fun %||%
     get_theme_element("tbl_regression-arg:estimate_fun") %||%
     getOption(
       "gtsummary.tbl_regression.estimate_fun",
       default = ifelse(exponentiate == TRUE, style_ratio, style_sigfig)
-    )
+    ) %>%
+    gts_mapper("tbl_regression(estimate_fun=)")
   conf.level <-
     conf.level %||%
     get_theme_element("tbl_regression-arg:conf.level") %||%
@@ -192,13 +194,14 @@ tbl_regression <- function(x, label = NULL, exponentiate = FALSE,
 
   # adding character CI
   if (all(c("conf.low", "conf.high") %in% names(table_body))) {
+    ci.sep <- get_theme_element("pkgwide-str:ci.sep", default = ", ")
     table_body <-
       table_body %>%
       # adding character CI
       mutate(
         ci = if_else(
           !is.na(.data$conf.low),
-          paste0(estimate_fun(.data$conf.low), ", ", estimate_fun(.data$conf.high)),
+          paste0(estimate_fun(.data$conf.low), ci.sep, estimate_fun(.data$conf.high)),
           NA_character_
         )
       )
@@ -236,7 +239,7 @@ tbl_regression <- function(x, label = NULL, exponentiate = FALSE,
     table_header <-
       table_header_fmt_fun(
         table_header,
-        N = function(x) ifelse(is.na(x), NA_character_, sprintf("%.0f", x))
+        N = function(x) style_number(x, digits = 0)
       )
   }
   if ("p.value" %in% names(table_body)) {
@@ -256,7 +259,7 @@ tbl_regression <- function(x, label = NULL, exponentiate = FALSE,
       footnote_abbrev = case_when(
         .data$column == "estimate" ~
           estimate_header(x, exponentiate) %>% attr("footnote") %||% NA_character_,
-        .data$column == "ci" ~ "CI = Confidence Interval",
+        .data$column == "ci" ~ translate_text("CI = Confidence Interval"),
         TRUE ~ .data$footnote_abbrev
       ),
       missing_emdash = case_when(
@@ -281,12 +284,12 @@ tbl_regression <- function(x, label = NULL, exponentiate = FALSE,
   # setting column headers
   results <- modify_header_internal(
     results,
-    label = "**Characteristic**",
+    label = paste0("**", translate_text("Characteristic"), "**"),
     estimate = glue("**{estimate_header(x, exponentiate)}**")
   )
   if ("p.value" %in% names(table_body)) {
     results <- modify_header_internal(
-      results, p.value = "**p-value**"
+      results, p.value = paste0("**", translate_text("p-value"), "**")
     )
   }
   if (all(c("conf.low", "conf.high") %in% names(table_body))) {
@@ -333,23 +336,25 @@ estimate_header <- function(x, exponentiate) {
   }
 
   # assigning header and footer ------------------------------------------------
+  language <- get_theme_element("pkgwide-str:language", default = "en")
   if (model_type == "logistic") {
-    header <- ifelse(exponentiate == TRUE, "OR", "log(OR)")
-    attr(header, "footnote") <- "OR = Odds Ratio"
+    header <- ifelse(exponentiate == TRUE, "OR", "log(OR)") %>% translate_text(language)
+    attr(header, "footnote") <- translate_text("OR = Odds Ratio", language)
   }
   else if (model_type == "poisson") {
-    header <- ifelse(exponentiate == TRUE, "IRR", "log(IRR)")
-    attr(header, "footnote") <- "IRR = Incidence Rate Ratio"
+    header <- ifelse(exponentiate == TRUE, "IRR", "log(IRR)") %>% translate_text(language)
+    attr(header, "footnote") <- translate_text("IRR = Incidence Rate Ratio", language)
   }
   else if (model_type == "prop_hazard") {
-    header <- ifelse(exponentiate == TRUE, "HR", "log(HR)")
-    attr(header, "footnote") <- "HR = Hazard Ratio"
+    header <- ifelse(exponentiate == TRUE, "HR", "log(HR)") %>% translate_text(language)
+    attr(header, "footnote") <- translate_text("HR = Hazard Ratio", language)
   }
   else {
     header <-
       get_theme_element("tbl_regression-str:coef_header") %||%
       ifelse(exponentiate == TRUE, "exp(Beta)", "Beta") %>%
-      as.character()
+      as.character() %>%
+      translate_text(language)
   }
 
   header

@@ -5,14 +5,26 @@
 \alias{theme_gtsummary_journal}
 \alias{theme_gtsummary_compact}
 \alias{theme_gtsummary_printer}
+\alias{theme_gtsummary_language}
 \title{Available gtsummary themes}
 \usage{
-theme_gtsummary_journal(journal = "jama")
+theme_gtsummary_journal(journal = c("jama", "lancet"), set_theme = TRUE)
 
-theme_gtsummary_compact()
+theme_gtsummary_compact(set_theme = TRUE)
 
 theme_gtsummary_printer(
-  print_engine = c("gt", "kable", "kable_extra", "flextable", "tibble")
+  print_engine = c("gt", "kable", "kable_extra", "flextable", "huxtable", "tibble"),
+  set_theme = TRUE
+)
+
+theme_gtsummary_language(
+  language = c("de", "en", "es", "fr", "gu", "hi", "ja", "mr", "pt", "se", "zh-cn",
+    "zh-tw"),
+  decimal.mark = NULL,
+  big.mark = NULL,
+  iqr.sep = NULL,
+  ci.sep = NULL,
+  set_theme = TRUE
 )
 }
 \arguments{
@@ -21,7 +33,47 @@ theme_gtsummary_printer(
 \item \code{"jama"} Journal of the American Medical Association
 }}
 
+\item{set_theme}{Logical indicating whether to set the theme. Default is \code{TRUE}.
+When \code{FALSE} the named list of theme elements is returned invisibly.}
+
 \item{print_engine}{String indicating the print engine. Default is \code{"gt"}}
+
+\item{language}{String indicating language. Must be one of
+\itemize{
+\item \code{"de"} (German)
+\item \code{"en"} (English)
+\item \code{"es"} (Spanish)
+\item \code{"fr"} (French)
+\item \code{"gu"} (Gujarati)
+\item \code{"hi"} (Hindi)
+\item \code{"ja"} (Japanese)
+\item \code{"mr"} (Marathi)
+\item \code{"pt"} (Portuguese)
+\item \code{"se"} (Swedish)
+\item \code{"zh-cn"} Chinese (Simplified)
+\item \code{"zh-tw"} Chinese (Traditional)
+}
+
+If a language is missing a translation for a word or phrase, please feel free
+to reach out on \href{https://github.com/ddsjoberg/gtsummary/issues}{GitHub}
+with the translated text!}
+
+\item{decimal.mark}{The character to be used to indicate the numeric decimal point.
+Default is \code{"."}  or \code{getOption("OutDec")}}
+
+\item{big.mark}{Character used between every 3 digits to separate
+hundreds/thousands/millions/etc.
+Default is \code{","}, except when \code{decimal.mark = ","} when the default is a space.}
+
+\item{iqr.sep}{string indicating separator for the default IQR in \code{tbl_summary()}.
+If \verb{decimal.mark=} is NULL, \verb{iqr.sep=} is \code{", "}. The comma
+separator, however, can look odd when \code{decimal.mark = ","}. In this case the argument
+will default to an en dash}
+
+\item{ci.sep}{string indicating separator for confidence intervals.
+If \verb{decimal.mark=} is NULL, \verb{ci.sep=} is \code{", "}. The comma
+separator, however, can look odd when \code{decimal.mark = ","}. In this case the argument
+will default to an en dash}
 }
 \description{
 \Sexpr[results=rd, stage=render]{lifecycle::badge("experimental")}
@@ -33,12 +85,19 @@ Use the \code{\link[=set_gtsummary_theme]{set_gtsummary_theme()}} function to se
 \itemize{
 \item \code{theme_gtsummary_journal(journal=)}
 \itemize{
-\item \code{journal = "jama"}
+\item \code{"jama"}
 \itemize{
 \item sets theme to align with the JAMA reporting guidelines
 \item large p-values are rounded to two decimal places
 \item in \code{tbl_summary()} the IQR is separated with a dash, rather than comma
 \item in \code{tbl_summary()} the percent symbol is not printed next to percentages
+}
+\item \code{"lancet"}
+\itemize{
+\item sets theme to align with the The Lancet reporting guidelines
+\item large p-values are rounded to two decimal places
+\item in \code{tbl_summary()} the IQR is separated with a dash, rather than comma
+\item confidence intervals are separated with \verb{4.5 to 7.8}, rather than a comma
 }
 }
 \item \code{theme_gtsummary_compact()}
@@ -56,7 +115,7 @@ Use the \code{\link[=set_gtsummary_theme]{set_gtsummary_theme()}} function to se
 
 Use \code{reset_gtsummary_theme()} to restore the default settings
 
-Review the \href{http://www.danieldsjoberg.com/gtsummary/dev/articles/themes.html}{themes vignette}
+Review the \href{http://www.danieldsjoberg.com/gtsummary/articles/themes.html}{themes vignette}
 to create your own themes.
 }
 
@@ -69,9 +128,9 @@ to create your own themes.
 
 \examples{
 # Setting JAMA theme for gtsummary
-set_gtsummary_theme(theme_gtsummary_journal("jama"))
+theme_gtsummary_journal("jama")
 # Themes can be combined by including more than one
-set_gtsummary_theme(theme_gtsummary_compact())
+theme_gtsummary_compact()
 
 set_gtsummary_theme_ex1 <-
   trial \%>\%
@@ -80,9 +139,13 @@ set_gtsummary_theme_ex1 <-
   add_stat_label() \%>\%
   as_gt()
 
-# reset gtsummary theme
+# reset gtsummary themes
 reset_gtsummary_theme()
 }
 \seealso{
 \code{\link[=set_gtsummary_theme]{set_gtsummary_theme()}}
+
+\href{http://www.danieldsjoberg.com/gtsummary/articles/themes.html}{Themes vignette}
+
+\code{set_gtsummary_theme()}, \code{reset_gtsummary_theme()}
 }

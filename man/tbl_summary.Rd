@@ -29,7 +29,7 @@ variable (e.g. \code{by = trt}). If \code{NULL}, summary statistics
 are calculated using all observations.}
 
 \item{label}{List of formulas specifying variables labels,
-e.g. \code{list(age ~ "Age, yrs", stage ~ "Path T Stage")}.  If a
+e.g. \code{list(age ~ "Age", stage ~ "Path T Stage")}.  If a
 variable's label is not specified here, the label attribute
 (\code{attr(data$age, "label")}) is used.  If
 attribute label is \code{NULL}, the variable name will be used.}
@@ -207,7 +207,7 @@ See tbl_summary \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_summa
 See \href{http://www.danieldsjoberg.com/gtsummary/articles/gallery.html}{table gallery} for additional examples
 
 Other tbl_summary tools: 
-\code{\link{add_n}()},
+\code{\link{add_n.tbl_summary}()},
 \code{\link{add_overall}()},
 \code{\link{add_p.tbl_summary}()},
 \code{\link{add_q}()},
@@ -215,9 +215,7 @@ Other tbl_summary tools:
 \code{\link{bold_italicize_labels_levels}},
 \code{\link{inline_text.tbl_summary}()},
 \code{\link{inline_text.tbl_survfit}()},
-\code{\link{modify_footnote}()},
-\code{\link{modify_header}()},
-\code{\link{modify_spanning_header}()},
+\code{\link{modify}},
 \code{\link{tbl_merge}()},
 \code{\link{tbl_stack}()}
 }

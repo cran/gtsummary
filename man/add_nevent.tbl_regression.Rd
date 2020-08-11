@@ -4,10 +4,13 @@
 \alias{add_nevent.tbl_regression}
 \title{Add number of events to a regression table}
 \usage{
-\method{add_nevent}{tbl_regression}(x, ...)
+\method{add_nevent}{tbl_regression}(x, quiet = NULL, ...)
 }
 \arguments{
 \item{x}{\code{tbl_regression} object}
+
+\item{quiet}{Logical indicating whether to print messages in console. Default is
+\code{FALSE}}
 
 \item{...}{Not used}
 }
@@ -44,9 +47,7 @@ Other tbl_regression tools:
 \code{\link{bold_italicize_labels_levels}},
 \code{\link{combine_terms}()},
 \code{\link{inline_text.tbl_regression}()},
-\code{\link{modify_footnote}()},
-\code{\link{modify_header}()},
-\code{\link{modify_spanning_header}()},
+\code{\link{modify}},
 \code{\link{tbl_merge}()},
 \code{\link{tbl_regression}()},
 \code{\link{tbl_stack}()}

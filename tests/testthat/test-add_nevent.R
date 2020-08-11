@@ -86,12 +86,30 @@ test_that("add_nevent error with bad inputs", {
     lm(hp ~ mpg, mtcars) %>%
       tbl_regression() %>%
       add_nevent(),
-    "*"
+    NULL
   )
   expect_error(
     lme4::lmer(hp ~ mpg + (1 | cyl), mtcars) %>%
       tbl_regression() %>%
       add_nevent(),
-    "*"
+    NULL
+  )
+})
+
+# add_nevent.tbl_surfit --------------------------------------------------------
+
+test_that("add_nevent.tbl_surfit", {
+  library(survival)
+
+  tbl_survfit <-
+    list(
+      survfit(Surv(ttdeath, death) ~ 1, trial),
+      survfit(Surv(ttdeath, death) ~ trt, trial)
+    ) %>%
+    tbl_survfit(times = c(12, 24))
+
+  expect_error(
+    add_nevent(tbl_survfit),
+    NA
   )
 })

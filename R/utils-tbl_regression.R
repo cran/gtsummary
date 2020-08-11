@@ -92,6 +92,17 @@ tidy_wrap <- function(x, exponentiate, conf.level, tidy_fun) {
     )
   }
 
+  # checking reserved names in the tidy data frame -----------------------------
+  if (any(c("rowname", "groupname_col") %in% names(tidy_bit))) {
+    paste("The resulting tibble from the initial tidying of the model",
+          "(likely from the tidier passed in `tidy_fun=`)",
+          "contains a column named 'rowname' or 'groupname_col'.",
+          "These column names result in special print behavior in the",
+          "{gt} package, and may cause errors or malformed tables.") %>%
+      stringr::str_wrap() %>%
+      rlang::inform()
+  }
+
   # otherwise returning original output
   return(tidy_bit)
 }
@@ -478,7 +489,7 @@ parse_final_touches <- function(group, group_lbl, single_row, var_type, data, mo
       var_type = var_type
     ) %>%
     select(any_of(c("variable", "var_type", "row_ref", "row_type", "label", "N")),
-                  everything(), -.data$term, -.data$term_id, -.data$interaction, -.data$level_lbl)
+           everything(), -.data$term, -.data$term_id, -.data$interaction, -.data$level_lbl)
 }
 
 #' Takes a vector and transforms to data frame with those column names
