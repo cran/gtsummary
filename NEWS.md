@@ -1,8 +1,16 @@
+# gtsummary 1.3.4
+
+* Added a copy of tidyselect's `where()` function to allow users to use predicate select helpers (#632)
+
+* Fixed `tbl_cross()` bug where function defaulted to `'column'` when `margin = NULL`. Now it defaults to display no margins when `NULL`. (#624)
+
+* Changed default of `tbl_survfit()` `missing` argument from `'\U2014'` (em dash) to NULL (CRAN issue). Em dash is still displayed by default in tables but it is set later in function. 
+
 # gtsummary 1.3.3
 
 ### New Functions
 
-* The {flextable} has graduated from Experimental status! Introducing `as_flex_table()`, which replaces `as_flextable()`. The updated function includes improvements to the default ascetics of the tables, and improved consistency for spanning header rows.
+* The {flextable} has graduated from Experimental status! Introducing `as_flex_table()`, which replaces `as_flextable()`. The updated function includes improvements to the default aesthetics of the tables, and improved consistency for spanning header rows.
 
 * Added `tbl_svysummary()` function to summarize complex and weighted survey designs. `tbl_svysummary` is now its own class that works with `add_n()`, `add_p()`, `add_q()`, `add_stat_label()`, `add_overall()`, `inline_text()`, `tbl_merge()` and `tbl_stack()` (#460).
 
