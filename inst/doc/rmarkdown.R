@@ -167,3 +167,26 @@ tibble::tibble(
 #    file.path("rmarkdown_example/gtsummary_rmarkdown_html.Rmd") %>%
 #    file.edit()
 
+## ---- eval = FALSE------------------------------------------------------------
+#  # build gtsummary table
+#  tbl <- tbl_summary(trial)
+#  
+#  # using the {gt} package
+#  as_gt(tbl) %>% gt::as_latex()
+#  
+#  # using the {huxtable} package
+#  as_hux_table(tbl) %>% huxtable::to_latex()
+#  
+#  # using the {kableExtra} package
+#  as_kable_extra(tbl, format = "latex")
+#  
+#  # using the knitr::kable function
+#  as_kable(tbl, format = "latex")
+
+## ---- eval = FALSE------------------------------------------------------------
+#  tbl_summary(trial) %>%    # build gtsummary table
+#    as_gt() %>%             # convert to gt table
+#    gt::gtsave(             # save table as image
+#      filename = "my_table_image.png"
+#    )
+

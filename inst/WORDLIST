@@ -6,6 +6,8 @@ coxph
 crosstab
 customizable
 der
+df
+effectsize
 emdash
 exponentiate
 flextable
@@ -24,8 +26,9 @@ lifecycle
 Lifecycle
 lm
 lme
-magrittr
+logLik
 mL
+NEJM
 nevent
 ng
 ORCID

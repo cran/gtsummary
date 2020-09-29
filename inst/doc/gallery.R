@@ -5,16 +5,17 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
-## ----setup, message = FALSE---------------------------------------------------
+## ----setup, message = FALSE, warning=FALSE------------------------------------
 library(gtsummary); library(gt); library(survival)
 library(dplyr); library(stringr); library(purrr); library(forcats)
 
 ## -----------------------------------------------------------------------------
-trial[c("trt", "age", "grade")] %>%
+trial %>%
+  select(trt, age, grade) %>%
   tbl_summary(
     by = trt, 
     missing = "no",
-    statistic = all_continuous() ~ "{median} ({p25}, {p75}) [N = {N_nonmiss}]"
+    statistic = all_continuous() ~ "{median} ({p25}, {p75})"
   ) %>%
   modify_header(stat_by = md("**{level}**<br>N =  {n} ({style_percent(p)}%)")) %>%
   add_n() %>%
@@ -22,18 +23,34 @@ trial[c("trt", "age", "grade")] %>%
   modify_spanning_header(starts_with("stat_") ~ "**Chemotherapy Treatment**")
 
 ## -----------------------------------------------------------------------------
-trial[!is.na(trial$response), c("response", "age", "grade")] %>%
+trial %>%
+  select(trt, age, marker) %>%
+  tbl_summary(
+    by = trt,
+    type = all_continuous() ~ "continuous2",
+    statistic = all_continuous() ~ c("{N_nonmiss}",
+                                     "{mean} ({sd})", 
+                                     "{median} ({p25}, {p75})", 
+                                     "{min}, {max}"),
+    missing = "no"
+  ) %>%
+  italicize_levels()
+
+## ---- message = FALSE---------------------------------------------------------
+trial %>%
+  select(response, age, grade) %>%
   mutate(response = factor(response, labels = c("No Tumor Response", "Tumor Responded"))) %>%
   tbl_summary(
     by = response, 
     missing = "no",
     label = list(age ~ "Patient Age", grade ~ "Tumor Grade")
   ) %>%
-  add_p(pvalue_fun = partial(style_pvalue, digits = 2)) %>%
+  add_p(pvalue_fun = ~style_pvalue(.x, digits = 2)) %>%
   add_q()
 
 ## -----------------------------------------------------------------------------
-trial[c("response", "age", "grade")] %>%
+trial %>%
+  select(response, age, grade) %>%
   mutate(
     response = factor(response, labels = c("No Tumor Response", "Tumor Responded")) %>% 
       fct_explicit_na(na_level = "Missing Response Status")
@@ -56,7 +73,9 @@ t1 <- trial %>%
   filter(grade %in% c("I", "II")) %>%
   tbl_summary(by = grade, missing = "no") %>%
   add_p() %>%
-  modify_header(p.value ~ md("**I vs. II**"))
+  modify_header(p.value ~ md("**I vs. II**")) %>%
+  # hide summary stat columns
+  modify_table_header(starts_with("stat_"), hide = TRUE)
 
 # table comparing grade I and II
 t2 <- trial %>%
@@ -64,7 +83,9 @@ t2 <- trial %>%
   filter(grade %in% c("I", "III")) %>%
   tbl_summary(by = grade, missing = "no") %>%
   add_p()  %>%
-  modify_header(p.value ~ md("**I vs. III**"))
+  modify_header(p.value ~ md("**I vs. III**")) %>%
+  # hide summary stat columns
+  modify_table_header(starts_with("stat_"), hide = TRUE)
 
 # merging the 3 tables together, and adding additional gt formatting
 tbl_merge(list(t0, t1, t2)) %>%
@@ -74,9 +95,8 @@ tbl_merge(list(t0, t1, t2)) %>%
       starts_with("p.value") ~ "**p-value**"
     )
   ) %>%
-  as_gt(include = -tab_spanner) %>%
-  # hiding repeated summary columns
-  cols_hide(columns = vars(stat_1_2, stat_2_2, stat_3_2, stat_1_3, stat_2_3, stat_3_3))
+  # remove default spanning headers
+  modify_spanning_header(everything() ~ NA_character_)
 
 ## -----------------------------------------------------------------------------
 # define function for lower and upper bounds of the mean CI
@@ -100,7 +120,8 @@ tbl_merge(list(t1, t2)) %>%
   modify_spanning_header(everything() ~ NA_character_)
 
 ## -----------------------------------------------------------------------------
-trial[c("response", "age", "grade")] %>%
+trial %>%
+  select(response, age, grade) %>%
   tbl_uvregression(
     method = glm,
     y = response, 
@@ -110,20 +131,25 @@ trial[c("response", "age", "grade")] %>%
   add_nevent()
 
 ## -----------------------------------------------------------------------------
-gt_r1 <- glm(response ~ age + trt, trial, family = binomial) %>%
+gt_r1 <- glm(response ~ trt + grade, trial, family = binomial) %>%
   tbl_regression(exponentiate = TRUE)
-gt_r2 <- coxph(Surv(ttdeath, death) ~ age + trt, trial) %>%
+gt_r2 <- coxph(Surv(ttdeath, death) ~ trt + grade, trial) %>%
   tbl_regression(exponentiate = TRUE)
-gt_t1 <- trial[c("age", "trt")] %>% tbl_summary(missing = "no") %>% add_n()
+gt_t1 <- trial[c("trt", "grade")] %>% 
+  tbl_summary(missing = "no") %>% 
+  add_n() %>%
+  modify_header(stat_0 ~ "**n (%)**") %>%
+  modify_footnote(stat_0 ~ NA_character_)
 
 tbl_merge(
   list(gt_t1, gt_r1, gt_r2),
-  tab_spanner = c("**Summary Statistics**", "**Tumor Response**", "**Time to Death**")
+  tab_spanner = c(NA_character_, "**Tumor Response**", "**Time to Death**")
 )
 
 ## -----------------------------------------------------------------------------
 gt_model <-
-  trial[c("ttdeath", "death", "stage", "grade")] %>%
+  trial %>%
+  select(ttdeath, death, stage, grade) %>%
   tbl_uvregression(
     method = coxph,
     y = Surv(ttdeath, death), 
@@ -149,7 +175,8 @@ tbl_merge(list(gt_eventn, gt_model)) %>%
 
 ## -----------------------------------------------------------------------------
 tbl_reg <-
-  trial[c("age", "marker", "trt")] %>%
+  trial %>%
+  select(age, marker, trt) %>%
   tbl_uvregression(
     method = lm,
     x = trt,
@@ -166,7 +193,8 @@ tbl_reg %>%
 
 ## -----------------------------------------------------------------------------
 gt_sum <- 
-  trial[c("age", "marker", "trt")] %>%
+  trial %>%
+  select(age, marker, trt) %>%
   mutate(trt = fct_rev(trt)) %>%
   tbl_summary(by = trt, 
               statistic = all_continuous() ~ "{mean} ({sd})",
