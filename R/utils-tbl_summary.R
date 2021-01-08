@@ -110,19 +110,19 @@ assign_stat_display <- function(variable, summary_type, stat_display) {
   stat_display <-
     map2(
       variable, summary_type,
-      ~ case_when(
-        .y == "continuous" ~
-          stat_display[[.x]] %||%
-          get_theme_element("tbl_summary-str:continuous_stat") %||%
-          "{median} ({p25}, {p75})",
-        .y == "continuous2" ~
-          stat_display[[.x]] %||%
-          get_theme_element("tbl_summary-str:continuous_stat") %||%
-          "{median} ({p25}, {p75})",
-        .y %in% c("categorical", "dichotomous") ~
-          stat_display[[.x]] %||%
-          get_theme_element("tbl_summary-str:categorical_stat") %||%
-          "{n} ({p}%)"
+      ~switch(.y,
+              "continuous" = stat_display[[.x]] %||%
+                get_theme_element("tbl_summary-str:continuous_stat") %||%
+                "{median} ({p25}, {p75})",
+              "continuous2" = stat_display[[.x]] %||%
+                get_theme_element("tbl_summary-str:continuous_stat") %||%
+                "{median} ({p25}, {p75})",
+              "categorical" = stat_display[[.x]] %||%
+                get_theme_element("tbl_summary-str:categorical_stat") %||%
+                "{n} ({p}%)",
+              "dichotomous" = stat_display[[.x]] %||%
+                get_theme_element("tbl_summary-str:categorical_stat") %||%
+                "{n} ({p}%)"
       )
     )
 
@@ -800,8 +800,7 @@ footnote_stat_label <- function(meta_data) {
     ) %>%
     distinct() %>%
     pull("message") %>%
-    paste(collapse = "; ") %>%
-    paste0(translate_text("Statistics presented"), ": ", .)
+    paste(collapse = "; ")
 }
 
 # summarize_categorical --------------------------------------------------------
@@ -1021,7 +1020,6 @@ adding_formatting_as_attr <- function(df_stats, data, variable, summary_type,
   # setting the default formatting ---------------------------------------------
   percent_fun <- get_theme_element("tbl_summary-fn:percent_fun") %||%
     getOption("gtsummary.tbl_summary.percent_fun", default = style_percent)
-  N_fun <- get_theme_element("tbl_summary-fn:N_fun", default = style_number)
 
   # extracting statistics requested
   fns_names_chr <-
@@ -1032,15 +1030,31 @@ adding_formatting_as_attr <- function(df_stats, data, variable, summary_type,
   base_stats <- c("p_miss", "p_nonmiss", "N_miss", "N_nonmiss", "N_obs",
                   "N_obs_unweighted", "N_miss_unweighted", "N_nonmiss_unweighted",
                   "p_miss_unweighted", "p_nonmiss_unweighted")
+  percent_stats <- c("p_miss", "p_nonmiss", "p_miss_unweighted", "p_nonmiss_unweighted")
+
+  # converting the digits input to a list
+  if (is.numeric(digits[[variable]])) digits[[variable]] <- as.list(digits[[variable]])
+  else if (rlang::is_function(digits[[variable]])) digits[[variable]] <- list(digits[[variable]])
 
   # if user supplied number of digits to round, use them
   if (!is.null(digits[[variable]])) {
     digits[[variable]] <-
       # making the digits passed the same length as stat vector
       rep(digits[[variable]], length.out = length(fns_names_chr)) %>%
-      as.list() %>%
-      rlang::set_names(fns_names_chr)
+      rlang::set_names(fns_names_chr) %>%
+      # converting digits to fns
+      imap(
+        # scale percents by 100
+        ~switch(is.numeric(.x) & .y %in% percent_stats,
+                purrr::partial(style_number, digits = !!.x, scale = 100)) %||%
+          switch(is.numeric(.x) & summary_type %in% c("categorical", "dichotomous") & .y %in% "p" ,
+                 purrr::partial(style_number, digits = !!.x, scale = 100)) %||%
+          # all other stats are not scaled
+          switch(is.numeric(.x), purrr::partial(style_number, digits = !!.x)) %||%
+          .x # if user passed a function, then return the function
+      )
   }
+
   # if no digits supplied and variable is continuous, guess how to summarize
   else if (summary_type %in% c("continuous", "continuous2")) {
     digits[[variable]] <-
@@ -1049,44 +1063,50 @@ adding_formatting_as_attr <- function(df_stats, data, variable, summary_type,
                               summary_type = summary_type) %>%
       rep(length.out = length(fns_names_chr %>% setdiff(base_stats))) %>%
       as.list() %>%
-      rlang::set_names(fns_names_chr %>% setdiff(base_stats))
+      rlang::set_names(fns_names_chr %>% setdiff(base_stats)) %>%
+      map(~purrr::partial(style_number, digits = !!.x))
   }
 
   # adding the formatting function as an attribute
-  df_stats <- purrr::imap_dfc(
-    df_stats,
-    function(column, colname) {
-      if (colname %in% c("variable", "by")) return(column)
+  df_stats <-
+    purrr::imap_dfc(
+      df_stats,
+      function(column, colname) {
+        if (colname %in% c("by", "variable", "variable_levels", "stat_display"))
+          return(column)
 
-      # if number of digits was passed by user, round to the specified digits
-      if (!is.null(digits[[variable]][[colname]])) {
-        if (summary_type %in% c("continuous", "continuous2") &&
-            colname %in% c("p_miss", "p_nonmiss",
-                           "p_miss_unweighted",
-                           "p_nonmiss_unweighted"))
-          attr(column, "fmt_fun") <-
-            purrr::partial(style_number, scale = 100,
-                           digits = !!digits[[variable]][[colname]])
-        else if (colname %in% c("p", "p_miss", "p_nonmiss",
-                                "p_miss_unweighted", "p_nonmiss_unweighted"))
-          attr(column, "fmt_fun") <-
-            purrr::partial(style_number, scale = 100,
-                           digits = !!digits[[variable]][[colname]])
-        else
-          attr(column, "fmt_fun") <-
-            purrr::partial(style_number, digits = !!digits[[variable]][[colname]])
-      }
-      # if digits not specified, use the default percent and integer formatting
-      else if (colname %in% c("p" ,"p_miss", "p_nonmiss")) {
-        attr(column, "fmt_fun") <- percent_fun
-      }
-      else {
-        attr(column, "fmt_fun") <- N_fun
-      }
+        # if the fmt function is already defined, then add it as attribute
+        else if (!is.null(digits[[variable]][[colname]])) {
+          attr(column, "fmt_fun") <- digits[[variable]][[colname]]
+        }
 
-      column
-    }
-  )
+        # if the variable is categorical and a percent, use `style_percent`
+        else if (summary_type %in% c("categorical", "dichotomous") & colname %in% "p") {
+          attr(column, "fmt_fun") <- percent_fun
+        }
+
+        # if the variable is categorical and an N, use `style_number`
+        else if (summary_type %in% c("categorical", "dichotomous") & colname %in% c("N", "n")) {
+          attr(column, "fmt_fun") <- style_number
+        }
+
+        # if the column is one of the remaining percent cols, use `style_percent`
+        else if (colname %in% percent_stats) {
+          attr(column, "fmt_fun") <- percent_fun
+        }
+
+        # if the column is one of the remaining N cols, use `style_number`
+        else if (colname %in% base_stats) {
+          attr(column, "fmt_fun") <- style_number
+        }
+
+        # that should cove everything, but adding this just in case
+        else attr(column, "fmt_fun") <- style_number
+
+        # return column
+        column
+      }
+    )
 
   df_stats
 }
@@ -1100,6 +1120,7 @@ df_stats_to_tbl <- function(data, variable, summary_type, by, var_label, stat_di
     calculate_missing_fun <- calculate_missing_row
 
   # styling the statistics -----------------------------------------------------
+  df_stats_original <- df_stats
   for (v in (names(df_stats) %>% setdiff(c("by", "variable", "variable_levels", "stat_display")))) {
     df_stats[[v]] <- df_stats[[v]] %>% attr(df_stats[[v]], "fmt_fun")()
   }
@@ -1179,8 +1200,17 @@ df_stats_to_tbl <- function(data, variable, summary_type, by, var_label, stat_di
     result <-
       result %>%
       bind_rows(
-        calculate_missing_fun(data = data, variable = variable,
-                              by = by, missing_text = missing_text)
+        df_stats_original %>%
+          select(any_of(c("by", "variable", "N_miss"))) %>%
+          distinct() %>%
+          mutate(stat_display = "{N_miss}") %>%
+          {df_stats_to_tbl(
+            data = data, variable = variable, summary_type = "dichotomous", by = by,
+            var_label = missing_text, stat_display = "{N_miss}", df_stats = .,
+            missing = "no", missing_text = "Doesn't Matter -- Text should never appear"
+          )} %>%
+          # changing row_type to missing
+          mutate(row_type = "missing")
       )
   }
 
@@ -1289,4 +1319,27 @@ has_na <- function(data, variable) {
   } else {
     sum(is.na(data[[variable]])) > 0
   }
+}
+
+# convert a tbl_summary meta_data object to a var_info tibble
+meta_data_to_var_info <- function(meta_data) {
+  var_info <-
+    meta_data %>%
+    select(any_of(c("variable", "summary_type", "class", "var_label")))
+
+  if ("class" %in% names(var_info)){
+    var_info <-
+      var_info %>%
+      mutate(var_class = map_chr(.data$class, pluck, 1)) %>%
+      select(-.data$class)
+  }
+  if ("summary_type" %in% names(var_info))
+    var_info <- select(var_info, var_type = .data$summary_type, everything())
+
+  var_info
+}
+
+# simple function to evaluate the RHS of a formula in the formula's environment
+eval_rhs <- function(x) {
+  rlang::f_rhs(x) %>% rlang::eval_tidy(env = rlang::f_env(x))
 }

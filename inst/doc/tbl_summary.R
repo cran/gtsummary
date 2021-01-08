@@ -69,6 +69,28 @@ trial2 %>%
     missing_text = "(Missing)"
   )
 
+## ---- echo = FALSE------------------------------------------------------------
+tibble::tribble(
+  ~`select_helper`, ~`varname`, ~`named_list`,
+  '`all_continuous() ~ "{mean}"`', '`c("age", "marker") ~ "{mean}"`', '`list(age = "{mean}", marker = "{mean}")`',
+  '`list(all_continuous() ~ "{mean}")`', '`c(age, marker) ~ "{mean}"`', NA_character_ ,
+  NA_character_, '`list(c(age, marker) ~ "{mean}")`', NA_character_
+) %>%
+  gt::gt() %>%
+  gt::fmt_markdown(everything()) %>%
+  gt::cols_label(select_helper = gt::md("**Select with Helpers**"),
+                 varname = gt::md("**Select by Variable Name**"),
+                 named_list = gt::md("**Select with Named List**")) %>%
+  gt::fmt_missing(columns = everything(), missing_text = "---") %>%
+  gt::tab_options(table.font.size = "85%") %>%
+  gt::cols_width(everything() ~ gt::px(390))
+
+## ----out.width = "80%", echo = FALSE, fig.align='center'----------------------
+# print picture of slide if in packagedown so not included in CRAN
+if (pkgdown::in_pkgdown()) {
+  knitr::include_graphics("https://github.com/ddsjoberg/gtsummary/raw/master/data-raw/crayon_images/crayon-selectors.png")
+}
+
 ## ----echo = FALSE-------------------------------------------------------------
 tibble::tribble(
   ~Function,             ~Description,
@@ -107,7 +129,7 @@ trial2 %>%
   modify_header(label ~ "**Variable**") %>%
   modify_spanning_header(c("stat_1", "stat_2") ~ "**Treatment Received**") %>%
   modify_footnote(
-    starts_with("stat_") ~ "Median (IQR) or Frequency (%)"
+    all_stat_cols() ~ "Median (IQR) or Frequency (%)"
   ) %>%
   bold_labels()
 

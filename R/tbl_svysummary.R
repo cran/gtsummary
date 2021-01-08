@@ -1,7 +1,6 @@
 #' Create a table of summary statistics from a survey object
 #'
-#' \Sexpr[results=rd, stage=render]{lifecycle::badge("experimental")}
-#'
+#' \lifecycle{experimental}
 #' The `tbl_svysummary` function calculates descriptive statistics for
 #' continuous, categorical, and dichotomous variables taking into account survey weights and design.
 #' It is similar to [tbl_summary()].
@@ -94,7 +93,7 @@ tbl_svysummary <- function(data, by = NULL, label = NULL, statistic = NULL,
                         missing = NULL, missing_text = NULL, sort = NULL,
                         percent = NULL, include = NULL) {
   # checking for survey package ------------------------------------------------
-  assert_package("survey", "tbl_svysummary")
+  assert_package("survey", "tbl_svysummary()")
 
   # test if data is a survey object
   if (!is_survey(data)) stop("'data' should be a survey object (see svydesign()).", call. = FALSE)
@@ -150,8 +149,13 @@ tbl_svysummary <- function(data, by = NULL, label = NULL, statistic = NULL,
     get_theme_element("tbl_summary-arg:percent", default = "column")
 
   # converting bare arguments to string ----------------------------------------
-  by <- var_input_to_string(data = data$variables, select_input = !!rlang::enquo(by),
-                            arg_name = "by", select_single = TRUE)
+  by <-
+    .select_to_varnames(
+      select = {{ by }},
+      data = data$variables,
+      arg_name = "by",
+      select_single = TRUE
+    )
 
   # matching arguments ---------------------------------------------------------
   missing <- match.arg(missing, choices = c("ifany", "always", "no"))
@@ -221,10 +225,12 @@ tbl_svysummary <- function(data, by = NULL, label = NULL, statistic = NULL,
             df_stats = df_stats, missing = missing, missing_text = missing_text
           )
         }
-      )
+      ),
+      var_class = map_chr(.data$class, pluck, 1)
     ) %>%
-    pull(.data$tbl_stats) %>%
-    purrr::reduce(bind_rows)
+    select(var_type = .data$summary_type, .data$var_class, .data$var_label, .data$tbl_stats) %>%
+    unnest(.data$tbl_stats) %>%
+    select(.data$variable, .data$var_type, .data$var_class, .data$var_label, everything())
 
   # table of column headers ----------------------------------------------------
   table_header <-
@@ -262,16 +268,18 @@ tbl_svysummary <- function(data, by = NULL, label = NULL, statistic = NULL,
 
   # adding headers
   if (is.null(by)) {
-    results <- modify_header_internal(
+    results <- modify_header(
       results,
       stat_0 = "**N = {style_number(N)}**",
       label = paste0("**", translate_text("Characteristic"), "**")
     )
   } else {
-    results <- modify_header_internal(
+    results <- modify_header(
       results,
-      stat_by = "**{level}**, N = {style_number(n)}",
-      label = paste0("**", translate_text("Characteristic"), "**")
+      update = list(
+        all_stat_cols(FALSE) ~ "**{level}**, N = {style_number(n)}",
+        label ~ paste0("**", translate_text("Characteristic"), "**")
+      )
     )
   }
 

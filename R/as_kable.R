@@ -52,10 +52,18 @@ as_kable <- function(x, include = everything(), return_calls = FALSE,
   if (return_calls == TRUE) return(kable_calls)
 
   # converting to charcter vector ----------------------------------------------
-  include <- var_input_to_string(data = vctr_2_tibble(names(kable_calls)),
-                                 select_input = !!rlang::enquo(include))
-  exclude <- var_input_to_string(data = vctr_2_tibble(names(kable_calls)),
-                                 select_input = !!rlang::enquo(exclude))
+  include <-
+    .select_to_varnames(
+      select = {{ include }},
+      var_info = names(kable_calls),
+      arg_name = "include"
+    )
+  exclude <-
+    .select_to_varnames(
+      select = {{ exclude }},
+      var_info = names(kable_calls),
+      arg_name = "exclude"
+    )
 
   # making list of commands to include -----------------------------------------
   # this ensures list is in the same order as names(x$kable_calls)
@@ -79,7 +87,7 @@ as_kable <- function(x, include = everything(), return_calls = FALSE,
 table_header_to_kable_calls <- function(x, ...) {
   dots <- rlang::enexprs(...)
 
-  table_header <- x$table_header
+  table_header <- .clean_table_header(x$table_header)
 
   kable_calls <- as_tibble(x, return_calls = TRUE, include = -c("cols_label"))
 
@@ -90,9 +98,12 @@ table_header_to_kable_calls <- function(x, ...) {
   df_col_labels <-
     dplyr::filter(table_header, .data$hide == FALSE)
 
-  kable_calls[["kable"]] <- expr(
-    knitr::kable(col.names = !!df_col_labels$label, !!!dots)
-  )
+  if (!is.null(x$list_output$caption))
+    kable_calls[["kable"]] <-
+    expr(knitr::kable(caption = !!x$list_output$caption, col.names = !!df_col_labels$label, !!!dots))
+  else
+    kable_calls[["kable"]] <-
+    expr(knitr::kable(col.names = !!df_col_labels$label, !!!dots))
 
   kable_calls
 }

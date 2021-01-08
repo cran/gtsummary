@@ -45,7 +45,8 @@ places to round continuous summary statistics. If not specified,
 When multiple statistics are displayed for a single variable, supply a vector
 rather than an integer.  For example, if the
 statistic being calculated is \code{"{mean} ({sd})"} and you want the mean rounded
-to 1 decimal place, and the SD to 2 use \code{digits = list(age ~ c(1, 2))}.}
+to 1 decimal place, and the SD to 2 use \code{digits = list(age ~ c(1, 2))}. User
+may also pass a styling function: \code{digits = age ~ style_sigfig}}
 
 \item{type}{List of formulas specifying variable types. Accepted values
 are \code{c("continuous", "continuous2", "categorical", "dichotomous")},
@@ -107,9 +108,13 @@ of formulas (e.g. \code{statistic}, \code{type}, \code{digits}, \code{value}, \c
 
 The \code{tbl_summary()} function has four summary types:
 \itemize{
-\item \code{"continuous"} summaries are shown on a \emph{single row}
+\item \code{"continuous"} summaries are shown on a \emph{single row}. Most numeric
+variables default to summary type continuous.
 \item \code{"continuous2"} summaries are shown on \emph{2 or more rows}
-\item \code{"categorical"} \emph{multi-line} summaries of nominal data
+\item \code{"categorical"} \emph{multi-line} summaries of nominal data. Character variables,
+factor variables, and numeric variables with fewer than 10 unique levels default to
+type categorical. To change a numeric variable to continuous that
+defaulted to categorical, use \code{type = list(varname ~ "continuous")}
 \item \code{"dichotomous"} categorical variables that are displayed on a \emph{single row},
 rather than one row per level of the variable.
 Variables coded as \code{TRUE}/\code{FALSE}, \code{0}/\code{1}, or \code{yes}/\code{no} are assumed to be dichotomous,

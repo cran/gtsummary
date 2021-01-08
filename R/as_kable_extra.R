@@ -1,6 +1,5 @@
 #' Convert gtsummary object to a kableExtra object
 #'
-#' \Sexpr[results=rd, stage=render]{lifecycle::badge("experimental")}
 #' Function converts a gtsummary object to a knitr_kable + kableExtra object.
 #' A user can use this function if they wish to add customized formatting
 #' available via [knitr::kable] and {kableExtra}. Note that {gtsummary}
@@ -22,7 +21,7 @@
 as_kable_extra <- function(x, include = everything(), return_calls = FALSE,
                            strip_md_bold = TRUE, ...) {
   # must have kableExtra package installed to use this function ----------------
-  assert_package("kableExtra", "as_kable_extra")
+  assert_package("kableExtra", "as_kable_extra()")
 
   # stripping markdown asterisk ------------------------------------------------
   if (strip_md_bold == TRUE) {
@@ -55,8 +54,12 @@ as_kable_extra <- function(x, include = everything(), return_calls = FALSE,
     )
 
   # converting to charcter vector ----------------------------------------------
-  include <- var_input_to_string(data = vctr_2_tibble(names(kable_extra_calls)),
-                                 select_input = !!rlang::enquo(include))
+  include <-
+    .select_to_varnames(
+      select = {{ include }},
+      var_info = names(kable_extra_calls),
+      arg_name = "include"
+    )
 
   # making list of commands to include -----------------------------------------
   # this ensures list is in the same order as names(x$kable_calls)
@@ -79,7 +82,7 @@ as_kable_extra <- function(x, include = everything(), return_calls = FALSE,
 }
 
 table_header_to_kable_extra_calls <- function(x, ...) {
-  table_header <- x$table_header
+  table_header <- .clean_table_header(x$table_header)
 
   # getting kable calls
   kable_extra_calls <-

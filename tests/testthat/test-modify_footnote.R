@@ -23,9 +23,23 @@ test_that("modify_footnote works", {
   )
 
   expect_error(
+    tbl_summary %>%
+      modify_footnote(update = NULL),
+    NA
+  )
+
+  expect_error(
     glm(response ~ age + grade, trial, family = binomial) %>%
       tbl_regression(exponentiate = TRUE) %>%
       modify_footnote(ci ~ "CI = Credible Interval", abbreviation = TRUE),
     NA
+  )
+
+  expect_true(
+    tbl_summary %>%
+      modify_footnote(everything() ~ NA) %>%
+      purrr::pluck("table_header", "footnote") %>%
+      is.na() %>%
+      all()
   )
 })

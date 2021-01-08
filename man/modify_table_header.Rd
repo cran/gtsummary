@@ -24,7 +24,7 @@ modify_table_header(
 \arguments{
 \item{x}{gtsummary object}
 
-\item{column}{columns to update}
+\item{column}{vector or selector of columns in \code{x$table_body}}
 
 \item{label}{string of column label}
 
@@ -34,7 +34,7 @@ modify_table_header(
 \code{c("left", "right", "center")}}
 
 \item{missing_emdash}{string that evaluates to logical identifying rows to
-include em-dash for missing values, e.g. \code{"row_ref == TRUE"}}
+include em-dash for missing values, e.g. \code{"reference_row == TRUE"}}
 
 \item{indent}{string that evaluates to logical identifying rows to indent}
 
@@ -52,9 +52,6 @@ include em-dash for missing values, e.g. \code{"row_ref == TRUE"}}
 \item{footnote}{string with text for column footnote}
 
 \item{spanning_header}{string with text for spanning header}
-}
-\value{
-gtsummary object
 }
 \description{
 This is a function meant for advanced users to gain
@@ -84,4 +81,9 @@ modify_table_header_ex1 <-
                       footnote = "Regression Coefficient") \%>\%
   modify_table_header(column = "p.value",
                       hide = TRUE)
+}
+\seealso{
+\code{modify_table_body()}
+
+See \href{http://www.danieldsjoberg.com/gtsummary/articles/gtsummary_definition.html}{gtsummary internals vignette}
 }

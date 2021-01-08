@@ -53,9 +53,15 @@ inline_text.tbl_summary <-
 
     # checking variable input --------------------------------------------------
     variable <-
-      var_input_to_string(
-        data = vctr_2_tibble(x$meta_data$variable), arg_name = "variable",
-        select_single = TRUE, select_input = !!variable
+      .select_to_varnames(
+        select = !!variable,
+        data = switch(class(x[1]),
+                      "tbl_summary" = x$inputs$data,
+                      "tbl_cross" = x$inputs$data,
+                      "tbl_svysummary" = x$inputs$data$variables),
+        var_info = x$table_body,
+        arg_name = "variable",
+        select_single = TRUE
       )
 
     # selecting variable row from meta_data
@@ -90,9 +96,11 @@ inline_text.tbl_summary <-
 
     # selecting proper column name
     column <-
-      var_input_to_string(
-        data = vctr_2_tibble(col_lookup_table$input), arg_name = "column",
-        select_single = TRUE, select_input = !!column
+      .select_to_varnames(
+        select = !!column,
+        var_info = col_lookup_table$input,
+        arg_name = "column",
+        select_single = TRUE
       )
 
     column <- col_lookup_table %>%
@@ -126,10 +134,11 @@ inline_text.tbl_summary <-
     }
     else {
       level <-
-        var_input_to_string(
-          data = vctr_2_tibble(filter(result, .data$row_type != "label") %>%
-                                 pull(.data$label)),
-          arg_name = "level", select_single = TRUE, select_input = !!level
+        .select_to_varnames(
+          select = !!level,
+          var_info = filter(result, .data$row_type != "label")$label,
+          arg_name = "level",
+          select_single = TRUE
         )
 
       result <-
@@ -232,9 +241,12 @@ inline_text.tbl_regression <-
 
     # select variable ----------------------------------------------------------
     variable <-
-      var_input_to_string(
-        data = vctr_2_tibble(unique(x$table_body$variable)), arg_name = "variable",
-        select_single = TRUE, select_input = !!variable
+      .select_to_varnames(
+        select = !!variable,
+        data = NULL,
+        var_info = x$table_body,
+        arg_name = "variable",
+        select_single = TRUE
       )
 
     # grabbing rows matching variable
@@ -249,10 +261,11 @@ inline_text.tbl_regression <-
     }
     else {
       level <-
-        var_input_to_string(
-          data = vctr_2_tibble(filter(result, .data$row_type != "label") %>%
-                                 pull(.data$label)),
-          arg_name = "level", select_single = TRUE, select_input = !!level
+        .select_to_varnames(
+          select = !!level,
+          var_info = filter(result, .data$row_type != "label")$label,
+          arg_name = "level",
+          select_single = TRUE
         )
 
       result <-
@@ -457,7 +470,7 @@ inline_text.tbl_survival <-
 
 #' Report statistics from survfit tables inline
 #'
-#' \Sexpr[results=rd, stage=render]{lifecycle::badge("experimental")}
+#' \lifecycle{experimental}
 #' Extracts and returns statistics from a `tbl_survfit` object for
 #' inline reporting in an R markdown document. Detailed examples in the
 #' \href{http://www.danieldsjoberg.com/gtsummary/articles/inline_text.html}{inline_text vignette}
@@ -465,6 +478,8 @@ inline_text.tbl_survival <-
 #' @param x Object created from  [tbl_survfit]
 #' @param time time for which to return survival probabilities.
 #' @param prob probability with values in (0,1)
+#' @param column column to print from `x$table_body`.
+#' Columns may be selected with `time=` or `prob=` as well.
 #' @param variable Variable name of statistic to present.
 #' @param pattern String indicating the statistics to return.
 #' @param level Level of the variable to display for categorical variables.
@@ -482,66 +497,101 @@ inline_text.tbl_survival <-
 #' fit2 <- survfit(Surv(ttdeath, death) ~ 1, trial)
 #'
 #' # sumarize survfit objects
-#' tbl1 <- tbl_survfit(
-#'   fit1,
-#'   times = c(12, 24),
-#'   label = "Treatment",
-#'   label_header = "**{time} Month**"
-#' )
+#' tbl1 <-
+#'   tbl_survfit(
+#'     fit1,
+#'     times = c(12, 24),
+#'     label = "Treatment",
+#'     label_header = "**{time} Month**"
+#'   ) %>%
+#'   add_p()
 #'
-#' tbl2 <- tbl_survfit(
-#'   fit2,
-#'   probs = 0.5,
-#'   label_header = "**Median Survival**"
-#' )
+#' tbl2 <-
+#'   tbl_survfit(
+#'     fit2,
+#'     probs = 0.5,
+#'     label_header = "**Median Survival**"
+#'   )
 #'
 #' # report results inline
 #' inline_text(tbl1, time = 24, level = "Drug B")
+#' inline_text(tbl1, column = p.value)
 #' inline_text(tbl2, prob = 0.5)
 inline_text.tbl_survfit <-
-  function(x, time = NULL, prob = NULL, variable = NULL, level = NULL,
-           pattern = x$inputs$statistic,
+  function(x, variable = NULL, level = NULL,
+           pattern = NULL, time = NULL, prob = NULL, column = NULL,
            estimate_fun = x$inputs$estimate_fun, pvalue_fun = NULL, ...) {
+    # quoting inputs -------------------------------------------------------------
+    variable <- rlang::enquo(variable)
+    level <- rlang::enquo(level)
+    column <- rlang::enquo(column)
+
     # setting defaults ---------------------------------------------------------
     pvalue_fun <-
       pvalue_fun %||%
       get_theme_element("pkgwide-fn:prependpvalue_fun") %||%
       (function(x) style_pvalue(x, prepend_p = TRUE)) %>%
       gts_mapper("inline_text(pvalue_fun=)")
-
     estimate_fun <- estimate_fun %>%
       gts_mapper("inline_text(estimate_fun=)")
 
     # checking inputs ----------------------------------------------------------
-    if (c(is.null(time), is.null(prob)) %>% sum() != 1) {
-      stop("One and only one of `time=` and `prob=` must be specified.", call. = FALSE)
+    if (c(!is.null(time), !is.null(prob), !rlang::quo_is_null(column)) %>% sum() != 1) {
+      stop("One and only one of `time=`, `prob=`, and `column=` must be specified.", call. = FALSE)
     }
 
-    # selecting variable -------------------------------------------------------
-    variable <- dplyr::select(vctr_2_tibble(unique(x$meta_data$variable)), {{ variable }}) %>% names()
-    if (length(variable) == 0)
-      variable <- dplyr::select(vctr_2_tibble(unique(x$meta_data$variable)), 1) %>% names()
+    # selecting column ---------------------------------------------------------
+    if (!is.null(time)) {
+      if (!time %in% x$inputs$times)
+        glue("`time=` must be one of {quoted_list(x$inputs$times)}") %>% abort()
+      column <- which(x$inputs$times %in% time) %>% {paste0("stat_", .)}
+    }
+    if (!is.null(prob)) {
+      if (!prob %in% x$inputs$probs)
+        glue("`prob=` must be one of {quoted_list(x$inputs$probs)}") %>% abort()
+      column <- which(x$inputs$probs %in% prob) %>% {paste0("stat_", .)}
+    }
+    column <- x$table_body %>% select({{ column }}) %>% names()
 
-    result <-
-      dplyr::filter(x$meta_data, .data$variable == .env$variable) %>%
-      pull(.data$df_stats) %>%
-      purrr::flatten_dfc()
+    # selecting variable -------------------------------------------------------
+    variable <- .select_to_varnames(select = !!variable, var_info = x$meta_data)
+    if (length(variable) == 0)
+      variable <- .select_to_varnames(select = 1, var_info = x$meta_data)
 
     # selecting level ----------------------------------------------------------
-    level <- dplyr::select(vctr_2_tibble(unique(result$label)), {{ level }}) %>% names()
+    level <- .select_to_varnames(select = !!level,
+                                 var_info = filter(x$table_body, .data$variable == .env$variable) %>%
+                                   dplyr::pull(.data$label))
     if (length(level) == 0)
-      level <- dplyr::select(vctr_2_tibble(unique(result$label)), 1) %>% names()
+      level <- .select_to_varnames(select = 1,
+                                   var_info = filter(x$table_body, .data$variable == .env$variable) %>%
+                                     dplyr::pull(.data$label))
 
-    result <- dplyr::filter(result, .data$label == .env$level)
+    # if pattern specified, then construct the stat to display
+    if (!is.null(pattern)) {
+      stat_cols <- select(x$meta_data, .data$df_stats) %>% unnest(cols = .data$df_stats) %>% pull(.data$col_name) %>% unique()
+      if (!column %in% stat_cols)
+        glue("When `pattern=` specified, column must be one of {quoted_list(stat_cols)}") %>%
+        abort()
 
-    # prob and time ------------------------------------------------------------
-    est_var <- ifelse(!is.null(time), "time", "prob")
-    est_val <- time %||% prob
-    result <-
-      result[result[[est_var]] == est_val, ] %>%
-      mutate_at(vars(.data$estimate, .data$conf.high, .data$conf.low), estimate_fun) %>%
-      mutate(stat = glue(.env$pattern) %>% as.character()) %>%
-      pull(.data$stat)
+      result <-
+        dplyr::filter(x$meta_data, .data$variable == .env$variable) %>%
+        pull(.data$df_stats) %>%
+        purrr::flatten_dfc() %>%
+        filter(.data$col_name %in% .env$column, .data$label %in% .env$level) %>%
+        mutate_at(vars(.data$estimate, .data$conf.high, .data$conf.low), estimate_fun) %>%
+        mutate(stat = glue(.env$pattern) %>% as.character()) %>%
+        pull(.data$stat)
+    }
+    # if not pattern, then return cell from table_body
+    else {
+      result <-
+        x$table_body %>%
+        filter(.data$variable == .env$variable, .data$label == .env$level) %>%
+        pull(all_of(column))
+
+      if (column == "p.value") result <- pvalue_fun(result)
+    }
 
     result
 }
@@ -549,7 +599,7 @@ inline_text.tbl_survfit <-
 
 #' Report statistics from cross table inline
 #'
-#' \Sexpr[results=rd, stage=render]{lifecycle::badge("experimental")}
+#' \lifecycle{experimental}
 #' Extracts and returns statistics from a `tbl_cross` object for
 #' inline reporting in an R markdown document. Detailed examples in the
 #' \href{http://www.danieldsjoberg.com/gtsummary/articles/inline_text.html}{inline_text vignette}
@@ -590,11 +640,13 @@ inline_text.tbl_cross <-
 
     # row_level ----------------------------------------------------------------
     # converting row_level to a string
-    row_level <- var_input_to_string(
-      data = vctr_2_tibble(unique(x$table_body$label)),
-      select_input = {{ row_level }},
-      arg_name = "row_level", select_single = TRUE
-    )
+    row_level <-
+      .select_to_varnames(
+        select = {{ row_level }},
+        var_info = x$table_body$label,
+        arg_name = "row_level",
+        select_single = TRUE
+      )
 
     # assessing if user selected total row
     if (!is.null(row_level) && row_level == x$inputs$margin_text && "..total.." %in% x$meta_data$variable) {
@@ -626,15 +678,20 @@ inline_text.tbl_cross <-
 
     # selecting proper column name
     col_level <-
-      var_input_to_string(
-        data = vctr_2_tibble(col_lookup_table$input), arg_name = "col_level",
-        select_single = TRUE, select_input = {{ col_level }}
+      .select_to_varnames(
+        select = {{ col_level }},
+        var_info = col_lookup_table$input,
+        arg_name = "col_level",
+        select_single = TRUE
       )
 
     col_level <- col_lookup_table %>%
       filter(.data$input == col_level) %>%
       slice(1) %>%
       pull(.data$column_name)
+
+    # replacing passed data with, tbl_data (only data used in table) -----------
+    x$inputs$data <- x$tbl_data
 
     # evaluating inline_text for tbl_summary -----------------------------------
     expr(

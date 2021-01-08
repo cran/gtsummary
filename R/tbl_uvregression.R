@@ -20,7 +20,7 @@
 #' of model, e.g. they are all continuous variables appropriate for [lm], or
 #' dichotomous variables appropriate for logistic regression with [glm].
 #'
-#' @inheritSection tbl_regression Setting Defaults
+#' @inheritSection tbl_regression Methods
 #' @inheritSection tbl_regression Note
 #'
 #' @param data Data frame to be used in univariate regression modeling.  Data
@@ -83,6 +83,7 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
                              include = everything(), tidy_fun = NULL,
                              hide_n = FALSE, show_single_row = NULL, conf.level = NULL,
                              estimate_fun = NULL, pvalue_fun = NULL, formula = "{y} ~ {x}",
+                             add_estimate_to_reference_rows = NULL,
                              show_yesno = NULL, exclude = NULL) {
   # deprecated arguments -------------------------------------------------------
   if (!is.null(show_yesno)) {
@@ -137,13 +138,14 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
   y <- rlang::enexpr(y)
   x <-
     tryCatch({
-      var_input_to_string(data = data, select_input = !!x, arg_name = "x")
+      .select_to_varnames(select = !!x, data = data, arg_name = "x")
     }, error = function(e) {
       rlang::expr_text(x)
     })
+
   y <-
     tryCatch({
-      var_input_to_string(data = data, select_input = !!y, arg_name = "y")
+      .select_to_varnames(select = !!y, data = data, arg_name = "y")
     }, error = function(e) {
       rlang::expr_text(y)
     })
@@ -158,13 +160,24 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
     stop("Select only a single column in argument `x=` or `y=`.", call. = FALSE)
   }
 
-  include <- var_input_to_string(data = data, select_input = !!rlang::enquo(include),
-                                 arg_name = "include")
-  exclude <- var_input_to_string(data = data, select_input = !!rlang::enquo(exclude),
-                                 arg_name = "exclude")
-  show_single_row <- var_input_to_string(data = data,
-                                         select_input = !!rlang::enquo(show_single_row),
-                                         arg_name = "show_single_row")
+  include <-
+    .select_to_varnames(
+      select = {{ include }},
+      data = data,
+      arg_name =  "include"
+    )
+  exclude <-
+    .select_to_varnames(
+      select = {{ exclude }},
+      data = data,
+      arg_name =  "exclude"
+    )
+  show_single_row <-
+    .select_to_varnames(
+      select = {{ show_single_row }},
+      data = data,
+      arg_name =  "show_single_row"
+    )
 
   # checking formula correctly specified ---------------------------------------
   if (!rlang::is_string(formula)) {
@@ -189,8 +202,14 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
   }
 
   # converting tidyselect formula lists to named lists -------------------------
-  label <- tidyselect_to_list(data, label, .meta_data = NULL, arg_name = "label")
-  # all sepcifed labels must be a string of length 1
+  label <-
+    .formula_list_to_named_list(
+      x = label,
+      data = data,
+      arg_name = "label"
+    )
+
+  # all specified labels must be a string of length 1
   if (!every(label, ~ rlang::is_string(.x))) {
     stop("Each `label` specified must be a string of length 1.", call. = FALSE)
   }
@@ -206,6 +225,7 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
   tbl_uvregression_inputs <- as.list(environment())
   tbl_uvregression_inputs <-
     tbl_uvregression_inputs[!names(tbl_uvregression_inputs) %in% c("x_name", "y_name")]
+
 
   # get all vars not specified -------------------------------------------------
   all_vars <-
@@ -224,10 +244,22 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
   }
 
   # building regression models -------------------------------------------------
+  tbl_reg_args <-
+    c("exponentiate", "conf.level", "label", "include", "show_single_row",
+      "tidy_fun", "estimate_fun", "pvalue_fun", "add_estimate_to_reference_rows")
+
   df_model <-
-    tibble(vars = all_vars) %>%
-    set_names(ifelse(!is.null(y), "x", "y")) %>%
+    tibble(
+      # quoting the bad names in backticks
+      all_vars = all_vars,
+      y = switch(!is.null(y), rep_len(y, length(all_vars))) %||%
+        chr_w_backtick(all_vars),
+      x = switch(!is.null(x), rep_len(x, length(all_vars))) %||%
+        chr_w_backtick(all_vars)
+    ) %>%
+    # building model
     mutate(
+      type = ifelse(!is.null(.env$y), "x_varies", "y_varies"),
       formula_chr = glue(formula),
       model = map(
         .data$formula_chr,
@@ -235,56 +267,53 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
           c(as.list(method.args)[-1]) %>%
           as.call() %>%
           eval()
+      ),
+      # removing backticks
+      y = switch(is.null(.env$y), all_vars) %||% y,
+      x = switch(is.null(.env$x), all_vars) %||% x
+    ) %>%
+    select(all_of(c("y", "x", "type", "model"))) %>%
+    # preparing tbl_regression function arguments
+    mutate(
+      tbl_args = pmap(
+        list(.data$model, .data$y, .data$x, .data$type),
+        function(model, y, x, type) {
+          args <- tbl_uvregression_inputs
+          # removing NULL elements from list
+          args[sapply(args, is.null)] <- NULL
+          args$label <- args$label[names(args$label) %in% x]
+          # keeping args to pass to tbl_regression
+          args <- args[names(args) %in% tbl_reg_args]
+
+          # fixing show_single_row arg for x_varies
+          if (type == "x_varies")
+            args[["show_single_row"]] <- intersect(x, show_single_row)
+
+          # only include the one x var of interest
+          args[["include"]] <- x
+
+          if (type == "y_varies")
+            args[["label"]] <- list(label[[y]] %||% attr(data[[y]], "label") %||% y) %>% set_names(x)
+
+          # adding model object
+          args[["x"]] <- model
+          args
+        }
       )
     )
 
-  # convert model to tbl_regression object -------------------------------------
-  if (!is.null(y)) {
-    df_model <-
-      df_model %>%
-      mutate(
-        tbl = map2(
-          .data$model, .data$x,
-          ~tbl_regression(
-            .x,
-            exponentiate = exponentiate,
-            conf.level = conf.level,
-            label = label,
-            include = .y, # only include the covariate of interest in output
-            show_single_row = intersect(.y, show_single_row),
-            tidy_fun = tidy_fun,
-            estimate_fun = estimate_fun,
-            pvalue_fun = pvalue_fun
-          )
-        )
-      )
-  }
-  if (!is.null(x)) {
-    df_model <-
-      df_model %>%
-      mutate(
-        tbl = map2(
-          .data$model, .data$y,
-          function(model, y) {
-            tbl_uv <-
-              tbl_regression(
-                model,
-                label = list(label[[y]] %||% attr(data[[y]], "label") %||% y) %>% set_names(x),
-                exponentiate = exponentiate,
-                conf.level = conf.level,
-                include = x,
-                show_single_row = show_single_row,
-                tidy_fun = tidy_fun,
-                estimate_fun = estimate_fun,
-                pvalue_fun = pvalue_fun
-              )
-            tbl_uv$table_body$variable <- y
-            tbl_uv$table_body$var_type <- NA_character_
-            tbl_uv
-          }
-        )
-      )
-  }
+  # creating tbl_regression object
+  df_model$tbl <- pmap(
+    list(df_model$tbl_args, df_model$type, df_model$y),
+    function(tbl_args, type, y) {
+      tbl <- call2(tbl_regression, !!!tbl_args) %>% eval()
+      if (type == "y_varies") {
+        tbl$table_body$variable <- y
+        tbl$table_body$var_type <- NA_character_
+      }
+      tbl
+    }
+  )
 
   # adding N to table ----------------------------------------------------------
   if (hide_n == FALSE) {

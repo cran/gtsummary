@@ -32,7 +32,8 @@
 #' When multiple statistics are displayed for a single variable, supply a vector
 #' rather than an integer.  For example, if the
 #' statistic being calculated is `"{mean} ({sd})"` and you want the mean rounded
-#' to 1 decimal place, and the SD to 2 use `digits = list(age ~ c(1, 2))`.
+#' to 1 decimal place, and the SD to 2 use `digits = list(age ~ c(1, 2))`. User
+#' may also pass a styling function: `digits = age ~ style_sigfig`
 #' @param missing Indicates whether to include counts of `NA` values in the table.
 #' Allowed values are `"no"` (never display NA values),
 #' `"ifany"` (only display if any NA values), and `"always"`
@@ -66,9 +67,13 @@
 #'
 #' @section type argument:
 #' The `tbl_summary()` function has four summary types:
-#'    - `"continuous"` summaries are shown on a *single row*
+#'    - `"continuous"` summaries are shown on a *single row*. Most numeric
+#'    variables default to summary type continuous.
 #'    - `"continuous2"` summaries are shown on *2 or more rows*
-#'    - `"categorical"` *multi-line* summaries of nominal data
+#'    - `"categorical"` *multi-line* summaries of nominal data. Character variables,
+#'    factor variables, and numeric variables with fewer than 10 unique levels default to
+#'    type categorical. To change a numeric variable to continuous that
+#'    defaulted to categorical, use `type = list(varname ~ "continuous")`
 #'    - `"dichotomous"` categorical variables that are displayed on a *single row*,
 #'    rather than one row per level of the variable.
 #'    Variables coded as `TRUE`/`FALSE`, `0`/`1`, or `yes`/`no` are assumed to be dichotomous,
@@ -207,8 +212,10 @@ tbl_summary <- function(data, by = NULL, label = NULL, statistic = NULL,
   data <- data %>% ungroup()
 
   # converting bare arguments to string ----------------------------------------
-  by <- var_input_to_string(data = data, select_input = !!rlang::enquo(by),
-                            arg_name = "by", select_single = TRUE)
+  by <- .select_to_varnames(select = {{ by }},
+                            data = data,
+                            arg_name = "by",
+                            select_single = TRUE)
 
   # matching arguments ---------------------------------------------------------
   missing <- match.arg(missing, choices = c("ifany", "always", "no"))
@@ -284,10 +291,12 @@ tbl_summary <- function(data, by = NULL, label = NULL, statistic = NULL,
             df_stats = df_stats, missing = missing, missing_text = missing_text
           )
         }
-      )
+      ),
+      var_class = map_chr(.data$class, pluck, 1)
     ) %>%
-    pull(.data$tbl_stats) %>%
-    purrr::reduce(bind_rows)
+    select(var_type = .data$summary_type, .data$var_class, .data$var_label, .data$tbl_stats) %>%
+    unnest(.data$tbl_stats) %>%
+    select(.data$variable, .data$var_type, .data$var_class, .data$var_label, everything())
 
   # table of column headers ----------------------------------------------------
   table_header <-
@@ -325,16 +334,18 @@ tbl_summary <- function(data, by = NULL, label = NULL, statistic = NULL,
 
   # adding headers
   if (is.null(by)) {
-    results <- modify_header_internal(
+    results <- modify_header(
       results,
       stat_0 = "**N = {style_number(N)}**",
       label = paste0("**", translate_text("Characteristic"), "**")
     )
   } else {
-    results <- modify_header_internal(
+    results <- modify_header(
       results,
-      stat_by = "**{level}**, N = {style_number(n)}",
-      label = paste0("**", translate_text("Characteristic"), "**")
+      update = list(
+        all_stat_cols(FALSE) ~ "**{level}**, N = {style_number(n)}",
+        label ~ paste0("**", translate_text("Characteristic"), "**")
+      )
     )
   }
 
@@ -363,9 +374,10 @@ removing_variables_with_unsupported_types <- function(data, include, classes_exp
 
 # generate metadata table --------------------------------------------------------------
 # for survey objects pass the full survey object to `survey` argument, and `design$variables` to `data` argument
-generate_metadata <- function(data, value, by, classes_expected, type, label, statistic, digits, percent, sort, survey = NULL) {
+generate_metadata <- function(data, value, by, classes_expected, type, label,
+                              statistic, digits, percent, sort, survey = NULL) {
   # converting tidyselect formula lists to named lists -------------------------
-  value <- tidyselect_to_list(data, value, arg_name = "value")
+  value <- .formula_list_to_named_list(x = value, data = data, arg_name = "value")
 
   # creating a table with meta data about each variable ------------------------
   meta_data <- tibble(
@@ -386,7 +398,10 @@ generate_metadata <- function(data, value, by, classes_expected, type, label, st
   # updating type of user supplied one
   if (!is.null(type)) {
     # converting tidyselect formula lists to named lists
-    type <- tidyselect_to_list(data, type, .meta_data = meta_data, arg_name = "type")
+    type <- .formula_list_to_named_list(x = type,
+                                        data = data,
+                                        var_info = meta_data_to_var_info(meta_data) ,
+                                        arg_name = "type")
 
     # updating meta data object with new types
     meta_data <-
@@ -400,10 +415,22 @@ generate_metadata <- function(data, value, by, classes_expected, type, label, st
   }
 
   # converting tidyselect formula lists to named lists -------------------------
-  label <- tidyselect_to_list(data, label, .meta_data = meta_data, arg_name = "label")
-  statistic <- tidyselect_to_list(data, statistic, .meta_data = meta_data, arg_name = "statistic")
-  digits <- tidyselect_to_list(data, digits, .meta_data = meta_data, arg_name = "digits")
-  sort <- tidyselect_to_list(data, sort, .meta_data = meta_data)
+  label <- .formula_list_to_named_list(x = label,
+                                       data = data,
+                                       var_info = meta_data_to_var_info(meta_data) ,
+                                       arg_name = "label")
+  statistic <- .formula_list_to_named_list(x = statistic,
+                                           data = data,
+                                           var_info = meta_data_to_var_info(meta_data) ,
+                                           arg_name = "statistic")
+  digits <- .formula_list_to_named_list(x = digits,
+                                        data = data,
+                                        var_info = meta_data_to_var_info(meta_data) ,
+                                        arg_name = "digits")
+  sort <- .formula_list_to_named_list(x = sort,
+                                      data = data,
+                                      var_info = meta_data_to_var_info(meta_data) ,
+                                      arg_name = "sort")
 
   # assigning variable characteristics -----------------------------------------
   if (is.null(survey)) {

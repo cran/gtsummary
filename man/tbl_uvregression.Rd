@@ -20,6 +20,7 @@ tbl_uvregression(
   estimate_fun = NULL,
   pvalue_fun = NULL,
   formula = "{y} ~ {x}",
+  add_estimate_to_reference_rows = NULL,
   show_yesno = NULL,
   exclude = NULL
 )
@@ -83,6 +84,8 @@ Uses \link[glue:glue]{glue::glue} syntax. Default is \code{"{y} ~ {x}"}, where \
 is the dependent variable, and \code{{x}} represents a single covariate. For a
 random intercept model, the formula may be \code{formula = "{y} ~ {x} + (1 | gear)"}.}
 
+\item{add_estimate_to_reference_rows}{add a reference value. Default is FALSE}
+
 \item{show_yesno}{DEPRECATED}
 
 \item{exclude}{DEPRECATED}
@@ -121,16 +124,18 @@ dichotomous variables appropriate for logistic regression with \link{glm}.
 \if{html}{\figure{tbl_uv_ex2.png}{options: width=50\%}}
 }
 
-\section{Setting Defaults}{
+\section{Methods}{
 
-If you prefer to consistently use a different function to format p-values or
-estimates, you can set options in the script or in the user- or
-project-level startup file, '.Rprofile'.  The default confidence level can
-also be set.
+
+The default method for \code{tbl_regression()} model summary uses \code{broom::tidy(x)}
+to perform the initial tidying of the model object. There are, however,
+a few models that use \link[=tbl_regression_methods]{modifications}.
 \itemize{
-\item \code{options(gtsummary.pvalue_fun = new_function)}
-\item \code{options(gtsummary.tbl_regression.estimate_fun = new_function)}
-\item \code{options(gtsummary.conf.level = 0.90)}
+\item \code{"survreg"}: The scale parameter is removed, \code{broom::tidy(x) \%>\% dplyr::filter(term != "Log(scale)")}
+\item \code{"multinom"}: This multinomial outcome is complex, with one line per covariate per outcome (less the reference group)
+\item \code{"lmerMod"}, \code{"glmerMod"}, \code{"glmmTMB"}, \code{"glmmadmb"}, \code{"stanreg"}: These mixed effects
+models use \code{broom.mixed::tidy(x, effects = "fixed")}. Specify \code{tidy_fun = broom.mixed::tidy}
+to print the random components.
 }
 }
 
@@ -176,7 +181,7 @@ tbl_uv_ex2 <-
 See tbl_regression \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html#tbl_uvregression}{vignette}  for detailed examples
 
 Other tbl_uvregression tools: 
-\code{\link{add_global_p.tbl_uvregression}()},
+\code{\link{add_global_p}()},
 \code{\link{add_nevent.tbl_uvregression}()},
 \code{\link{add_q}()},
 \code{\link{bold_italicize_labels_levels}},

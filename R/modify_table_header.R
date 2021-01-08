@@ -9,13 +9,13 @@
 #' vignette for information on `.$table_header` objects.
 #'
 #' @param x gtsummary object
-#' @param column columns to update
+#' @param column vector or selector of columns in `x$table_body`
 #' @param label string of column label
 #' @param hide logical indicating whether to hide column from output
 #' @param align string indicating alignment of column, must be one of
 #' `c("left", "right", "center")`
 #' @param missing_emdash string that evaluates to logical identifying rows to
-#' include em-dash for missing values, e.g. `"row_ref == TRUE"`
+#' include em-dash for missing values, e.g. `"reference_row == TRUE"`
 #' @param indent string that evaluates to logical identifying rows to indent
 #' @param bold string that evaluates to logical identifying rows to bold
 #' @param italic string that evaluates to logical identifying rows to italicize
@@ -26,7 +26,8 @@
 #' @param footnote string with text for column footnote
 #' @param spanning_header string with text for spanning header
 #'
-#' @return gtsummary object
+#' @seealso `modify_table_body()`
+#' @seealso See \href{http://www.danieldsjoberg.com/gtsummary/articles/gtsummary_definition.html}{gtsummary internals vignette}
 #' @export
 #'
 #'
@@ -54,12 +55,19 @@ modify_table_header <- function(x, column, label = NULL, hide = NULL, align = NU
   # checking inputs ------------------------------------------------------------
   if (!inherits(x, "gtsummary")) stop("`x=` must be class 'gtsummary'", call. = FALSE)
 
+  # update table_header --------------------------------------------------------
+  x$table_header <- table_header_fill_missing(x$table_header, x$table_body)
+
   # convert column input to string ---------------------------------------------
   column <-
-    var_input_to_string(
-      data = vctr_2_tibble(x$table_header$column), arg_name = "column",
-      select_single = FALSE, select_input = {{ column }}
+    .select_to_varnames(
+      select = {{ column }},
+      var_info = x$table_header$column,
+      arg_name = "column"
     )
+
+  # if no columns selected, returning unaltered
+  if (is.null(column)) return(x)
 
   # label ----------------------------------------------------------------------
   x <- .update_table_header_element(

@@ -1,12 +1,12 @@
-# magrittr ---------------------------------------------------------------------
-#' @export
-#' @importFrom magrittr %>%
-magrittr::`%>%`
-
 # tibble -----------------------------------------------------------------------
 #' @export
 #' @importFrom tibble as_tibble
 tibble::as_tibble
+
+# survival ---------------------------------------------------------------------
+#' @export
+#' @importFrom survival Surv
+survival::Surv
 
 # knitr ------------------------------------------------------------------------
 #' @export
@@ -14,6 +14,10 @@ tibble::as_tibble
 knitr::knit_print
 
 # dplyr ------------------------------------------------------------------------
+#' @export
+#' @importFrom dplyr %>%
+dplyr::`%>%`
+
 #' @importFrom dplyr vars
 #' @export
 dplyr::vars
@@ -22,43 +26,46 @@ dplyr::vars
 #' @export
 dplyr::select
 
-# tidyselect -------------------------------------------------------------------
-#' @importFrom tidyselect starts_with
+#' @importFrom dplyr mutate
 #' @export
-tidyselect::starts_with
+dplyr::mutate
 
-#' @importFrom tidyselect ends_with
+#' @importFrom dplyr starts_with
 #' @export
-tidyselect::ends_with
+dplyr::starts_with
 
-#' @importFrom tidyselect contains
+#' @importFrom dplyr ends_with
 #' @export
-tidyselect::contains
+dplyr::ends_with
 
-#' @importFrom tidyselect matches
+#' @importFrom dplyr contains
 #' @export
-tidyselect::matches
+dplyr::contains
 
-#' @importFrom tidyselect num_range
+#' @importFrom dplyr matches
 #' @export
-tidyselect::num_range
+dplyr::matches
 
-#' @importFrom tidyselect all_of
+#' @importFrom dplyr num_range
 #' @export
-tidyselect::all_of
+dplyr::num_range
 
-#' @importFrom tidyselect any_of
+#' @importFrom dplyr all_of
 #' @export
-tidyselect::any_of
+dplyr::all_of
 
-#' @importFrom tidyselect everything
+#' @importFrom dplyr any_of
 #' @export
-tidyselect::everything
+dplyr::any_of
 
-#' @importFrom tidyselect last_col
+#' @importFrom dplyr everything
 #' @export
-tidyselect::last_col
+dplyr::everything
 
-#' @importFrom tidyselect one_of
+#' @importFrom dplyr last_col
 #' @export
-tidyselect::one_of
+dplyr::last_col
+
+#' @importFrom dplyr one_of
+#' @export
+dplyr::one_of

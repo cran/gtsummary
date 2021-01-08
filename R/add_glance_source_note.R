@@ -1,6 +1,6 @@
 #' Add glance statistics
 #'
-#' \Sexpr[results=rd, stage=render]{lifecycle::badge("experimental")}
+#' \lifecycle{experimental}
 #' Add the statistics returned in `broom::glance()` as a table source note.
 #'
 #' @param x 'tbl_regression' object
@@ -8,6 +8,8 @@
 #' @param label use to update statistic labels
 #' @param fmt_fun use to update default formatting function. Default is
 #' `everything() ~ purrr::partial(style_sigfig, digits = 3)`
+#' @param glance_fun function to calculate and return glance statistics.
+#' Default is `broom::glance()`
 #' @param sep1 Separator between statistic name and statistic.
 #' Default is `" = "`, e.g. `"R2 = 0.456"`
 #' @param sep2 Separator between statistics. Default is `"; "`
@@ -40,14 +42,16 @@
 #' \if{html}{\figure{add_glance_source_note_ex1.png}{options: width=64\%}}
 
 add_glance_source_note <- function(x, include = everything(), label = NULL,
-                                   fmt_fun = NULL, sep1 = " = ", sep2 = "; ", ...) {
+                                   fmt_fun = NULL, glance_fun = broom::glance,
+                                   sep1 = " = ", sep2 = "; ", ...) {
   # checking inputs ------------------------------------------------------------
   if (!inherits(x, "tbl_regression"))
     stop("`x=` must be class 'tbl_regression'")
 
   # prepping table -------------------------------------------------------------
+  df_glance_orig <- glance_fun(x$model_obj, ...)
   df_glance <-
-    broom::glance(x$model_obj, ...) %>%
+    df_glance_orig %>%
     tidyr::pivot_longer(cols = everything(),
                         names_to = "statistic_name",
                         values_to = "statistic")
@@ -72,18 +76,27 @@ add_glance_source_note <- function(x, include = everything(), label = NULL,
     mutate(label = map_chr(.data$label, ~translate_text(.x, language)))
 
   # evaluating tidyselects -----------------------------------------------------
-  include <- var_input_to_string(
-    data = vctr_2_tibble(df_results$statistic_name), arg_name = "include",
-    select_single = FALSE, select_input = {{include}}
-  )
+  include <-
+    .select_to_varnames(
+      select = {{ include }},
+      data = df_glance_orig,
+      arg_name = "include"
+    )
 
   label <-
-    tidyselect_to_list(vctr_2_tibble(df_results$statistic_name), label, arg_name = "label")
+    .formula_list_to_named_list(
+      x = label,
+      data = df_glance_orig,
+      arg_name = "label"
+    )
 
   if (rlang::is_function(fmt_fun)) fmt_fun <- everything() ~ fmt_fun
   fmt_fun <-
-    tidyselect_to_list(vctr_2_tibble(df_results$statistic_name), fmt_fun, arg_name = "fmt_fun")
-
+    .formula_list_to_named_list(
+      x = fmt_fun,
+      data = df_glance_orig,
+      arg_name = "fmt_fun"
+    )
 
   # updating df_results with new information -----------------------------------
   if (!is.null(label)) {

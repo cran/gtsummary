@@ -1,37 +1,7 @@
-#' Adds the global p-value for a categorical variables
+#' Add the global p-values
 #'
-#' This function uses [car::Anova] with argument
-#' `type = "III"` to calculate global p-values for categorical variables.
+#' This function uses `car::Anova(type = "III")` to calculate global p-values variables.
 #' Output from `tbl_regression` and `tbl_uvregression` objects supported.
-#'
-#' @section Note:
-#' If a needed class of model is not supported by
-#' [car::Anova], please create a
-#' [GitHub Issue](https://github.com/ddsjoberg/gtsummary/issues) to request support.
-#'
-#' @param x `tbl_regression` or `tbl_uvregression` object
-#' @param ... Further arguments passed to or from other methods.
-#' @seealso \code{\link{add_global_p.tbl_regression}},
-#' \code{\link{add_global_p.tbl_uvregression}}
-#' @author Daniel D. Sjoberg
-#' @export
-
-add_global_p <- function(x, ...) {
-  # must have car package installed to use this function
-  assert_package("car", "add_global_p")
-  UseMethod("add_global_p")
-}
-
-#' Adds the global p-value for categorical variables
-#'
-#' This function uses [car::Anova] with argument
-#' `type = "III"` to calculate global p-values for categorical variables.
-#'
-#' @section Note:
-#' If a needed class of model is not supported by
-#' [car::Anova], please create a
-#' [GitHub Issue](https://github.com/ddsjoberg/gtsummary/issues) to request support.
-#'
 #'
 #' @param x Object with class `tbl_regression` from the
 #' [tbl_regression] function
@@ -39,29 +9,53 @@ add_global_p <- function(x, ...) {
 #' p-values in the table output for each level of the categorical variable.
 #' Default is `FALSE`
 #' @param include Variables to calculate global p-value for. Input may be a vector of
-#' quoted or unquoted variable names. tidyselect and gtsummary select helper
-#' functions are also accepted. Default is `NULL`, which adds global p-values
-#' for all categorical and interaction terms.
+#' quoted or unquoted variable names. Default is `everything()`
 #' @param quiet Logical indicating whether to print messages in console. Default is
 #' `FALSE`
 #' @param terms DEPRECATED.  Use `include=` argument instead.
 #' @param type Type argument passed to [car::Anova]. Default is `"III"`
 #' @param ... Additional arguments to be passed to [car::Anova]
 #' @author Daniel D. Sjoberg
-#' @family tbl_regression tools
+#' @export
 #' @examples
+#' # Example 1 ----------------------------------
 #' tbl_lm_global_ex1 <-
 #'   lm(marker ~ age + grade, trial) %>%
 #'   tbl_regression() %>%
 #'   add_global_p()
-#' @export
-#' @return A `tbl_regression` object
+#'
+#' # Example 2 ----------------------------------
+#' tbl_uv_global_ex2 <-
+#'   trial[c("response", "trt", "age", "grade")] %>%
+#'   tbl_uvregression(
+#'     method = glm,
+#'     y = response,
+#'     method.args = list(family = binomial),
+#'     exponentiate = TRUE
+#'   ) %>%
+#'   add_global_p()
+#'
+#' @family tbl_uvregression tools
+#' @family tbl_regression tools
 #' @section Example Output:
-#' \if{html}{\figure{tbl_lm_global_ex1.png}{options: width=50\%}}
+#' \if{html}{Example 1}
+#'
+#' \if{html}{\figure{tbl_lm_global_ex1.png}{options: width=45\%}}
+#'
+#' \if{html}{Example 2}
+#'
+#' \if{html}{\figure{tbl_uv_global_ex2.png}{options: width=50\%}}
 
-add_global_p.tbl_regression <- function(x,
-                                        include = x$table_body$variable[x$table_body$var_type %in% c("categorical", "interaction")],
-                                        type = NULL, keep = FALSE, quiet = NULL, ..., terms = NULL) {
+add_global_p <- function(x, ...) {
+  # must have car package installed to use this function
+  assert_package("car", "add_global_p()")
+  UseMethod("add_global_p")
+}
+
+#' @name add_global_p
+#' @export
+add_global_p.tbl_regression <- function(x, include = everything(), type = NULL,
+                                        keep = FALSE, quiet = NULL, ..., terms = NULL) {
   # deprecated arguments -------------------------------------------------------
   if (!is.null(terms)) {
     lifecycle::deprecate_warn(
@@ -76,8 +70,12 @@ add_global_p.tbl_regression <- function(x,
   type <- type %||% get_theme_element("add_global_p-str:type", default = "III")
 
   # converting to character vector ---------------------------------------------
-  include <- var_input_to_string(data = vctr_2_tibble(unique(x$table_body$variable)),
-                                 select_input = !!rlang::enquo(include))
+  include <-
+    .select_to_varnames(
+      select = {{ include }},
+      var_info = x$table_body,
+      arg_name = "include"
+    )
 
   # if no terms are provided, stop and return x
   if (length(include) == 0) {
@@ -105,8 +103,8 @@ add_global_p.tbl_regression <- function(x,
       rlang::expr(car::Anova(x$model_obj, type = !!type, !!!list(...))) %>%
       deparse()
 
-    paste("Global p-values for variable(s)",
-          glue("`include = {deparse(include) %>% paste(collapse = '')}`"),
+    paste("add_global_p: Global p-values for variable(s)",
+          glue("`add_global_p(include = {deparse(include) %>% paste(collapse = '')})`"),
           glue("were calculated with")) %>%
       stringr::str_wrap() %>%
       paste(glue("`{expr_car}`"), sep = "\n  ") %>%
@@ -121,20 +119,20 @@ add_global_p.tbl_regression <- function(x,
         car::Anova(type = type, ...)
     },
     error = function(e) {
-      usethis::ui_oops(paste0(
-        "{usethis::ui_code('add_global_p()')} uses ",
-        "{usethis::ui_code('car::Anova()')} to calculate the global p-value,\n",
+      ui_oops(paste0(
+        "{ui_code('add_global_p()')} uses ",
+        "{ui_code('car::Anova()')} to calculate the global p-value,\n",
         "and the function returned an error while calculating the p-values.\n",
-        "Is your model type supported by {usethis::ui_code('car::Anova()')}?"
+        "Is your model type supported by {ui_code('car::Anova()')}?"
       ))
       stop(e)
     }
   )
-
   global_p <-
     car_Anova %>%
     as.data.frame() %>%
     tibble::rownames_to_column(var = "variable") %>%
+    mutate(variable = broom.helpers::.clean_backticks(.data$variable)) %>%
     filter(.data$variable %in% !!include) %>%
     select(c("variable", starts_with("Pr(>"))) %>% # selecting the pvalue column
     set_names(c("variable", "p.value_global")) %>%
@@ -154,7 +152,7 @@ add_global_p.tbl_regression <- function(x,
         p.value = x$inputs$pvalue_fun %||%
           getOption("gtsummary.pvalue_fun", default = style_pvalue)
       )
-    x <- modify_header_internal(x, p.value = "**p-value**")
+    x <- modify_header(x, p.value = "**p-value**")
   }
   # adding global p-values
   x$table_body <-
@@ -184,35 +182,8 @@ add_global_p.tbl_regression <- function(x,
   return(x)
 }
 
-#' Adds the global p-value for categorical variables
-#'
-#' This function uses [car::Anova] with argument
-#' `type = "III"` to calculate global p-values for categorical variables.
-#'
-#' @param x Object with class `tbl_uvregression` from the
-#' [tbl_uvregression] function
-#' @param ... Additional arguments to be passed to [car::Anova].
-#' @inheritParams add_global_p.tbl_regression
-#' @param include Variables to calculate global p-value for. Input may be a vector of
-#' quoted or unquoted variable names. tidyselect and gtsummary select helper
-#' functions are also accepted. Default is `everything()`.
-#' @author Daniel D. Sjoberg
-#' @family tbl_uvregression tools
-#' @examples
-#' tbl_uv_global_ex2 <-
-#'   trial[c("response", "trt", "age", "grade")] %>%
-#'   tbl_uvregression(
-#'     method = glm,
-#'     y = response,
-#'     method.args = list(family = binomial),
-#'     exponentiate = TRUE
-#'   ) %>%
-#'   add_global_p()
+#' @name add_global_p
 #' @export
-#' @return A `tbl_uvregression` object
-#' @section Example Output:
-#' \if{html}{\figure{tbl_uv_global_ex2.png}{options: width=50\%}}
-#'
 add_global_p.tbl_uvregression <- function(x, type = NULL, include = everything(),
                                           keep = FALSE, quiet = NULL, ...) {
   # setting defaults -----------------------------------------------------------
@@ -220,8 +191,12 @@ add_global_p.tbl_uvregression <- function(x, type = NULL, include = everything()
   type <- type %||% get_theme_element("add_global_p-str:type", default = "III")
 
   # converting to character vector ---------------------------------------------
-  include <- var_input_to_string(data = vctr_2_tibble(unique(x$table_body$variable)),
-                                 select_input = !!rlang::enquo(include))
+  include <-
+    .select_to_varnames(
+      select = {{ include }},
+      var_info = x$table_body,
+      arg_name = "include"
+    )
 
   # capturing dots in expression
   dots <- rlang::enexprs(...)
@@ -232,8 +207,8 @@ add_global_p.tbl_uvregression <- function(x, type = NULL, include = everything()
       rlang::expr(car::Anova(mod = x$model_obj, type = !!type, !!!list(...))) %>%
       deparse()
 
-    paste("Global p-values for variable(s)",
-          glue("`include = {deparse(include) %>% paste(collapse = '')}`"),
+    paste("add_global_p: Global p-values for variable(s)",
+          glue("`add_global_p(include = {deparse(include) %>% paste(collapse = '')})`"),
           glue("were calculated with")) %>%
       stringr::str_wrap() %>%
       paste(glue("`{expr_car}`"), sep = "\n  ") %>%
@@ -254,11 +229,11 @@ add_global_p.tbl_uvregression <- function(x, type = NULL, include = everything()
               rlang::eval_tidy()
           },
           error = function(e) {
-            usethis::ui_oops(paste0(
-              "{usethis::ui_code('add_global_p()')} uses ",
-              "{usethis::ui_code('car::Anova()')} to calculate the global p-value,\n",
+            ui_oops(paste0(
+              "{ui_code('add_global_p()')} uses ",
+              "{ui_code('car::Anova()')} to calculate the global p-value,\n",
               "and the function returned an error while calculating the p-value ",
-              "for {usethis::ui_value(y)}."
+              "for {ui_value(y)}."
             ))
             stop(e)
           }
@@ -267,6 +242,7 @@ add_global_p.tbl_uvregression <- function(x, type = NULL, include = everything()
         car_Anova %>%
           as.data.frame() %>%
           tibble::rownames_to_column(var = "variable") %>%
+          mutate(variable = broom.helpers::.clean_backticks(.data$variable)) %>%
           filter(.data$variable == y) %>%
           select(c(
             "variable", starts_with("Pr(>")
@@ -295,7 +271,7 @@ add_global_p.tbl_uvregression <- function(x, type = NULL, include = everything()
       left_join(x$table_header, by = "column") %>%
       table_header_fill_missing() %>%
       table_header_fmt_fun(p.value = x$inputs$pvalue_fun)
-    x <- modify_header_internal(x, p.value = "**p-value**")
+    x <- modify_header(x, p.value = "**p-value**")
   }
   # adding global p-values
   x$table_body <-

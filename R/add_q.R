@@ -8,7 +8,7 @@
 #' adjustment. Methods from
 #' [stats::p.adjust] are accepted.  Default is `method = "fdr"`.
 #' @inheritParams tbl_regression
-#' @inheritParams add_global_p.tbl_regression
+#' @inheritParams add_global_p
 #' @author Esther Drill, Daniel D. Sjoberg
 #' @family tbl_summary tools
 #' @family tbl_svysummary tools
@@ -79,7 +79,7 @@ add_q <- function(x, method = "fdr", pvalue_fun = NULL, quiet = NULL) {
     rlang::expr(stats::p.adjust(x$table_body$p.value, method = !!method)) %>%
     deparse()
   if (quiet == FALSE)
-    rlang::inform(glue("Adjusting p-values with\n`{expr_p.adjust}`"))
+    rlang::inform(glue("add_q: Adjusting p-values with\n`{expr_p.adjust}`"))
 
   x$table_body$q.value <- x$table_body$p.value %>% stats::p.adjust(method = method)
 
@@ -102,7 +102,7 @@ add_q <- function(x, method = "fdr", pvalue_fun = NULL, quiet = NULL) {
     )
 
   # adding  column header
-  x <- modify_header_internal(x, q.value = paste0("**", translate_text("q-value"), "**"))
+  x <- modify_header(x, q.value = paste0("**", translate_text("q-value"), "**"))
 
   # return final object --------------------------------------------------------
   # adding call

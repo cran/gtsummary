@@ -32,7 +32,7 @@ add_nevent <- function(x, ...) UseMethod("add_nevent")
 #'
 #' @param x `tbl_regression` object
 #' @param ... Not used
-#' @inheritParams add_global_p.tbl_regression
+#' @inheritParams add_global_p
 #' @export
 #' @author Daniel D. Sjoberg
 #' @family tbl_regression tools
@@ -52,7 +52,7 @@ add_nevent.tbl_regression <- function(x, quiet = NULL, ...) {
 
   # if model is a cox model, adding number of events as well
   if (inherits(x$model_obj, "coxph") && !inherits(x$model_obj, "clogit")) {
-    assert_package("survival", "add_nevent")
+    assert_package("survival", "add_nevent()")
 
     x$nevent <- x$model_obj %>%
       survival::coxph.detail() %>%
@@ -196,7 +196,7 @@ add_nevent.tbl_uvregression <- function(x, ...) {
     tibble(column = names(x$table_body)) %>%
     left_join(x$table_header, by = "column") %>%
     table_header_fill_missing()
-  x <- modify_header_internal(x, nevent = "**Event N**")
+  x <- modify_header(x, nevent = "**Event N**")
 
   # adding a format function to the N event column
   x$table_header <- table_header_fmt_fun(
@@ -209,7 +209,7 @@ add_nevent.tbl_uvregression <- function(x, ...) {
 
 #' Add column with number of observed events
 #'
-#' \Sexpr[results=rd, stage=render]{lifecycle::badge("experimental")}
+#' \lifecycle{experimental}
 #' For each `survfit()` object summarized with `tbl_survfit()` this function
 #' will add the total number of events observed in a new column.
 #'
@@ -266,7 +266,7 @@ add_nevent.tbl_survfit <- function(x, ...) {
       x$table_body
     ) %>%
     table_header_fmt_fun(N = style_number)
-  x <- modify_header_internal(x, nevent = "**Event N**")
+  x <- modify_header(x, nevent = "**Event N**")
 
   # adding indicator to output that add_n was run on this data
   x$call_list <- c(x$call_list, list(add_nevent = match.call()))

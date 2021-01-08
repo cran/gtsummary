@@ -9,18 +9,27 @@
 #' @noRd
 #' @keywords internal
 #' @author David Hugh-Jones
-assert_package <- function(pkg, fn) {
-  if (!requireNamespace(pkg, quietly = TRUE)) {
-    usethis::ui_oops("The {usethis::ui_value(pkg)} is required for function {usethis::ui_code(paste0(fn, '()'))}.")
-    usethis::ui_todo("Install the {usethis::ui_value(pkg)} package with the code below.")
-    usethis::ui_code_block('install.packages("{pkg}")')
-    stop()
+assert_package <- function(pkg, fn, version = NULL) {
+  if (is.null(version) && !requireNamespace(pkg, quietly = TRUE)) {
+    ui_oops("The {ui_value(pkg)} is required for function {ui_code(fn)}.")
+    usethis::ui_todo("Install the {ui_value(pkg)} package with the code below.")
+    ui_code_block('install.packages("{pkg}")')
+    stop("Install required package", call. = FALSE)
+  }
+
+  if (!is.null(version) &&
+      (!requireNamespace(pkg, quietly = TRUE) ||
+       (requireNamespace(pkg, quietly = TRUE) && utils::packageVersion(pkg) < version))) {
+    ui_oops("The {ui_value(pkg)} v{version} or greater is required for function {ui_code(fn)}.")
+    usethis::ui_todo("Install/update the {ui_value(pkg)} package with the code below.")
+    ui_code_block('install.packages("{pkg}")')
+    stop("Install required package", call. = FALSE)
   }
 }
 
 # converts a character vector into a quotes list separated by a comma, eg 'a', 'b'
 quoted_list <- function(x) {
-  paste(sQuote(x), collapse = ", ")
+  paste(shQuote(x, type = "csh"), collapse = ", ")
 }
 
 # used in the as_flex_table (and friends) functions for inserting calls

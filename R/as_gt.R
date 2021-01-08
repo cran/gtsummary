@@ -19,12 +19,13 @@
 #' Default is `everything()`.
 #' @param return_calls Logical. Default is `FALSE`. If `TRUE`, the calls are returned
 #' as a list of expressions.
+#' @param ... Arguments passed on to [gt::gt]
 #' @param exclude DEPRECATED.
 #' @param omit DEPRECATED.
-#' @export
 #' @return A `gt_tbl` object
 #' @family gtsummary output types
 #' @author Daniel D. Sjoberg
+#' @export
 #' @examples
 #' as_gt_ex <-
 #'   trial[c("trt", "age", "response", "grade")] %>%
@@ -34,7 +35,8 @@
 #'
 #' \if{html}{\figure{as_gt_ex.png}{options: width=50\%}}
 
-as_gt <- function(x, include = everything(), return_calls = FALSE, exclude = NULL, omit = NULL) {
+as_gt <- function(x, include = everything(), return_calls = FALSE, ...,
+                  exclude = NULL, omit = NULL) {
   # making list of commands to include -----------------------------------------
   if (!rlang::quo_is_null(rlang::enquo(exclude))) {
     lifecycle::deprecate_warn(
@@ -63,7 +65,7 @@ as_gt <- function(x, include = everything(), return_calls = FALSE, exclude = NUL
   }
 
   # creating list of gt calls --------------------------------------------------
-  gt_calls <- table_header_to_gt_calls(x = x)
+  gt_calls <- table_header_to_gt_calls(x = x, ...)
   # adding other calls from x$list_output$source_note
   if (!is.null(x$list_output$source_note)) {
     gt_calls[["tab_source_note"]] <- expr(gt::tab_source_note(source_note = !!x$list_output$source_note))
@@ -82,10 +84,18 @@ as_gt <- function(x, include = everything(), return_calls = FALSE, exclude = NUL
     )
 
   # converting to charcter vector ----------------------------------------------
-  include <- var_input_to_string(data = vctr_2_tibble(names(gt_calls)),
-                                 select_input = !!rlang::enquo(include))
-  exclude <- var_input_to_string(data = vctr_2_tibble(names(gt_calls)),
-                                 select_input = !!rlang::enquo(exclude))
+  include <-
+    .select_to_varnames(
+      select = {{ include }},
+      var_info = names(gt_calls),
+      arg_name = "include"
+    )
+  exclude <-
+    .select_to_varnames(
+      select = {{ exclude }},
+      var_info = names(gt_calls),
+      arg_name = "exclude"
+    )
 
   # this ensures list is in the same order as names(x$gt_calls)
   include <- names(gt_calls) %>% intersect(include)
@@ -111,13 +121,19 @@ as_gt <- function(x, include = everything(), return_calls = FALSE, exclude = NUL
 }
 
 # creating gt calls from table_header ------------------------------------------
-# gt table_header to gt fmt and bolding code
-table_header_to_gt_calls <- function(x) {
-  table_header <- x$table_header
+table_header_to_gt_calls <- function(x, ...) {
+  table_header <- .clean_table_header(x$table_header)
   gt_calls <- list()
 
   # gt -------------------------------------------------------------------------
-  gt_calls[["gt"]] <- expr(gt::gt(data = x$table_body))
+  if (!is.null(x$list_output$caption) && "caption" %in% names(as.list(gt::gt))) {
+    caption <- rlang::call2(attr(x$list_output$caption, "text_interpret"), x$list_output$caption)
+    gt_calls[["gt"]] <-
+      expr(gt::gt(data = x$table_body, caption = !!caption, !!!list(...)))
+  }
+  else
+    gt_calls[["gt"]] <-
+    expr(gt::gt(data = x$table_body, !!!list(...)))
 
   # fmt_missing ----------------------------------------------------------------
   gt_calls[["fmt_missing"]] <- expr(
@@ -134,7 +150,8 @@ table_header_to_gt_calls <- function(x) {
       seq_len(nrow(df_fmt_missing_emdash)),
       ~ expr(gt::fmt_missing(columns = gt::vars(!!!syms(df_fmt_missing_emdash$column[[.x]])),
                              rows = !!parse_expr(df_fmt_missing_emdash$missing_emdash[[.x]]),
-                             missing_text = '---'))
+                             missing_text = !!get_theme_element("tbl_regression-str:ref_row_text",
+                                                              default = "---")))
     )
 
   # cols_align -----------------------------------------------------------------
@@ -274,7 +291,15 @@ table_header_to_gt_calls <- function(x) {
   gt_calls
 }
 
-
+# this function cleans up table_header (i.e. removes formatting for hidden columns, etc.)
+.clean_table_header <- function(x) {
+  # removing instructions for hidden columns
+  dplyr::mutate_at(
+    x,
+    vars(any_of(c("bold", "italic", "missing_emdash", "indent", "footnote_abbrev", "footnote"))),
+    ~ifelse(.data$hide, NA_character_, .)
+  )
+}
 
 
 

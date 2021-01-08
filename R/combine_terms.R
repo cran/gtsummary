@@ -1,6 +1,5 @@
 #' Combine terms in a regression model
 #'
-#' \Sexpr[results=rd, stage=render]{lifecycle::badge("experimental")}
 #' The function combines terms from a regression model, and replaces the terms
 #' with a single row in the output table.  The p-value is calculated using
 #' [stats::anova()].
@@ -13,7 +12,7 @@
 #' function's `formula.=` argument
 #' @param label Option string argument labeling the combined rows
 #' @param ... Additional arguments passed to [stats::anova]
-#' @inheritParams add_global_p.tbl_regression
+#' @inheritParams add_global_p
 #' @author Daniel D. Sjoberg
 #' @family tbl_regression tools
 #' @return `tbl_regression` object
@@ -21,38 +20,8 @@
 #'
 #' @examples
 #' # Example 1 ----------------------------------
-#' # fit model with nonlinear terms for marker
-#' nlmod1 <- lm(
-#'   age ~ marker + I(marker^2) + grade,
-#'   trial[c("age", "marker", "grade")] %>% na.omit() # keep complete cases only!
-#' )
-#'
-#' combine_terms_ex1 <-
-#'   tbl_regression(nlmod1, label = grade ~ "Grade") %>%
-#'   # collapse non-linear terms to a single row in output using anova
-#'   combine_terms(
-#'     formula_update = . ~ . - marker - I(marker^2),
-#'     label = "Marker (non-linear terms)"
-#'   )
-#'
-#' # Example 2 ----------------------------------
-#' # Example with Cubic Splines
-#' library(Hmisc, warn.conflicts = FALSE, quietly = TRUE)
-#' mod2 <- lm(
-#'   age ~ rcspline.eval(marker, inclx = TRUE) + grade,
-#'   trial[c("age", "marker", "grade")] %>% na.omit() # keep complete cases only!
-#' )
-#'
-#' combine_terms_ex2 <-
-#'   tbl_regression(mod2, label = grade ~ "Grade") %>%
-#'   combine_terms(
-#'     formula_update = . ~ . -rcspline.eval(marker, inclx = TRUE),
-#'     label = "Marker (non-linear terms)"
-#'   )
-#'
-#' # Example 3 ----------------------------------
 #' # Logistic Regression Example, LRT p-value
-#' combine_terms_ex3 <-
+#' combine_terms_ex1 <-
 #'   glm(
 #'     response ~ marker + I(marker^2) + grade,
 #'     trial[c("response", "marker", "grade")] %>% na.omit(), # keep complete cases only!
@@ -70,14 +39,6 @@
 #' \if{html}{Example 1}
 #'
 #' \if{html}{\figure{combine_terms_ex1.png}{options: width=45\%}}
-#'
-#' \if{html}{Example 2}
-#'
-#' \if{html}{\figure{combine_terms_ex2.png}{options: width=45\%}}
-#'
-#' \if{html}{Example 3}
-#'
-#' \if{html}{\figure{combine_terms_ex3.png}{options: width=45\%}}
 
 combine_terms <- function(x, formula_update, label = NULL, quiet = NULL, ...) {
   # setting defaults -----------------------------------------------------------
@@ -101,7 +62,7 @@ combine_terms <- function(x, formula_update, label = NULL, quiet = NULL, ...) {
     paste(collapse = "") %>%
     stringr::str_squish()
   if (quiet == FALSE)
-    rlang::inform(glue("Creating a reduced model with\n  `reduced_model <- {expr_update}`"))
+    rlang::inform(glue("combine_terms: Creating a reduced model with\n  `reduced_model <- {expr_update}`"))
   reduced_model <- stats::update(x$model_obj, formula. = formula_update)
   tryCatch({
     expr_anova <-
@@ -110,7 +71,7 @@ combine_terms <- function(x, formula_update, label = NULL, quiet = NULL, ...) {
       paste(collapse = "")  %>%
       stringr::str_squish()
     if (quiet == FALSE)
-      rlang::inform(glue("Calculating p-value comparing full and reduced models with\n",
+      rlang::inform(glue("combine_terms: Calculating p-value comparing full and reduced models with\n",
                        "  `{expr_anova}`"))
 
     anova <- stats::anova(x$model_obj, reduced_model, ...)
@@ -181,17 +142,17 @@ combine_terms <- function(x, formula_update, label = NULL, quiet = NULL, ...) {
         p.value = x$inputs$pvalue_fun %||%
           getOption("gtsummary.pvalue_fun", default = style_pvalue)
       )
-    x <- modify_header_internal(x, p.value = "**p-value**")
+    x <- modify_header(x, p.value = "**p-value**")
   }
   # replacing the combined rows with a single row
   table_body <-
     x$table_body %>%
     left_join(
       new_model_tbl$table_body %>%
-        select(.data$variable, .data$var_type, .data$row_ref,
+        select(.data$variable, .data$var_type, .data$reference_row,
                .data$row_type, .data$label) %>%
         mutate(collapse_row = FALSE),
-      by = c("variable", "var_type", "row_type", "row_ref", "label")
+      by = c("variable", "var_type", "row_type", "reference_row", "label")
     ) %>%
     # marking rows on tbl that will be reduced to a single row
     mutate(collapse_row = ifelse(is.na(.data$collapse_row), TRUE, .data$collapse_row)) %>%

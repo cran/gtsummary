@@ -153,7 +153,7 @@ test_that("tbl_uvregression x= argument tests", {
     NA
   )
 
-  expect_identical(
+  expect_equivalent(
     ux_x$meta_data$label[1],
     "PATIENT AGE"
   )
@@ -268,5 +268,12 @@ test_that("tbl_uvregression estimate_fun and pvalue_fun respected", {
   expect_equivalent(
     tbl_fmt %>% as_tibble(col_labels = FALSE) %>% purrr::map_chr(I),
     c("inst", "227", "0.001", "-0.143, 0.144", "0.993")
+  )
+})
+
+
+test_that("tbl_uvregression throw error with odd variable names in `data=`", {
+  expect_error(
+    trial %>% dplyr::rename(`age person` = age) %>% tbl_uvregression(method = lm, y = `age person`)
   )
 })

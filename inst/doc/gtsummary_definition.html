@@ -31,6 +31,15 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
 
 <style type="text/css">code{white-space: pre;}</style>
 <style type="text/css" data-origin="pandoc">
@@ -120,6 +129,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   }
 })();
 </script>
+
 
 
 
@@ -325,7 +335,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <p>Every {gtsummary} object has a few characteristics common among all objects. Here, we review those characteristics, and provide instructions on how to construct a {gtsummary} object.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">library</span>(gtsummary)</span>
 <span id="cb1-2"><a href="#cb1-2"></a><span class="kw">library</span>(purrr); <span class="kw">library</span>(dplyr); <span class="kw">library</span>(tibble)</span>
-<span id="cb1-3"><a href="#cb1-3"></a><span class="co">#&gt; Warning: package &#39;tibble&#39; was built under R version 4.0.2</span></span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="co">#&gt; Warning: package &#39;tibble&#39; was built under R version 4.0.3</span></span>
 <span id="cb1-4"><a href="#cb1-4"></a></span>
 <span id="cb1-5"><a href="#cb1-5"></a>tbl_regression_ex &lt;-</span>
 <span id="cb1-6"><a href="#cb1-6"></a><span class="st">  </span><span class="kw">lm</span>(age <span class="op">~</span><span class="st"> </span>grade <span class="op">+</span><span class="st"> </span>marker, trial) <span class="op">%&gt;%</span></span>
@@ -345,17 +355,17 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h4>table_body</h4>
 <p>The <code>.$table_body</code> object is the data frame that will ultimately be printed as the output. The table must include columns <code>&quot;label&quot;</code>, <code>&quot;row_type&quot;</code>, and <code>&quot;variable&quot;</code>. The <code>&quot;label&quot;</code> column is printed, and the other two are hidden from the final output.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>tbl_summary_ex<span class="op">$</span>table_body</span>
-<span id="cb3-2"><a href="#cb3-2"></a><span class="co">#&gt; # A tibble: 8 x 5</span></span>
-<span id="cb3-3"><a href="#cb3-3"></a><span class="co">#&gt;   variable row_type label          stat_1      stat_2     </span></span>
-<span id="cb3-4"><a href="#cb3-4"></a><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;          &lt;chr&gt;       &lt;chr&gt;      </span></span>
-<span id="cb3-5"><a href="#cb3-5"></a><span class="co">#&gt; 1 age      label    Age            46 (37, 59) 48 (39, 56)</span></span>
-<span id="cb3-6"><a href="#cb3-6"></a><span class="co">#&gt; 2 age      missing  Unknown        7           4          </span></span>
-<span id="cb3-7"><a href="#cb3-7"></a><span class="co">#&gt; 3 grade    label    Grade          &lt;NA&gt;        &lt;NA&gt;       </span></span>
-<span id="cb3-8"><a href="#cb3-8"></a><span class="co">#&gt; 4 grade    level    I              35 (36%)    33 (32%)   </span></span>
-<span id="cb3-9"><a href="#cb3-9"></a><span class="co">#&gt; 5 grade    level    II             32 (33%)    36 (35%)   </span></span>
-<span id="cb3-10"><a href="#cb3-10"></a><span class="co">#&gt; 6 grade    level    III            31 (32%)    33 (32%)   </span></span>
-<span id="cb3-11"><a href="#cb3-11"></a><span class="co">#&gt; 7 response label    Tumor Response 28 (29%)    33 (34%)   </span></span>
-<span id="cb3-12"><a href="#cb3-12"></a><span class="co">#&gt; 8 response missing  Unknown        3           4</span></span></code></pre></div>
+<span id="cb3-2"><a href="#cb3-2"></a><span class="co">#&gt; # A tibble: 8 x 8</span></span>
+<span id="cb3-3"><a href="#cb3-3"></a><span class="co">#&gt;   variable var_type   var_class var_label   row_type label     stat_1   stat_2  </span></span>
+<span id="cb3-4"><a href="#cb3-4"></a><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;      &lt;chr&gt;     &lt;chr&gt;       &lt;chr&gt;    &lt;chr&gt;     &lt;chr&gt;    &lt;chr&gt;   </span></span>
+<span id="cb3-5"><a href="#cb3-5"></a><span class="co">#&gt; 1 age      continuous numeric   Age         label    Age       46 (37,~ 48 (39,~</span></span>
+<span id="cb3-6"><a href="#cb3-6"></a><span class="co">#&gt; 2 age      continuous numeric   Age         missing  Unknown   7        4       </span></span>
+<span id="cb3-7"><a href="#cb3-7"></a><span class="co">#&gt; 3 grade    categoric~ factor    Grade       label    Grade     &lt;NA&gt;     &lt;NA&gt;    </span></span>
+<span id="cb3-8"><a href="#cb3-8"></a><span class="co">#&gt; 4 grade    categoric~ factor    Grade       level    I         35 (36%) 33 (32%)</span></span>
+<span id="cb3-9"><a href="#cb3-9"></a><span class="co">#&gt; 5 grade    categoric~ factor    Grade       level    II        32 (33%) 36 (35%)</span></span>
+<span id="cb3-10"><a href="#cb3-10"></a><span class="co">#&gt; 6 grade    categoric~ factor    Grade       level    III       31 (32%) 33 (32%)</span></span>
+<span id="cb3-11"><a href="#cb3-11"></a><span class="co">#&gt; 7 response dichotomo~ integer   Tumor Resp~ label    Tumor Re~ 28 (29%) 33 (34%)</span></span>
+<span id="cb3-12"><a href="#cb3-12"></a><span class="co">#&gt; 8 response dichotomo~ integer   Tumor Resp~ missing  Unknown   3        4</span></span></code></pre></div>
 </div>
 <div id="table_header" class="section level4">
 <h4>table_header</h4>
@@ -429,24 +439,31 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <p>NOTE: Columns ‘hide’, ‘align’, ‘missing_emdash’, ‘indent’, ‘bold’, and ‘italic’ MUST follow the tidyverse style guidelines and include spaces around any variable names, e.g. <code>row_type == &#39;label&#39;</code> (NOT <code>row_type==&#39;label&#39;</code>).</p>
 <p>Example from <code>tbl_regression()</code></p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>tbl_regression_ex<span class="op">$</span>table_header</span>
-<span id="cb4-2"><a href="#cb4-2"></a><span class="co">#&gt; # A tibble: 13 x 13</span></span>
+<span id="cb4-2"><a href="#cb4-2"></a><span class="co">#&gt; # A tibble: 20 x 13</span></span>
 <span id="cb4-3"><a href="#cb4-3"></a><span class="co">#&gt;    column label hide  align missing_emdash indent text_interpret bold  italic</span></span>
 <span id="cb4-4"><a href="#cb4-4"></a><span class="co">#&gt;    &lt;chr&gt;  &lt;chr&gt; &lt;lgl&gt; &lt;chr&gt; &lt;chr&gt;          &lt;chr&gt;  &lt;chr&gt;          &lt;chr&gt; &lt;chr&gt; </span></span>
 <span id="cb4-5"><a href="#cb4-5"></a><span class="co">#&gt;  1 varia~ vari~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb4-6"><a href="#cb4-6"></a><span class="co">#&gt;  2 var_t~ var_~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb4-7"><a href="#cb4-7"></a><span class="co">#&gt;  3 row_r~ row_~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb4-8"><a href="#cb4-8"></a><span class="co">#&gt;  4 row_t~ row_~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb4-9"><a href="#cb4-9"></a><span class="co">#&gt;  5 label  **Ch~ FALSE left  &lt;NA&gt;           row_t~ gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb4-10"><a href="#cb4-10"></a><span class="co">#&gt;  6 N      N     TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb4-11"><a href="#cb4-11"></a><span class="co">#&gt;  7 estim~ **Be~ FALSE cent~ row_ref == TR~ &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb4-12"><a href="#cb4-12"></a><span class="co">#&gt;  8 std.e~ std.~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb4-13"><a href="#cb4-13"></a><span class="co">#&gt;  9 stati~ stat~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb4-14"><a href="#cb4-14"></a><span class="co">#&gt; 10 conf.~ conf~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb4-15"><a href="#cb4-15"></a><span class="co">#&gt; 11 conf.~ conf~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb4-16"><a href="#cb4-16"></a><span class="co">#&gt; 12 ci     **95~ FALSE cent~ row_ref == TR~ &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb4-17"><a href="#cb4-17"></a><span class="co">#&gt; 13 p.val~ **p-~ FALSE cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         p.va~ &lt;NA&gt;  </span></span>
-<span id="cb4-18"><a href="#cb4-18"></a><span class="co">#&gt; # ... with 4 more variables: fmt_fun &lt;list&gt;, footnote_abbrev &lt;chr&gt;,</span></span>
-<span id="cb4-19"><a href="#cb4-19"></a><span class="co">#&gt; #   footnote &lt;chr&gt;, spanning_header &lt;chr&gt;</span></span></code></pre></div>
+<span id="cb4-6"><a href="#cb4-6"></a><span class="co">#&gt;  2 var_l~ var_~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb4-7"><a href="#cb4-7"></a><span class="co">#&gt;  3 var_t~ var_~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb4-8"><a href="#cb4-8"></a><span class="co">#&gt;  4 refer~ refe~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb4-9"><a href="#cb4-9"></a><span class="co">#&gt;  5 row_t~ row_~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb4-10"><a href="#cb4-10"></a><span class="co">#&gt;  6 label  **Ch~ FALSE left  &lt;NA&gt;           row_t~ gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb4-11"><a href="#cb4-11"></a><span class="co">#&gt;  7 N      **N** TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb4-12"><a href="#cb4-12"></a><span class="co">#&gt;  8 term   term  TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb4-13"><a href="#cb4-13"></a><span class="co">#&gt;  9 var_c~ var_~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb4-14"><a href="#cb4-14"></a><span class="co">#&gt; 10 var_n~ var_~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb4-15"><a href="#cb4-15"></a><span class="co">#&gt; 11 heade~ head~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb4-16"><a href="#cb4-16"></a><span class="co">#&gt; 12 contr~ cont~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb4-17"><a href="#cb4-17"></a><span class="co">#&gt; 13 contr~ cont~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb4-18"><a href="#cb4-18"></a><span class="co">#&gt; 14 estim~ **Be~ FALSE cent~ reference_row~ &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb4-19"><a href="#cb4-19"></a><span class="co">#&gt; 15 std.e~ **SE~ TRUE  cent~ reference_row~ &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb4-20"><a href="#cb4-20"></a><span class="co">#&gt; 16 stati~ **St~ TRUE  cent~ reference_row~ &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb4-21"><a href="#cb4-21"></a><span class="co">#&gt; 17 conf.~ conf~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb4-22"><a href="#cb4-22"></a><span class="co">#&gt; 18 conf.~ conf~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb4-23"><a href="#cb4-23"></a><span class="co">#&gt; 19 ci     **95~ FALSE cent~ reference_row~ &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb4-24"><a href="#cb4-24"></a><span class="co">#&gt; 20 p.val~ **p-~ FALSE cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         p.va~ &lt;NA&gt;  </span></span>
+<span id="cb4-25"><a href="#cb4-25"></a><span class="co">#&gt; # ... with 4 more variables: fmt_fun &lt;list&gt;, footnote_abbrev &lt;chr&gt;,</span></span>
+<span id="cb4-26"><a href="#cb4-26"></a><span class="co">#&gt; #   footnote &lt;chr&gt;, spanning_header &lt;chr&gt;</span></span></code></pre></div>
 </div>
 </div>
 <div id="constructing-a-gtsummary-object" class="section level2">
@@ -474,24 +491,31 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>gtsummary<span class="op">:::</span><span class="kw">table_header_fill_missing</span>(</span>
 <span id="cb6-2"><a href="#cb6-2"></a>  <span class="dt">table_header =</span> <span class="kw">tibble</span>(<span class="dt">column =</span> <span class="kw">names</span>(tbl_regression_ex<span class="op">$</span>table_body))</span>
 <span id="cb6-3"><a href="#cb6-3"></a>) </span>
-<span id="cb6-4"><a href="#cb6-4"></a><span class="co">#&gt; # A tibble: 13 x 13</span></span>
+<span id="cb6-4"><a href="#cb6-4"></a><span class="co">#&gt; # A tibble: 20 x 13</span></span>
 <span id="cb6-5"><a href="#cb6-5"></a><span class="co">#&gt;    column label hide  align missing_emdash indent text_interpret bold  italic</span></span>
 <span id="cb6-6"><a href="#cb6-6"></a><span class="co">#&gt;    &lt;chr&gt;  &lt;chr&gt; &lt;lgl&gt; &lt;chr&gt; &lt;chr&gt;          &lt;chr&gt;  &lt;chr&gt;          &lt;chr&gt; &lt;chr&gt; </span></span>
 <span id="cb6-7"><a href="#cb6-7"></a><span class="co">#&gt;  1 varia~ vari~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb6-8"><a href="#cb6-8"></a><span class="co">#&gt;  2 var_t~ var_~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb6-9"><a href="#cb6-9"></a><span class="co">#&gt;  3 row_r~ row_~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb6-10"><a href="#cb6-10"></a><span class="co">#&gt;  4 row_t~ row_~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb6-11"><a href="#cb6-11"></a><span class="co">#&gt;  5 label  label TRUE  left  &lt;NA&gt;           row_t~ gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb6-12"><a href="#cb6-12"></a><span class="co">#&gt;  6 N      N     TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb6-13"><a href="#cb6-13"></a><span class="co">#&gt;  7 estim~ esti~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb6-14"><a href="#cb6-14"></a><span class="co">#&gt;  8 std.e~ std.~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb6-15"><a href="#cb6-15"></a><span class="co">#&gt;  9 stati~ stat~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb6-16"><a href="#cb6-16"></a><span class="co">#&gt; 10 conf.~ conf~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb6-17"><a href="#cb6-17"></a><span class="co">#&gt; 11 conf.~ conf~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb6-18"><a href="#cb6-18"></a><span class="co">#&gt; 12 ci     ci    TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb6-19"><a href="#cb6-19"></a><span class="co">#&gt; 13 p.val~ p.va~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
-<span id="cb6-20"><a href="#cb6-20"></a><span class="co">#&gt; # ... with 4 more variables: fmt_fun &lt;list&gt;, footnote_abbrev &lt;chr&gt;,</span></span>
-<span id="cb6-21"><a href="#cb6-21"></a><span class="co">#&gt; #   footnote &lt;chr&gt;, spanning_header &lt;chr&gt;</span></span></code></pre></div>
+<span id="cb6-8"><a href="#cb6-8"></a><span class="co">#&gt;  2 var_l~ var_~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb6-9"><a href="#cb6-9"></a><span class="co">#&gt;  3 var_t~ var_~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb6-10"><a href="#cb6-10"></a><span class="co">#&gt;  4 refer~ refe~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb6-11"><a href="#cb6-11"></a><span class="co">#&gt;  5 row_t~ row_~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb6-12"><a href="#cb6-12"></a><span class="co">#&gt;  6 label  label TRUE  left  &lt;NA&gt;           row_t~ gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb6-13"><a href="#cb6-13"></a><span class="co">#&gt;  7 N      N     TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb6-14"><a href="#cb6-14"></a><span class="co">#&gt;  8 term   term  TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb6-15"><a href="#cb6-15"></a><span class="co">#&gt;  9 var_c~ var_~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb6-16"><a href="#cb6-16"></a><span class="co">#&gt; 10 var_n~ var_~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb6-17"><a href="#cb6-17"></a><span class="co">#&gt; 11 heade~ head~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb6-18"><a href="#cb6-18"></a><span class="co">#&gt; 12 contr~ cont~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb6-19"><a href="#cb6-19"></a><span class="co">#&gt; 13 contr~ cont~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb6-20"><a href="#cb6-20"></a><span class="co">#&gt; 14 estim~ esti~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb6-21"><a href="#cb6-21"></a><span class="co">#&gt; 15 std.e~ std.~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb6-22"><a href="#cb6-22"></a><span class="co">#&gt; 16 stati~ stat~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb6-23"><a href="#cb6-23"></a><span class="co">#&gt; 17 conf.~ conf~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb6-24"><a href="#cb6-24"></a><span class="co">#&gt; 18 conf.~ conf~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb6-25"><a href="#cb6-25"></a><span class="co">#&gt; 19 ci     ci    TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb6-26"><a href="#cb6-26"></a><span class="co">#&gt; 20 p.val~ p.va~ TRUE  cent~ &lt;NA&gt;           &lt;NA&gt;   gt::md         &lt;NA&gt;  &lt;NA&gt;  </span></span>
+<span id="cb6-27"><a href="#cb6-27"></a><span class="co">#&gt; # ... with 4 more variables: fmt_fun &lt;list&gt;, footnote_abbrev &lt;chr&gt;,</span></span>
+<span id="cb6-28"><a href="#cb6-28"></a><span class="co">#&gt; #   footnote &lt;chr&gt;, spanning_header &lt;chr&gt;</span></span></code></pre></div>
 <p>The <code>modify_header_internal()</code> is useful for assigning column headers. The function accepts a complete {gtsummary} object as its input, and returns an updated version where the column labels have been added to <code>.$table_header</code>. The function also switches the default <code>.$table_header$hide</code> from <code>TRUE</code> to <code>FALSE</code>, resulting in column with labels being printed.</p>
 </div>
 </div>

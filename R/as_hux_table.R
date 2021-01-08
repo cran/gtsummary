@@ -1,6 +1,5 @@
 #' Convert gtsummary object to a huxtable object
 #'
-#' \Sexpr[results=rd, stage=render]{lifecycle::badge("experimental")}
 #' Function converts a gtsummary object to a huxtable object.
 #' A user can use this function if they wish to add customized formatting
 #' available via the huxtable functions. The huxtable package supports output
@@ -36,7 +35,7 @@
 
 as_hux_table <- function(x, include = everything(), return_calls = FALSE,
                          strip_md_bold = TRUE) {
-  assert_package("huxtable", "as_hux_table")
+  assert_package("huxtable", "as_hux_table()")
 
   # stripping markdown asterisk ------------------------------------------------
   if (strip_md_bold == TRUE) {
@@ -64,8 +63,12 @@ as_hux_table <- function(x, include = everything(), return_calls = FALSE,
     )
 
   # converting to character vector ----------------------------------------------
-  include <- var_input_to_string(data = vctr_2_tibble(names(huxtable_calls)),
-                                 select_input = !!rlang::enquo(include))
+  include <-
+    .select_to_varnames(
+      select = {{ include }},
+      var_info = names(huxtable_calls),
+      arg_name = "include"
+    )
 
   # return calls, if requested -------------------------------------------------
   if (return_calls == TRUE) return(huxtable_calls[include])
@@ -80,15 +83,15 @@ as_hux_table <- function(x, include = everything(), return_calls = FALSE,
     eval()
 }
 
-# creating huxxtable calls from table_header -----------------------------------
+# creating huxtable calls from table_header ------------------------------------
 table_header_to_huxtable_calls <- function(x, ...) {
 
   # adding id number for columns not hidden
   table_header <-
-      x$table_header %>%
-      group_by(.data$hide) %>%
-      mutate(id = ifelse(.data$hide == FALSE, dplyr::row_number(), NA)) %>%
-      ungroup()
+    .clean_table_header(x$table_header) %>%
+    group_by(.data$hide) %>%
+    mutate(id = ifelse(.data$hide == FALSE, dplyr::row_number(), NA)) %>%
+    ungroup()
 
   # tibble ---------------------------------------------------------------------
   # huxtable doesn't use the markdown language `__` or `**`
@@ -98,6 +101,13 @@ table_header_to_huxtable_calls <- function(x, ...) {
               include = -c("cols_label", "tab_style_bold", "tab_style_italic"))
 
   huxtable_calls[["huxtable"]] <- expr(huxtable::as_huxtable(add_colnames = FALSE))
+
+  # set_caption ----------------------------------------------------------------
+  if (!is.null(x$list_output$caption)) {
+    huxtable_calls[["set_caption"]] <- expr(
+      huxtable::set_caption(value = !!x$list_output$caption)
+    )
+  }
 
   # padding --------------------------------------------------------------------
   df_padding <-
@@ -215,7 +225,9 @@ table_header_to_huxtable_calls <- function(x, ...) {
 
   huxtable_calls[["set_na_string"]] <- map2(df_na_emdash$i_index, df_na_emdash$id,
     ~expr(
-      huxtable::set_na_string(row = !!.x, col = !!.y, value = "\U2014")
+      huxtable::set_na_string(row = !!.x, col = !!.y,
+                              value = !!get_theme_element("tbl_regression-str:ref_row_text",
+                                                          default = "\U2014"))
     )
   )
 

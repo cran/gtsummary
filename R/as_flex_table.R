@@ -50,7 +50,7 @@
 as_flex_table <- function(x, include = everything(), return_calls = FALSE,
                           strip_md_bold = TRUE) {
   # checking flextable installation --------------------------------------------
-  assert_package("flextable", "as_flex_table")
+  assert_package("flextable", "as_flex_table()")
 
   # stripping markdown asterisk ------------------------------------------------
   if (strip_md_bold == TRUE) {
@@ -77,9 +77,13 @@ as_flex_table <- function(x, include = everything(), return_calls = FALSE,
       .init = flextable_calls
     )
 
-  # converting to charcter vector ----------------------------------------------
-  include <- var_input_to_string(data = vctr_2_tibble(names(flextable_calls)),
-                                 select_input = !!rlang::enquo(include))
+  # converting to character vector ---------------------------------------------
+  include <-
+    .select_to_varnames(
+      select = {{ include }},
+      var_info = names(flextable_calls),
+      arg_name = "include"
+    )
 
   # return calls, if requested -------------------------------------------------
   if (return_calls == TRUE) return(flextable_calls[include])
@@ -99,11 +103,11 @@ as_flex_table <- function(x, include = everything(), return_calls = FALSE,
 table_header_to_flextable_calls <- function(x, ...) {
 
   # adding id number for columns not hidden
-   table_header <-
-      x$table_header %>%
-      group_by(.data$hide) %>%
-      mutate(id = ifelse(.data$hide == FALSE, dplyr::row_number(), NA)) %>%
-      ungroup()
+  table_header <-
+    .clean_table_header(x$table_header) %>%
+    group_by(.data$hide) %>%
+    mutate(id = ifelse(.data$hide == FALSE, dplyr::row_number(), NA)) %>%
+    ungroup()
 
   # tibble ---------------------------------------------------------------------
   # flextable doesn't use the markdown language `__` or `**`
@@ -124,6 +128,13 @@ table_header_to_flextable_calls <- function(x, ...) {
   flextable_calls[["set_header_labels"]] <- expr(
     flextable::set_header_labels(!!!col_labels)
   )
+
+  # set_caption ----------------------------------------------------------------
+  if (!is.null(x$list_output$caption)) {
+    flextable_calls[["set_caption"]] <- expr(
+      flextable::set_caption(caption = !!x$list_output$caption)
+    )
+  }
 
   # add_header_row -------------------------------------------------------------
   # this is the spanning rows
@@ -259,7 +270,10 @@ table_header_to_flextable_calls <- function(x, ...) {
   flextable_calls[["fmt_missing_emdash"]] <-
     map2(
       df_na_emdash$i_index, df_na_emdash$id,
-      ~expr(flextable::colformat_char(j = !!.y, i = !!.x, na_str = "\U2014"))
+      ~expr(
+        flextable::colformat_char(j = !!.y, i = !!.x,
+                                  na_str = !!get_theme_element("tbl_regression-str:ref_row_text", default = "\U2014"))
+        )
     )
 
   # bold -----------------------------------------------------------------------

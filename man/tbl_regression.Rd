@@ -2,9 +2,12 @@
 % Please edit documentation in R/tbl_regression.R
 \name{tbl_regression}
 \alias{tbl_regression}
+\alias{tbl_regression.default}
 \title{Display regression model results in table}
 \usage{
-tbl_regression(
+tbl_regression(x, ...)
+
+\method{tbl_regression}{default}(
   x,
   label = NULL,
   exponentiate = FALSE,
@@ -14,13 +17,17 @@ tbl_regression(
   intercept = FALSE,
   estimate_fun = NULL,
   pvalue_fun = NULL,
-  tidy_fun = NULL,
+  tidy_fun = broom::tidy,
+  add_estimate_to_reference_rows = FALSE,
   show_yesno = NULL,
-  exclude = NULL
+  exclude = NULL,
+  ...
 )
 }
 \arguments{
 \item{x}{Regression model object}
+
+\item{...}{Not used}
 
 \item{label}{List of formulas specifying variables labels,
 e.g. \code{list(age ~ "Age", stage ~ "Path T Stage")}}
@@ -58,6 +65,8 @@ and return a string that is the rounded/formatted p-value (e.g.
 model is not a \link[=vetted_models]{vetted model} or you need to implement a
 custom method. Default is \code{NULL}}
 
+\item{add_estimate_to_reference_rows}{add a reference value. Default is FALSE}
+
 \item{show_yesno}{DEPRECATED}
 
 \item{exclude}{DEPRECATED}
@@ -73,16 +82,18 @@ regression model results. Review the
 \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html}{tbl_regression vignette}
 for detailed examples.
 }
-\section{Setting Defaults}{
+\section{Methods}{
 
-If you prefer to consistently use a different function to format p-values or
-estimates, you can set options in the script or in the user- or
-project-level startup file, '.Rprofile'.  The default confidence level can
-also be set.
+
+The default method for \code{tbl_regression()} model summary uses \code{broom::tidy(x)}
+to perform the initial tidying of the model object. There are, however,
+a few models that use \link[=tbl_regression_methods]{modifications}.
 \itemize{
-\item \code{options(gtsummary.pvalue_fun = new_function)}
-\item \code{options(gtsummary.tbl_regression.estimate_fun = new_function)}
-\item \code{options(gtsummary.conf.level = 0.90)}
+\item \code{"survreg"}: The scale parameter is removed, \code{broom::tidy(x) \%>\% dplyr::filter(term != "Log(scale)")}
+\item \code{"multinom"}: This multinomial outcome is complex, with one line per covariate per outcome (less the reference group)
+\item \code{"lmerMod"}, \code{"glmerMod"}, \code{"glmmTMB"}, \code{"glmmadmb"}, \code{"stanreg"}: These mixed effects
+models use \code{broom.mixed::tidy(x, effects = "fixed")}. Specify \code{tidy_fun = broom.mixed::tidy}
+to print the random components.
 }
 }
 
@@ -139,7 +150,7 @@ tbl_regression_ex3 <-
 See tbl_regression \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html}{vignette} for detailed examples
 
 Other tbl_regression tools: 
-\code{\link{add_global_p.tbl_regression}()},
+\code{\link{add_global_p}()},
 \code{\link{add_nevent.tbl_regression}()},
 \code{\link{add_q}()},
 \code{\link{bold_italicize_labels_levels}},

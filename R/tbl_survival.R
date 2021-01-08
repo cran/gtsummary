@@ -1,6 +1,6 @@
 #' Creates table of univariate summary statistics for time-to-event endpoints
 #'
-#' \Sexpr[results=rd, stage=render]{lifecycle::badge("questioning")}
+#' \lifecycle{questioning}
 #' Please use [tbl_survfit].
 #' Function takes a `survfit` object as an argument, and provides a
 #' formatted summary of the results
@@ -16,7 +16,7 @@ tbl_survival <- function(x, ...) {
 
 #' Creates table of survival probabilities
 #'
-#' \Sexpr[results=rd, stage=render]{lifecycle::badge("questioning")}
+#' \lifecycle{questioning}
 #' Please use [tbl_survfit].
 #' Function takes a `survfit` object as an argument, and provides a
 #' formatted summary of the results
@@ -122,7 +122,7 @@ tbl_survival.survfit <- function(x, times = NULL, probs = NULL,
     )
 
   # input checks ---------------------------------------------------------------
-  assert_package("survival", "tbl_survival")
+  assert_package("survival", "tbl_survival()")
 
   if (c(is.null(times), is.null(probs)) %>% sum() != 1) {
     stop("One and only one of 'times' and 'probs' must be specified.")
@@ -254,7 +254,7 @@ tbl_survival.survfit <- function(x, times = NULL, probs = NULL,
 
   # specifying labels
   result <-
-    modify_header_internal(
+    modify_header(
       result,
       label = glue("{header_label}"),
       estimate = glue("{header_estimate}"),
@@ -263,7 +263,7 @@ tbl_survival.survfit <- function(x, times = NULL, probs = NULL,
 
   if ("level_label" %in% names(result$table_body)) {
     result <-
-      modify_header_internal(
+      modify_header(
         result,
         level_label = "**Group**"
       )

@@ -4,13 +4,16 @@
 \alias{tbl_stack}
 \title{Stacks two or more gtsummary objects}
 \usage{
-tbl_stack(tbls, group_header = NULL)
+tbl_stack(tbls, group_header = NULL, quiet = NULL)
 }
 \arguments{
 \item{tbls}{List of gtsummary objects}
 
 \item{group_header}{Character vector with table headers where length matches
 the length of \verb{tbls=}}
+
+\item{quiet}{Logical indicating whether to print messages in console. Default is
+\code{FALSE}}
 }
 \value{
 A \code{tbl_stack} object
@@ -104,7 +107,7 @@ Other tbl_svysummary tools:
 \code{\link{tbl_svysummary}()}
 
 Other tbl_regression tools: 
-\code{\link{add_global_p.tbl_regression}()},
+\code{\link{add_global_p}()},
 \code{\link{add_nevent.tbl_regression}()},
 \code{\link{add_q}()},
 \code{\link{bold_italicize_labels_levels}},
@@ -115,7 +118,7 @@ Other tbl_regression tools:
 \code{\link{tbl_regression}()}
 
 Other tbl_uvregression tools: 
-\code{\link{add_global_p.tbl_uvregression}()},
+\code{\link{add_global_p}()},
 \code{\link{add_nevent.tbl_uvregression}()},
 \code{\link{add_q}()},
 \code{\link{bold_italicize_labels_levels}},
