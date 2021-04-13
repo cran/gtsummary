@@ -27,9 +27,11 @@ tbl_uvregression(
 }
 \arguments{
 \item{data}{Data frame to be used in univariate regression modeling.  Data
-frame includes the outcome variable(s) and the independent variables.}
+frame includes the outcome variable(s) and the independent variables.
+Survey design objects are also accepted.}
 
-\item{method}{Regression method (e.g. \link{lm}, \link{glm}, \link[survival:coxph]{survival::coxph}, and more).}
+\item{method}{Regression method (e.g. \link{lm}, \link{glm}, \link[survival:coxph]{survival::coxph},
+\code{survey::svyglm}, and more).}
 
 \item{y}{Model outcome (e.g. \code{y = recurrence} or \code{y = Surv(time, recur)}).
 All other column in \code{data} will be regressed on \code{y}.
@@ -55,8 +57,9 @@ quoted variable names, unquoted variable names, or tidyselect select helper
 functions. Default is \code{everything()}.}
 
 \item{tidy_fun}{Option to specify a particular tidier function if the
-model is not a \link[=vetted_models]{vetted model} or you need to implement a
-custom method. Default is \code{NULL}}
+model. Default is to use \code{broom::tidy}, but if an error occurs
+then tidying of the model is attempted with \code{parameters::model_parameters()},
+if installed.}
 
 \item{hide_n}{Hide N column. Default is \code{FALSE}}
 
@@ -133,7 +136,8 @@ a few models that use \link[=tbl_regression_methods]{modifications}.
 \itemize{
 \item \code{"survreg"}: The scale parameter is removed, \code{broom::tidy(x) \%>\% dplyr::filter(term != "Log(scale)")}
 \item \code{"multinom"}: This multinomial outcome is complex, with one line per covariate per outcome (less the reference group)
-\item \code{"lmerMod"}, \code{"glmerMod"}, \code{"glmmTMB"}, \code{"glmmadmb"}, \code{"stanreg"}: These mixed effects
+\item \code{"gam"}: Uses the internal tidier \code{tidy_gam()} to print both parametric and smooth terms.
+\item \code{"lmerMod"}, \code{"glmerMod"}, \code{"glmmTMB"}, \code{"glmmadmb"}, \code{"stanreg"}, \code{"brmsfit"}: These mixed effects
 models use \code{broom.mixed::tidy(x, effects = "fixed")}. Specify \code{tidy_fun = broom.mixed::tidy}
 to print the random components.
 }
@@ -182,7 +186,6 @@ See tbl_regression \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_re
 
 Other tbl_uvregression tools: 
 \code{\link{add_global_p}()},
-\code{\link{add_nevent.tbl_uvregression}()},
 \code{\link{add_q}()},
 \code{\link{bold_italicize_labels_levels}},
 \code{\link{inline_text.tbl_uvregression}()},

@@ -15,7 +15,8 @@
 #'
 #' - `"survreg"`: The scale parameter is removed, `broom::tidy(x) %>% dplyr::filter(term != "Log(scale)")`
 #' - `"multinom"`: This multinomial outcome is complex, with one line per covariate per outcome (less the reference group)
-#' - `"lmerMod"`, `"glmerMod"`, `"glmmTMB"`, `"glmmadmb"`, `"stanreg"`: These mixed effects
+#' - `"gam"`: Uses the internal tidier `tidy_gam()` to print both parametric and smooth terms.
+#' - `"lmerMod"`, `"glmerMod"`, `"glmmTMB"`, `"glmmadmb"`, `"stanreg"`, `"brmsfit"`: These mixed effects
 #' models use `broom.mixed::tidy(x, effects = "fixed")`. Specify `tidy_fun = broom.mixed::tidy`
 #' to print the random components.
 #'
@@ -55,8 +56,9 @@
 #' `pvalue_fun = function(x) style_pvalue(x, digits = 2)` or equivalently,
 #'  `purrr::partial(style_pvalue, digits = 2)`).
 #' @param tidy_fun Option to specify a particular tidier function if the
-#' model is not a [vetted model][vetted_models] or you need to implement a
-#' custom method. Default is `NULL`
+#' model. Default is to use `broom::tidy`, but if an error occurs
+#' then tidying of the model is attempted with `parameters::model_parameters()`,
+#' if installed.
 #' @param add_estimate_to_reference_rows add a reference value. Default is FALSE
 #' @param ... Not used
 #' @param exclude DEPRECATED
@@ -84,7 +86,6 @@
 #' tbl_regression_ex3 <-
 #'   glmer(am ~ hp + (1 | gear), mtcars, family = binomial) %>%
 #'   tbl_regression(exponentiate = TRUE)
-#'
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
@@ -108,7 +109,7 @@ tbl_regression.default <- function(x, label = NULL, exponentiate = FALSE,
                                    include = everything(), show_single_row = NULL,
                                    conf.level = NULL, intercept = FALSE,
                                    estimate_fun = NULL, pvalue_fun = NULL,
-                                   tidy_fun = broom::tidy,
+                                   tidy_fun = NULL,
                                    add_estimate_to_reference_rows = FALSE,
                                    show_yesno = NULL, exclude = NULL, ...) {
   # deprecated arguments -------------------------------------------------------
@@ -133,6 +134,7 @@ tbl_regression.default <- function(x, label = NULL, exponentiate = FALSE,
   }
 
   # setting defaults -----------------------------------------------------------
+  tidy_fun <- tidy_fun %||% broom.helpers::tidy_with_broom_or_parameters
   pvalue_fun <-
     pvalue_fun %||%
     get_theme_element("tbl_regression-arg:pvalue_fun") %||%
@@ -159,7 +161,8 @@ tbl_regression.default <- function(x, label = NULL, exponentiate = FALSE,
   # checking estimate_fun and pvalue_fun are functions
   if (!purrr::every(list(estimate_fun, pvalue_fun, tidy_fun %||% pvalue_fun), is.function)) {
     stop("Inputs `estimate_fun`, `pvalue_fun`, `tidy_fun` must be functions.",
-         call. = FALSE)
+      call. = FALSE
+    )
   }
 
   include <- rlang::enquo(include)
@@ -170,16 +173,18 @@ tbl_regression.default <- function(x, label = NULL, exponentiate = FALSE,
   func_inputs <- as.list(environment())
 
   table_body <-
-    tidy_prep(x, tidy_fun = tidy_fun, exponentiate = exponentiate,
-              conf.level = conf.level, intercept = intercept,
-              label = label, show_single_row = !!show_single_row,
-              include = !!include,
-              add_estimate_to_reference_rows = add_estimate_to_reference_rows)
+    tidy_prep(x,
+      tidy_fun = tidy_fun, exponentiate = exponentiate,
+      conf.level = conf.level, intercept = intercept,
+      label = label, show_single_row = !!show_single_row,
+      include = !!include,
+      add_estimate_to_reference_rows = add_estimate_to_reference_rows
+    )
 
   # saving evaluated `label`, `show_single_row`, and `include` -----------------
   func_inputs$label <-
     .formula_list_to_named_list(
-      x =  label,
+      x = label,
       var_info = table_body,
       arg_name = "label"
     )
@@ -192,9 +197,6 @@ tbl_regression.default <- function(x, label = NULL, exponentiate = FALSE,
     )
 
   func_inputs$include <- unique(table_body$variable)
-
-  # model N
-  n <- pluck(table_body, "N", 1)
 
   # adding character CI
   if (all(c("conf.low", "conf.high") %in% names(table_body))) {
@@ -217,97 +219,44 @@ tbl_regression.default <- function(x, label = NULL, exponentiate = FALSE,
     dplyr::relocate(any_of(c("conf.low", "conf.high", "ci", "p.value")), .after = last_col())
 
   # table of column headers
-  table_header <-
-    tibble(column = names(table_body)) %>%
-    table_header_fill_missing() %>%
-    table_header_fmt_fun(estimate = estimate_fun)
-
-  # constructing return object
-  results <- list(
-    table_body = table_body,
-    table_header = table_header,
-    n = n,
-    model_obj = x,
-    inputs = func_inputs,
-    call_list = list(tbl_regression = match.call())
-  )
+  x <-
+    .create_gtsummary_object(
+      table_body = table_body,
+      N = pluck(table_body, "N_obs", 1),
+      n = pluck(table_body, "N_obs", 1), # i want to remove this eventually
+      N_event = pluck(table_body, "N_event", 1), model_obj = x,
+      inputs = func_inputs,
+      call_list = list(tbl_regression = match.call())
+    ) %>%
+    purrr::discard(is.null)
 
   # assigning a class of tbl_regression (for special printing in R markdown)
-  class(results) <- c("tbl_regression", "gtsummary")
+  class(x) <- c("tbl_regression", "gtsummary")
 
   # setting column headers, and print instructions
   tidy_columns_to_report <-
     get_theme_element("tbl_regression-chr:tidy_columns",
-                      default = c("conf.low", "conf.high", "p.value")) %>%
+      default = c("conf.low", "conf.high", "p.value")
+    ) %>%
     union("estimate") %>%
     intersect(names(table_body))
 
   # setting default table_header values
-  results <-
+  x <-
     .tbl_regression_default_table_header(
-      results,
+      x,
       exponentiate = exponentiate,
       tidy_columns_to_report = tidy_columns_to_report,
       estimate_fun = estimate_fun,
       pvalue_fun = pvalue_fun,
-      conf.level = conf.level)
+      conf.level = conf.level
+    )
+
+  # running any additional mods ------------------------------------------------
+  x <-
+    get_theme_element("tbl_regression-fn:addnl-fn-to-run", default = identity) %>%
+    do.call(list(x))
 
   # return results -------------------------------------------------------------
-  results
-}
-
-# identifies headers for common models (logistic, poisson, and PH regression)
-estimate_header <- function(x, exponentiate) {
-  # first identify the type ----------------------------------------------------
-  model_type <- "generic"
-  # GLM and GEE models
-  if (inherits(x, c("glm", "geeglm")) &&
-    x$family$family == "binomial" &&
-    x$family$link == "logit") {
-    model_type <- "logistic"
-  } else if (inherits(x, "clogit")) {
-    model_type <- "logistic"
-  } else if (inherits(x, c("glm", "geeglm")) &&
-    x$family$family == "poisson" &&
-    x$family$link == "log") {
-    model_type <- "poisson"
-  } # Cox Models
-  else if (inherits(x, "coxph")) {
-    model_type <- "prop_hazard"
-  } # LME4 models
-  else if (inherits(x, "glmerMod") &&
-    attr(class(x), "package") == "lme4" &&
-    x@resp$family$family == "binomial" &&
-    x@resp$family$link == "logit") {
-    model_type <- "logistic"
-  } else if (inherits(x, "glmerMod") &&
-    attr(class(x), "package") == "lme4" &&
-    x@resp$family$family == "poisson" &&
-    x@resp$family$link == "log") {
-    model_type <- "poisson"
-  }
-
-  # assigning header and footer ------------------------------------------------
-  language <- get_theme_element("pkgwide-str:language", default = "en")
-  if (model_type == "logistic") {
-    header <- ifelse(exponentiate == TRUE, "OR", "log(OR)") %>% translate_text(language)
-    attr(header, "footnote") <- translate_text("OR = Odds Ratio", language)
-  }
-  else if (model_type == "poisson") {
-    header <- ifelse(exponentiate == TRUE, "IRR", "log(IRR)") %>% translate_text(language)
-    attr(header, "footnote") <- translate_text("IRR = Incidence Rate Ratio", language)
-  }
-  else if (model_type == "prop_hazard") {
-    header <- ifelse(exponentiate == TRUE, "HR", "log(HR)") %>% translate_text(language)
-    attr(header, "footnote") <- translate_text("HR = Hazard Ratio", language)
-  }
-  else {
-    header <-
-      get_theme_element("tbl_regression-str:coef_header") %||%
-      ifelse(exponentiate == TRUE, "exp(Beta)", "Beta") %>%
-      as.character() %>%
-      translate_text(language)
-  }
-
-  header
+  x
 }

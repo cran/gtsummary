@@ -17,39 +17,50 @@
 #'   trial %>%
 #'   tbl_summary(by = trt) %>%
 #'   as_kable_extra()
-
 as_kable_extra <- function(x, include = everything(), return_calls = FALSE,
                            strip_md_bold = TRUE, ...) {
   # must have kableExtra package installed to use this function ----------------
   assert_package("kableExtra", "as_kable_extra()")
 
+  # running pre-conversion function, if present --------------------------------
+  x <- do.call(get_theme_element("pkgwide-fun:pre_conversion", default = identity), list(x))
+
+  # converting row specifications to row numbers, and removing old cmds --------
+  x <- .clean_table_styling(x)
+
   # stripping markdown asterisk ------------------------------------------------
   if (strip_md_bold == TRUE) {
-    x$table_header <-
-      x$table_header %>%
+    x$table_styling$header <-
+      x$table_styling$header %>%
       mutate(
         label = str_replace_all(
-          .data$label, pattern = fixed("**"), replacement = fixed("")
+          .data$label,
+          pattern = fixed("**"), replacement = fixed("")
         ),
         spanning_header = str_replace_all(
-          .data$spanning_header, pattern = fixed("**"), replacement = fixed("")
+          .data$spanning_header,
+          pattern = fixed("**"), replacement = fixed("")
         )
       )
   }
 
   # creating list of kableExtra calls ------------------------------------------
   kable_extra_calls <-
-    table_header_to_kable_extra_calls(x = x, ...)
+    table_styling_to_kable_extra_calls(x = x, ...)
 
   # adding user-specified calls ------------------------------------------------
   insert_expr_after <- get_theme_element("as_kable_extra-lst:addl_cmds")
   kable_extra_calls <-
     purrr::reduce(
       .x = seq_along(insert_expr_after),
-      .f = function(x, y) add_expr_after(calls = x,
-                                         add_after = names(insert_expr_after[y]),
-                                         expr = insert_expr_after[[y]],
-                                         new_name = paste0("user_added", y)),
+      .f = function(x, y) {
+        add_expr_after(
+          calls = x,
+          add_after = names(insert_expr_after[y]),
+          expr = insert_expr_after[[y]],
+          new_name = paste0("user_added", y)
+        )
+      },
       .init = kable_extra_calls
     )
 
@@ -68,7 +79,9 @@ as_kable_extra <- function(x, include = everything(), return_calls = FALSE,
   include <- "tibble" %>% union(include)
 
   # return calls, if requested -------------------------------------------------
-  if (return_calls == TRUE) return(kable_extra_calls)
+  if (return_calls == TRUE) {
+    return(kable_extra_calls)
+  }
 
   # taking each kable function call, concatenating them with %>% separating them
   kable_extra_calls[include] %>%
@@ -81,61 +94,74 @@ as_kable_extra <- function(x, include = everything(), return_calls = FALSE,
     eval()
 }
 
-table_header_to_kable_extra_calls <- function(x, ...) {
-  table_header <- .clean_table_header(x$table_header)
-
+table_styling_to_kable_extra_calls <- function(x, ...) {
   # getting kable calls
-  kable_extra_calls <-
-    table_header_to_kable_calls(x = x, ...)
+  kable_extra_calls <- table_styling_to_kable_calls(x = x, ...)
 
   # add_indent -----------------------------------------------------------------
-  tab_style_indent <-
-    table_header %>%
-    filter(!is.na(.data$indent), .data$column == "label") %>%
-    pull(.data$indent)
+  df_indent <-
+    x$table_styling$text_format %>%
+    filter(.data$format_type == "indent", .data$column == "label")
 
-  if (length(tab_style_indent) > 0) {
-    indent_index <-
-      expr(with(x$table_body, !!parse_expr(tab_style_indent))) %>%
-      eval() %>%
-      which()
-
-    kable_extra_calls[["add_indent"]] <- expr(kableExtra::add_indent(!!indent_index))
+  if (nrow(df_indent) > 0) {
+    kable_extra_calls[["add_indent"]] <-
+      expr(kableExtra::add_indent(!!df_indent$row_numbers[[1]]))
   }
 
   # add_header_above -----------------------------------------------------------
-  if (sum(!is.na(table_header$spanning_header)) > 0) {
-    header0 <- table_header %>%
+  if (any(!is.na(x$table_styling$header$spanning_header))) {
+    df_header0 <-
+      x$table_styling$header %>%
       filter(.data$hide == FALSE) %>%
       select(.data$spanning_header) %>%
-      mutate(spanning_header = ifelse(is.na(.data$spanning_header),
-                                      " ",
-                                      .data$spanning_header)) %>%
-      group_by(.data$spanning_header) %>%
-      dplyr::summarise(n = n()) %>%
+      mutate(
+        spanning_header = ifelse(is.na(.data$spanning_header),
+          " ", .data$spanning_header
+        ),
+        spanning_header_id = dplyr::row_number()
+      )
+    # assigning an ID for each spanning header group
+    for (i in seq(2, nrow(df_header0))) {
+      if (df_header0$spanning_header[i] == df_header0$spanning_header[i - 1]) {
+        df_header0$spanning_header_id[i] <- df_header0$spanning_header_id[i - 1]
+      }
+    }
+
+    df_header <-
+      df_header0 %>%
+      group_by(.data$spanning_header_id) %>%
+      mutate(width = n()) %>%
+      distinct() %>%
       ungroup()
-    header <- header0$n %>% set_names(header0$spanning_header)
+
+    header <- df_header$width %>% set_names(df_header$spanning_header)
 
     kable_extra_calls[["add_header_above"]] <-
-      expr(kableExtra::add_header_above(!!header))
+      expr(kableExtra::add_header_above(header = !!header))
+  }
+
+  # horizontal_line_above ------------------------------------------------------
+  if (!is.null(x$table_styling$horizontal_line_above)) {
+    row_number <-
+      eval_tidy(x$table_styling$horizontal_line_above, data = x$table_body) %>%
+      which()
+    row_number <- row_number - 1
+    kable_extra_calls[["horizontal_line"]] <-
+      expr(
+        kableExtra::row_spec(row = !!row_number, hline_after = TRUE)
+      )
   }
 
   # footnote -------------------------------------------------------------------
-  vct_footnote_abbrev <- table_header %>%
-    filter(!is.na(.data$footnote_abbrev)) %>%
-    pull(.data$footnote_abbrev)
-  if (length(vct_footnote_abbrev) > 0)
-    vct_footnote_abbrev <- paste(vct_footnote_abbrev, collapse = ", ")
-  vct_footnote <- table_header %>%
-    filter(!is.na(.data$footnote)) %>%
+  vct_footnote <-
+    .number_footnotes(x) %>%
     pull(.data$footnote) %>%
-    unique() %>%
-    c(vct_footnote_abbrev)
+    unique()
 
-  if( length(vct_footnote > 0))
+  if (length(vct_footnote > 0)) {
     kable_extra_calls[["footnote"]] <-
-    expr(kableExtra::footnote(number = !!vct_footnote))
+      expr(kableExtra::footnote(number = !!vct_footnote))
+  }
 
   kable_extra_calls
 }
-

@@ -18,9 +18,20 @@ modify_header(
   stat_by = NULL
 )
 
-modify_footnote(x, update = NULL, abbreviation = FALSE, quiet = NULL)
+modify_footnote(
+  x,
+  update = NULL,
+  abbreviation = FALSE,
+  text_interpret = c("md", "html"),
+  quiet = NULL
+)
 
-modify_spanning_header(x, update = NULL, quiet = NULL)
+modify_spanning_header(
+  x,
+  update = NULL,
+  text_interpret = c("md", "html"),
+  quiet = NULL
+)
 
 modify_caption(x, caption, text_interpret = c("md", "html"))
 
@@ -77,7 +88,8 @@ Syntax follows \code{\link[glue:glue]{glue::glue()}}, e.g. \code{all_stat_cols()
 \section{tbl_regression()}{
 
 When assigning column headers for \code{tbl_regression} tables,
-you may use \code{{N}} to insert the number of observations.
+you may use \code{{N}} to insert the number of observations, and \code{{N_event}}
+for the number of events (when applicable).
 }
 
 \section{captions}{
@@ -119,8 +131,10 @@ show_header_names(tbl)
 # updating column headers, footnote, and table caption
 modify_ex1 <- tbl \%>\%
   modify_header(
-    update = list(label ~ "**Variable**",
-                  p.value ~ "**P**")
+    update = list(
+      label ~ "**Variable**",
+      p.value ~ "**P**"
+    )
   ) \%>\%
   modify_footnote(
     update = all_stat_cols() ~ "median (IQR) for Age; n (\%) for Grade"
@@ -141,7 +155,6 @@ modify_ex3 <-
   glm(response ~ age + grade, trial, family = binomial) \%>\%
   tbl_regression(exponentiate = TRUE) \%>\%
   modify_footnote(ci ~ "CI = Credible Interval", abbreviation = TRUE)
-
 }
 \seealso{
 Other tbl_summary tools: 
@@ -169,7 +182,6 @@ Other tbl_svysummary tools:
 
 Other tbl_regression tools: 
 \code{\link{add_global_p}()},
-\code{\link{add_nevent.tbl_regression}()},
 \code{\link{add_q}()},
 \code{\link{bold_italicize_labels_levels}},
 \code{\link{combine_terms}()},
@@ -180,7 +192,6 @@ Other tbl_regression tools:
 
 Other tbl_uvregression tools: 
 \code{\link{add_global_p}()},
-\code{\link{add_nevent.tbl_uvregression}()},
 \code{\link{add_q}()},
 \code{\link{bold_italicize_labels_levels}},
 \code{\link{inline_text.tbl_uvregression}()},

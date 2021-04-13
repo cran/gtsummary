@@ -13,7 +13,7 @@ add_difference(
   conf.level = 0.95,
   include = everything(),
   pvalue_fun = NULL,
-  estimate_fun = style_sigfig
+  estimate_fun = NULL
 )
 }
 \arguments{
@@ -49,10 +49,12 @@ and return a string that is the rounded/formatted p-value (e.g.
 \code{pvalue_fun = function(x) style_pvalue(x, digits = 2)} or equivalently,
 \code{purrr::partial(style_pvalue, digits = 2)}).}
 
-\item{estimate_fun}{Function to round and format difference. Default is \code{\link[=style_sigfig]{style_sigfig()}}}
+\item{estimate_fun}{List of formulas specifying the formatting functions
+to round and format differences. Default is
+\code{list(all_continuous() ~ style_sigfig, all_categorical() ~ function(x) paste0(style_sigfig(x * 100), "\%"))}
+Function to round and format difference. Default is \code{\link[=style_sigfig]{style_sigfig()}}}
 }
 \description{
-\lifecycle{experimental}
 Add the difference between two groups (typically mean difference),
 along with the difference confidence interval and p-value.
 }
@@ -71,21 +73,30 @@ along with the difference confidence interval and p-value.
 # Example 1 ----------------------------------
 add_difference_ex1 <-
   trial \%>\%
-  select(trt, age, marker) \%>\%
-  tbl_summary(by = trt,
-              statistic = all_continuous() ~ "{mean} ({sd})",
-              missing = "no") \%>\%
+  select(trt, age, marker, response, death) \%>\%
+  tbl_summary(
+    by = trt,
+    statistic =
+      list(
+        all_continuous() ~ "{mean} ({sd})",
+        all_dichotomous() ~ "{p}\%"
+      ),
+    missing = "no"
+  ) \%>\%
   add_n() \%>\%
   add_difference()
 
 # Example 2 ----------------------------------
+# ANCOVA adjusted for grade and stage
 add_difference_ex2 <-
   trial \%>\%
-  select(trt, response, death) \%>\%
-  tbl_summary(by = trt,
-              statistic = all_dichotomous() ~ "{p}\%",
-              missing = "no") \%>\%
-  modify_footnote(all_stat_cols() ~ NA) \%>\%
+  select(trt, age, marker, grade, stage) \%>\%
+  tbl_summary(
+    by = trt,
+    statistic = list(all_continuous() ~ "{mean} ({sd})"),
+    missing = "no",
+    include = c(age, marker, trt)
+  ) \%>\%
   add_n() \%>\%
-  add_difference(estimate_fun = ~paste0(style_sigfig(. * 100), "\%"))
+  add_difference(adj.vars = c(grade, stage))
 }

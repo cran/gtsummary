@@ -16,16 +16,17 @@ tbl_svysummary(
   missing_text = NULL,
   sort = NULL,
   percent = NULL,
-  include = NULL
+  include = everything()
 )
 }
 \arguments{
-\item{data}{A survey object created with created with \code{\link[survey:svydesign]{survey::svydesign()}}}
+\item{data}{A survey object created with created with \code{survey::svydesign()}}
 
 \item{by}{A column name (quoted or unquoted) in \code{data}.
 Summary statistics will be calculated separately for each level of the \code{by}
 variable (e.g. \code{by = trt}). If \code{NULL}, summary statistics
-are calculated using all observations.}
+are calculated using all observations. To stratify a table by two or more
+variables, use \code{tbl_strata()}}
 
 \item{label}{List of formulas specifying variables labels,
 e.g. \code{list(age ~ "Age", stage ~ "Path T Stage")}.  If a
@@ -78,7 +79,6 @@ e.g. \code{sort = list(everything() ~ "frequency")}}
 A \code{tbl_svysummary} object
 }
 \description{
-\lifecycle{experimental}
 The \code{tbl_svysummary} function calculates descriptive statistics for
 continuous, categorical, and dichotomous variables taking into account survey weights and design.
 It is similar to \code{\link[=tbl_summary]{tbl_summary()}}.

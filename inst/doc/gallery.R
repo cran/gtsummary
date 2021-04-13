@@ -2,12 +2,22 @@
 knitr::opts_chunk$set(
   collapse = TRUE,
   eval = TRUE,
+  warning = FALSE,
   comment = "#>"
 )
 
+## ---- echo = FALSE, results = 'asis'------------------------------------------
+if (!identical(Sys.getenv("NOT_CRAN"), "true")) {
+  msg <- 
+    paste("View this vignette on the",
+          "[package website](http://www.danieldsjoberg.com/gtsummary/articles/gallery.html).")
+  cat(msg)
+  knitr::knit_exit()
+}
+
 ## ----setup, message = FALSE, warning=FALSE------------------------------------
 library(gtsummary); library(gt); library(survival)
-library(dplyr); library(stringr); library(purrr); library(forcats)
+library(dplyr); library(stringr); library(purrr); library(forcats); library(tidyr)
 
 ## -----------------------------------------------------------------------------
 trial %>%
@@ -17,7 +27,7 @@ trial %>%
     missing = "no",
     statistic = all_continuous() ~ "{median} ({p25}, {p75})"
   ) %>%
-  modify_header(stat_by = md("**{level}**<br>N =  {n} ({style_percent(p)}%)")) %>%
+  modify_header(all_stat_cols() ~ "**{level}**<br>N =  {n} ({style_percent(p)}%)") %>%
   add_n() %>%
   bold_labels() %>%
   modify_spanning_header(all_stat_cols() ~ "**Chemotherapy Treatment**")
@@ -61,7 +71,21 @@ trial %>%
   )  
 
 ## -----------------------------------------------------------------------------
-# imagine that each patient recieved Drug A and Drug B (adding ID showing their paired measurements)
+trial %>%
+  select(response, marker, trt) %>%
+  tbl_summary(
+    by = trt,
+    statistic = list(all_continuous() ~ "{mean} ({sd})",
+                     all_categorical() ~ "{p}%"),
+    missing = "no"
+  ) %>%
+  add_difference() %>%
+  add_n() %>%
+  modify_header(all_stat_cols() ~ "**{level}**") %>%
+  modify_footnote(all_stat_cols() ~ NA)
+
+## -----------------------------------------------------------------------------
+# imagine that each patient received Drug A and Drug B (adding ID showing their paired measurements)
 trial_paired <-
   trial %>%
   select(trt, marker) %>%
@@ -83,30 +107,28 @@ trial_paired %>%
 
 ## -----------------------------------------------------------------------------
 # table summarizing data with no p-values
-t0 <- trial %>%
-  select(grade, age, response) %>%
+small_trial <- trial %>% select(grade, age, response)
+t0 <- small_trial %>%
   tbl_summary(by = grade, missing = "no") %>%
-  modify_header(stat_by = md("**{level}**"))
+  modify_header(all_stat_cols() ~ "**{level}**")
 
 # table comparing grade I and II
-t1 <- trial %>%
-  select(grade, age, response) %>%
+t1 <- small_trial %>%
   filter(grade %in% c("I", "II")) %>%
   tbl_summary(by = grade, missing = "no") %>%
   add_p() %>%
   modify_header(p.value ~ md("**I vs. II**")) %>%
   # hide summary stat columns
-  modify_table_header(all_stat_cols(), hide = TRUE)
+  modify_column_hide(all_stat_cols())
 
 # table comparing grade I and II
-t2 <- trial %>%
-  select(grade, age, response) %>%
+t2 <- small_trial %>%
   filter(grade %in% c("I", "III")) %>%
   tbl_summary(by = grade, missing = "no") %>%
   add_p()  %>%
   modify_header(p.value ~ md("**I vs. III**")) %>%
   # hide summary stat columns
-  modify_table_header(all_stat_cols(), hide = TRUE)
+  modify_column_hide(all_stat_cols())
 
 # merging the 3 tables together, and adding additional gt formatting
 tbl_merge(list(t0, t1, t2)) %>%
@@ -140,6 +162,38 @@ tbl_merge(list(t1, t2)) %>%
 
 ## -----------------------------------------------------------------------------
 trial %>%
+  # nest data within tumor grade
+  select(trt, grade, marker) %>%
+  arrange(grade) %>%
+  nest(data = -grade) %>%
+  # build tbl_summary within each grade
+  rowwise() %>%
+  mutate(
+    tbl = 
+      data %>%
+      # build summary table, and use the grade level as the label
+      tbl_summary(by = trt, label = list(marker = as.character(grade)), missing = "no") %>%
+      modify_header(list(label ~ "**Tumor Grade**", all_stat_cols() ~ "{level}")) %>%
+      list()
+  ) %>%
+  # stack tbl_summary tables to create final tbl
+  pull(tbl) %>%
+  tbl_stack() %>%
+  modify_spanning_header(all_stat_cols() ~ "**Treatment Assignment**")
+
+## -----------------------------------------------------------------------------
+trial %>%
+  select(trt, grade, age, stage) %>%
+  mutate(grade = paste("Grade", grade)) %>%
+  tbl_strata(
+    strata = grade, 
+    ~.x %>%
+      tbl_summary(by = trt, missing = "no") %>%
+      modify_header(all_stat_cols() ~ "**{level}**")
+  )
+
+## -----------------------------------------------------------------------------
+trial %>%
   select(response, age, grade) %>%
   tbl_uvregression(
     method = glm,
@@ -160,41 +214,28 @@ gt_t1 <- trial[c("trt", "grade")] %>%
   modify_header(stat_0 ~ "**n (%)**") %>%
   modify_footnote(stat_0 ~ NA_character_)
 
+theme_gtsummary_compact()
 tbl_merge(
   list(gt_t1, gt_r1, gt_r2),
   tab_spanner = c(NA_character_, "**Tumor Response**", "**Time to Death**")
 )
 
+## ---- echo=FALSE--------------------------------------------------------------
+reset_gtsummary_theme()
+
 ## -----------------------------------------------------------------------------
-gt_model <-
-  trial %>%
+trial %>%
   select(ttdeath, death, stage, grade) %>%
   tbl_uvregression(
     method = coxph,
     y = Surv(ttdeath, death), 
     exponentiate = TRUE,
     hide_n = TRUE
-  )
-
-gt_eventn <-
-  trial %>%
-  filter(death ==  1) %>%
-  select(stage, grade) %>%
-  tbl_summary(
-    statistic = all_categorical() ~ "{n}",
-    label = list(stage ~ "T Stage", grade ~ "Grade")
   ) %>%
-  modify_header(stat_0 ~ "**Event N**") %>%
-  modify_footnote(everything() ~ NA_character_)
-
-tbl_merge(list(gt_eventn, gt_model)) %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_spanning_header(everything() ~ NA_character_)
+  add_nevent(location = "level")
 
 ## -----------------------------------------------------------------------------
-tbl_reg <-
-  trial %>%
+trial %>%
   select(age, marker, trt) %>%
   tbl_uvregression(
     method = lm,
@@ -205,26 +246,8 @@ tbl_reg <-
   modify_header(list(
     label ~"**Model Outcome**",
     estimate ~ "**Treatment Coef.**"
-  )) 
-
-tbl_reg %>%
-  modify_footnote(estimate ~ "Values larger than 0 indicate larger values in the Drug group.")
-
-## -----------------------------------------------------------------------------
-gt_sum <- 
-  trial %>%
-  select(age, marker, trt) %>%
-  mutate(trt = fct_rev(trt)) %>%
-  tbl_summary(by = trt, 
-              statistic = all_continuous() ~ "{mean} ({sd})",
-              missing = "no") %>%
-  add_n() %>%
-  modify_header(stat_by = md("**{level}**"))
-
-
-tbl_merge(list(gt_sum, tbl_reg))  %>%
-  modify_header(estimate_2 ~ "**Difference**") %>%
-  modify_spanning_header(everything() ~ NA_character_)
+  )) %>%
+  modify_footnote(estimate ~ "Values larger than 0 indicate larger values in the Drug B group.")
 
 ## -----------------------------------------------------------------------------
 my_tidy <- function(x, exponentiate =  FALSE, conf.level = 0.95, ...) {
@@ -238,4 +261,14 @@ my_tidy <- function(x, exponentiate =  FALSE, conf.level = 0.95, ...) {
 
 lm(age ~ grade + marker, trial) %>%
   tbl_regression(tidy_fun = my_tidy)
+
+## -----------------------------------------------------------------------------
+trial %>%
+  select(ttdeath, death, stage, grade) %>%
+  tbl_uvregression(
+    method = coxph,
+    y = Surv(ttdeath, death), 
+    exponentiate = TRUE,
+  ) %>%
+  add_significance_stars()
 

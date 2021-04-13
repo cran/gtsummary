@@ -9,7 +9,8 @@
 #' @param by A column name (quoted or unquoted) in `data`.
 #' Summary statistics will be calculated separately for each level of the `by`
 #' variable (e.g. `by = trt`). If `NULL`, summary statistics
-#' are calculated using all observations.
+#' are calculated using all observations. To stratify a table by two or more
+#' variables, use `tbl_strata()`
 #' @param label List of formulas specifying variables labels,
 #' e.g. `list(age ~ "Age", stage ~ "Path T Stage")`.  If a
 #' variable's label is not specified here, the label attribute
@@ -201,21 +202,26 @@ tbl_summary <- function(data, by = NULL, label = NULL, statistic = NULL,
   type <- type %||% get_theme_element("tbl_summary-arg:type")
   value <- value %||% get_theme_element("tbl_summary-arg:value")
   missing <- missing %||% get_theme_element("tbl_summary-arg:missing",
-                                            default = "ifany")
+    default = "ifany"
+  )
   missing_text <- missing_text %||%
     get_theme_element("tbl_summary-arg:missing_text",
-                      default = translate_text("Unknown"))
+      default = translate_text("Unknown")
+    )
   sort <- sort %||% get_theme_element("tbl_summary-arg:sort")
   percent <- percent %||% get_theme_element("tbl_summary-arg:percent",
-                                            default = "column")
+    default = "column"
+  )
   # ungrouping data ------------------------------------------------------------
   data <- data %>% ungroup()
 
   # converting bare arguments to string ----------------------------------------
-  by <- .select_to_varnames(select = {{ by }},
-                            data = data,
-                            arg_name = "by",
-                            select_single = TRUE)
+  by <- .select_to_varnames(
+    select = {{ by }},
+    data = data,
+    arg_name = "by",
+    select_single = TRUE
+  )
 
   # matching arguments ---------------------------------------------------------
   missing <- match.arg(missing, choices = c("ifany", "always", "no"))
@@ -223,11 +229,6 @@ tbl_summary <- function(data, by = NULL, label = NULL, statistic = NULL,
 
   # checking input data --------------------------------------------------------
   tbl_summary_data_checks(data)
-
-  # removing ordered class from factor variables -------------------------------
-  data <- dplyr::mutate_if(data,
-                           ~inherits(., "ordered") && inherits(., "factor"),
-                           ~factor(., levels = attr(., "levels"), ordered = FALSE))
 
   # deleting obs with missing by values ----------------------------------------
   # saving variable labels
@@ -237,15 +238,8 @@ tbl_summary <- function(data, by = NULL, label = NULL, statistic = NULL,
       "To include these observations, use `forcats::fct_explicit_na()` on `{by}` ",
       "column before passing to `tbl_summary()`."
     ))
-    lbls <- purrr::map(data, ~ attr(.x, "label"))
-    data <- data[!is.na(data[[by]]), ]
 
-    # re-applying labels---I think this will NOT be necessary after dplyr 1.0
-    for (i in names(lbls)) {
-      attr(data[[i]], "label") <- lbls[[i]]
-    }
-
-    rm(lbls, i)
+    data <- filter(data, !is.na(.data[[by]]))
   }
 
   # deprecation note about group -----------------------------------------------
@@ -261,10 +255,6 @@ tbl_summary <- function(data, by = NULL, label = NULL, statistic = NULL,
   # the object func_inputs is a list of every object passed to the function
   tbl_summary_inputs <- as.list(environment())
 
-  # removing variables with unsupported variable types from data ---------------
-  classes_expected <- c("character", "factor", "numeric", "logical", "integer", "difftime")
-  data <- removing_variables_with_unsupported_types(data, include, classes_expected)
-
   # checking function inputs ---------------------------------------------------
   tbl_summary_input_checks(
     data, by, label, type, value, statistic,
@@ -272,18 +262,22 @@ tbl_summary <- function(data, by = NULL, label = NULL, statistic = NULL,
   )
 
   # generate meta_data --------------------------------------------------------
-  meta_data <- generate_metadata(data = data, value = value, by = by,
-                                 classes_expected =  classes_expected,
-                                 type = type, label = label, statistic =  statistic,
-                                 digits = digits, percent = percent, sort = sort)
+  meta_data <- generate_metadata(
+    data = data %>% select(all_of(include)),
+    value = value, by = by,
+    type = type, label = label, statistic = statistic,
+    digits = digits, percent = percent, sort = sort
+  )
 
   # calculating summary statistics ---------------------------------------------
   table_body <-
     meta_data %>%
     mutate(
       tbl_stats = pmap(
-        list(.data$summary_type, .data$variable,
-             .data$var_label, .data$stat_display, .data$df_stats),
+        list(
+          .data$summary_type, .data$variable,
+          .data$var_label, .data$stat_display, .data$df_stats
+        ),
         function(summary_type, variable, var_label, stat_display, df_stats) {
           df_stats_to_tbl(
             data = data, variable = variable, summary_type = summary_type, by = by,
@@ -291,57 +285,48 @@ tbl_summary <- function(data, by = NULL, label = NULL, statistic = NULL,
             df_stats = df_stats, missing = missing, missing_text = missing_text
           )
         }
-      ),
-      var_class = map_chr(.data$class, pluck, 1)
+      )
     ) %>%
-    select(var_type = .data$summary_type, .data$var_class, .data$var_label, .data$tbl_stats) %>%
+    select(var_type = .data$summary_type, .data$var_label, .data$tbl_stats) %>%
     unnest(.data$tbl_stats) %>%
-    select(.data$variable, .data$var_type, .data$var_class, .data$var_label, everything())
+    select(.data$variable, .data$var_type, .data$var_label, everything())
 
   # table of column headers ----------------------------------------------------
-  table_header <-
-    tibble(column = names(table_body)) %>%
-    table_header_fill_missing()
+  x <-
+    .create_gtsummary_object(
+      table_body = table_body,
+      meta_data = meta_data,
+      inputs = tbl_summary_inputs,
+      N = nrow(data),
+      call_list = list(tbl_summary = match.call()),
+      by = by,
+      df_by = df_by(data, by)
+    )
 
   # adding stat footnote (unless there are continuous2 vars)
   if (!"continuous2" %in% meta_data$summary_type) {
-    table_header <-
-      table_header %>%
-      mutate(
-        # adding footnote of statistics on display (unless theme indicates a no print)
-        footnote = ifelse(
-          startsWith(.data$column, "stat_"),
-          footnote_stat_label(meta_data),
-          .data$footnote
-        )
+    x <-
+      modify_table_styling(
+        x,
+        columns = starts_with("stat_"),
+        footnote = footnote_stat_label(meta_data)
       )
   }
 
   # returning all results in a list --------------------------------------------
-  results <- list(
-    table_body = table_body,
-    table_header = table_header,
-    meta_data = meta_data,
-    inputs = tbl_summary_inputs,
-    N = nrow(data),
-    call_list = list(tbl_summary = match.call())
-  )
-  results$by <- by
-  results$df_by <- df_by(data, by)
-
   # assigning a class of tbl_summary (for special printing in Rmarkdown)
-  class(results) <- c("tbl_summary", "gtsummary")
+  class(x) <- c("tbl_summary", class(x))
 
   # adding headers
   if (is.null(by)) {
-    results <- modify_header(
-      results,
+    x <- modify_header(
+      x,
       stat_0 = "**N = {style_number(N)}**",
       label = paste0("**", translate_text("Characteristic"), "**")
     )
   } else {
-    results <- modify_header(
-      results,
+    x <- modify_header(
+      x,
       update = list(
         all_stat_cols(FALSE) ~ "**{level}**, N = {style_number(n)}",
         label ~ paste0("**", translate_text("Characteristic"), "**")
@@ -349,32 +334,19 @@ tbl_summary <- function(data, by = NULL, label = NULL, statistic = NULL,
     )
   }
 
-  return(results)
-}
+  # running any additional mods ------------------------------------------------
+  x <-
+    get_theme_element("tbl_summary-fn:addnl-fn-to-run", default = identity) %>%
+    do.call(list(x))
 
-
-# removing variables with unsupported variable types from data -------------------------
-removing_variables_with_unsupported_types <- function(data, include, classes_expected) {
-  data <- select(data, !!include)
-  var_to_remove <-
-    map_lgl(data, ~ class(.x) %in% classes_expected %>% any()) %>%
-    discard(. == TRUE) %>%
-    names()
-  data <- select(data, -var_to_remove)
-  if (length(var_to_remove) > 0) {
-    message(glue(
-      "Column(s) {glue_collapse(paste(sQuote(var_to_remove)), sep = ', ', last = ', and ')} ",
-      "omitted from output.\n",
-      "Accepted classes are {glue_collapse(paste(sQuote(classes_expected)), sep = ', ', last = ', or ')}."
-    ))
-  }
-  data
+  # returning tbl_summary table ------------------------------------------------
+  x
 }
 
 
 # generate metadata table --------------------------------------------------------------
 # for survey objects pass the full survey object to `survey` argument, and `design$variables` to `data` argument
-generate_metadata <- function(data, value, by, classes_expected, type, label,
+generate_metadata <- function(data, value, by, type, label,
                               statistic, digits, percent, sort, survey = NULL) {
   # converting tidyselect formula lists to named lists -------------------------
   value <- .formula_list_to_named_list(x = value, data = data, arg_name = "value")
@@ -382,12 +354,10 @@ generate_metadata <- function(data, value, by, classes_expected, type, label,
   # creating a table with meta data about each variable ------------------------
   meta_data <- tibble(
     variable = names(data),
-    # assigning class, if entire var is NA, then assigning class NA
-    class = assign_class(data, .data$variable, classes_expected),
     # assigning our best guess of the type, the final type is assigned below
     # we make a guess first, so users may use the gtsummary tidyselect functions for type
     summary_type = assign_summary_type(
-      data = data, variable = .data$variable, class = .data$class,
+      data = data, variable = .data$variable,
       summary_type = NULL, value = value
     )
   )
@@ -396,41 +366,49 @@ generate_metadata <- function(data, value, by, classes_expected, type, label,
 
   # updating type --------------------------------------------------------------
   # updating type of user supplied one
-  if (!is.null(type)) {
-    # converting tidyselect formula lists to named lists
-    type <- .formula_list_to_named_list(x = type,
-                                        data = data,
-                                        var_info = meta_data_to_var_info(meta_data) ,
-                                        arg_name = "type")
+  # converting tidyselect formula lists to named lists
+  type <- .formula_list_to_named_list(
+    x = type,
+    data = data,
+    var_info = meta_data_to_var_info(meta_data),
+    arg_name = "type"
+  )
 
-    # updating meta data object with new types
-    meta_data <-
-      meta_data %>%
-      mutate(
-        summary_type = assign_summary_type(
-          data = data, variable = .data$variable, class = .data$class,
-          summary_type = type, value = value
-        )
+  # updating meta data object with new types
+  meta_data <-
+    meta_data %>%
+    mutate(
+      summary_type = assign_summary_type(
+        data = data, variable = .data$variable,
+        summary_type = type, value = value, check_assignment = TRUE
       )
-  }
+    )
 
   # converting tidyselect formula lists to named lists -------------------------
-  label <- .formula_list_to_named_list(x = label,
-                                       data = data,
-                                       var_info = meta_data_to_var_info(meta_data) ,
-                                       arg_name = "label")
-  statistic <- .formula_list_to_named_list(x = statistic,
-                                           data = data,
-                                           var_info = meta_data_to_var_info(meta_data) ,
-                                           arg_name = "statistic")
-  digits <- .formula_list_to_named_list(x = digits,
-                                        data = data,
-                                        var_info = meta_data_to_var_info(meta_data) ,
-                                        arg_name = "digits")
-  sort <- .formula_list_to_named_list(x = sort,
-                                      data = data,
-                                      var_info = meta_data_to_var_info(meta_data) ,
-                                      arg_name = "sort")
+  label <- .formula_list_to_named_list(
+    x = label,
+    data = data,
+    var_info = meta_data_to_var_info(meta_data),
+    arg_name = "label"
+  )
+  statistic <- .formula_list_to_named_list(
+    x = statistic,
+    data = data,
+    var_info = meta_data_to_var_info(meta_data),
+    arg_name = "statistic"
+  )
+  digits <- .formula_list_to_named_list(
+    x = digits,
+    data = data,
+    var_info = meta_data_to_var_info(meta_data),
+    arg_name = "digits"
+  )
+  sort <- .formula_list_to_named_list(
+    x = sort,
+    data = data,
+    var_info = meta_data_to_var_info(meta_data),
+    arg_name = "sort"
+  )
 
   # assigning variable characteristics -----------------------------------------
   if (is.null(survey)) {
@@ -441,24 +419,28 @@ generate_metadata <- function(data, value, by, classes_expected, type, label,
     data_for_df_stats <- survey
   }
 
-
   meta_data <-
     meta_data %>%
     mutate(
-      dichotomous_value = assign_dichotomous_value(data, .data$variable, .data$summary_type, .data$class, value),
+      dichotomous_value = assign_dichotomous_value(data, .data$variable, .data$summary_type, value),
       var_label = assign_var_label(data, .data$variable, label),
-      stat_display = assign_stat_display(.data$variable, .data$summary_type, statistic),
+      stat_display = assign_stat_display(data, .data$variable, .data$summary_type, statistic),
       stat_label = stat_label_match(.data$stat_display),
       sort = assign_sort(.data$variable, .data$summary_type, sort),
       df_stats = pmap(
-        list(.data$summary_type, .data$variable,
-             .data$class, .data$dichotomous_value,
-             .data$sort, .data$stat_display),
-        ~ df_stats_function(summary_type = ..1, variable = ..2,
-                            class = ..3, dichotomous_value = ..4,
-                            sort = ..5, stat_display = ..6,
-                            data = data_for_df_stats, by = by,
-                            percent = percent, digits = digits)
+        list(
+          .data$summary_type, .data$variable,
+          .data$dichotomous_value,
+          .data$sort, .data$stat_display, .data$var_label
+        ),
+        ~ df_stats_function(
+          summary_type = ..1, variable = ..2,
+          dichotomous_value = ..3,
+          sort = ..4, stat_display = ..5,
+          data = data_for_df_stats, by = by,
+          percent = percent, digits = digits,
+          var_label = ..6
+        )
       )
     )
 

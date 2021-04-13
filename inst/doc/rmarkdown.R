@@ -5,6 +5,15 @@ knitr::opts_chunk$set(
 )
 library(gt)
 
+## ---- echo = FALSE, results = 'asis'------------------------------------------
+if (!identical(Sys.getenv("NOT_CRAN"), "true")) {
+  msg <- 
+    paste("View this vignette on the",
+          "[package website](http://www.danieldsjoberg.com/gtsummary/articles/rmarkdown.html).")
+  cat(msg)
+  knitr::knit_exit()
+}
+
 ## ---- echo=FALSE, warning=FALSE-----------------------------------------------
 
 # list of all the icons used in table

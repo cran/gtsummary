@@ -1,5 +1,7 @@
-context("test-tbl_regression")
-testthat::skip_on_cran()
+skip_on_cran()
+skip_if_not(requireNamespace("Hmisc"))
+skip_if_not(requireNamespace("lme4"))
+
 library(survival)
 library(lme4)
 
@@ -28,11 +30,11 @@ test_that("glm: logistic and poisson regression", {
   expect_error(tbl_regression(mod_poisson, show_single_row = "trt"), NA)
   expect_warning(tbl_regression(mod_poisson, show_single_row = "trt"), NA)
   expect_equal(
-    tbl_regression(mod_logistic)$table_header %>% filter(column == "estimate") %>% pull(label),
+    tbl_regression(mod_logistic)$table_styling$header %>% filter(column == "estimate") %>% pull(label),
     "**log(OR)**"
   )
   expect_equal(
-    tbl_regression(mod_poisson)$table_header %>% filter(column == "estimate") %>% pull(label),
+    tbl_regression(mod_poisson)$table_styling$header %>% filter(column == "estimate") %>% pull(label),
     "**log(IRR)**"
   )
 
@@ -41,11 +43,11 @@ test_that("glm: logistic and poisson regression", {
   expect_error(tbl_regression(mod_poisson, exponentiate = TRUE, show_single_row = "trt"), NA)
   expect_warning(tbl_regression(mod_poisson, exponentiate = TRUE, show_single_row = "trt"), NA)
   expect_equal(
-    tbl_regression(mod_logistic, exponentiate = TRUE)$table_header %>% filter(column == "estimate") %>% pull(label),
+    tbl_regression(mod_logistic, exponentiate = TRUE)$table_styling$header %>% filter(column == "estimate") %>% pull(label),
     "**OR**"
   )
   expect_equal(
-    tbl_regression(mod_poisson, exponentiate = TRUE)$table_header %>% filter(column == "estimate") %>% pull(label),
+    tbl_regression(mod_poisson, exponentiate = TRUE)$table_styling$header %>% filter(column == "estimate") %>% pull(label),
     "**IRR**"
   )
 })
@@ -121,11 +123,11 @@ test_that("No errors/warnings when data is labelled using Hmisc", {
   expect_warning(tbl_regression(cox_hmisclbl), NA)
 
   expect_equal(
-    tbl_regression(cox_hmisclbl)$table_header %>% filter(column == "estimate") %>% pull(label),
+    tbl_regression(cox_hmisclbl)$table_styling$header %>% filter(column == "estimate") %>% pull(label),
     "**log(HR)**"
   )
   expect_equal(
-    tbl_regression(cox_hmisclbl, exponentiate = TRUE)$table_header %>% filter(column == "estimate") %>% pull(label),
+    tbl_regression(cox_hmisclbl, exponentiate = TRUE)$table_styling$header %>% filter(column == "estimate") %>% pull(label),
     "**HR**"
   )
 })
@@ -147,7 +149,9 @@ test_that("All labels print with cubic splines", {
   rsc_mod <- lm(age ~ spline_fun(marker, inclx = TRUE) + response, trial)
 
   expect_equal(
-    tbl_regression(rsc_mod) %>% purrr::pluck("table_body", "label") %>% {sum(is.na(.))},
+    tbl_regression(rsc_mod) %>% purrr::pluck("table_body", "label") %>% {
+      sum(is.na(.))
+    },
     0
   )
 })
@@ -158,14 +162,19 @@ test_that("Testing lme4 results", {
 
   # tbl_regerssion runs without error
   expect_error(
-    tbl_lme4 <- tbl_regression(mod_glmer, exponentiate = TRUE,
-                               conf.level = 0.90),
+    tbl_lme4 <- tbl_regression(mod_glmer,
+      exponentiate = TRUE,
+      conf.level = 0.90
+    ),
     NA
   )
 
   # coefs are exponentiated properly
-  expect_equivalent(
-    coef(mod_glmer)[[1]] %>% {.[1, 2:ncol(.)]} %>% purrr::map_dbl(exp),
+  expect_equal(
+    coef(mod_glmer)[[1]] %>%
+      {
+        .[1, 2:ncol(.)]
+      } %>% purrr::map_dbl(exp) %>% as.numeric(),
     tbl_lme4$table_body %>% pull(estimate) %>% discard(is.na)
   )
 })
@@ -183,17 +192,15 @@ test_that("Interaction modifications", {
   )
 
   # checking modifications to table
-  expect_equivalent(
+  expect_equal(
     dplyr::filter(tbl_i$table_body, variable == "factor(response):marker") %>%
-      dplyr::pull(label),
+      dplyr::pull(label) %>% .[[1]],
     "Interaction"
   )
 
-  expect_equivalent(
+  expect_equal(
     dplyr::filter(tbl_i$table_body, variable == "factor(response):marker") %>%
       nrow(),
     1L
   )
 })
-
-

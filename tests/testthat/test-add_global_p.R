@@ -1,5 +1,5 @@
-context("test-add_global_p")
-testthat::skip_on_cran()
+skip_on_cran()
+skip_if_not(requireNamespace("car"))
 
 test_that("no errors/warnings with standard use after tbl_regression", {
   mod1 <- lm(hp ~ factor(cyl) + mpg + factor(am), mtcars)
@@ -24,7 +24,9 @@ test_that("no errors/warnings with standard use after tbl_regression", {
   expect_equal(
     tbl1 %>% add_global_p(keep = TRUE, type = "II") %>%
       pluck("table_body") %>% filter(variable == "factor(cyl)") %>%
-      pull("p.value") %>% {sum(is.na(.))},
+      pull("p.value") %>% {
+        sum(is.na(.))
+      },
     1L
   )
 
@@ -80,14 +82,16 @@ test_that("no errors/warnings with standard use after tbl_regression with non-st
   expect_equal(
     tbl1 %>% add_global_p(keep = TRUE, type = "II") %>%
       pluck("table_body") %>% filter(variable == "factor(`number + cylinders`)") %>%
-      pull("p.value") %>% {sum(is.na(.))},
+      pull("p.value") %>% {
+        sum(is.na(.))
+      },
     1L
   )
 
   # testing that using non-standard characters don't change the global p-values
   expect_equal(
     tbl1 %>% add_global_p(include = everything(), type = "III") %>% pluck("table_body", "p.value") %>% discard(is.na),
-    tbl2 %>% add_global_p(include = everything(), type = "III") %>% pluck("table_body", "p.value") %>% discard(is.na),
+    tbl2 %>% add_global_p(include = everything(), type = "III") %>% pluck("table_body", "p.value") %>% discard(is.na)
   )
 
   expect_message(tbl1 %>% add_global_p(quiet = TRUE), NA)

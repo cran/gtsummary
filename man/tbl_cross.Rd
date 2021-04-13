@@ -20,11 +20,9 @@ tbl_cross(
 \arguments{
 \item{data}{A data frame}
 
-\item{row}{A column name in data to be used for columns
-of cross table.}
+\item{row}{A column name in \verb{data=} to be used for the rows of cross table.}
 
-\item{col}{A column name in data to be used for rows
-of cross table.}
+\item{col}{A column name in \verb{data=} to be used for the columns of cross table.}
 
 \item{label}{List of formulas specifying variables labels,
 e.g. \code{list(age ~ "Age", stage ~ "Path T Stage")}.  If a
@@ -59,7 +57,6 @@ Default is \code{"Unknown"}.}
 A \code{tbl_cross} object
 }
 \description{
-\lifecycle{experimental}
 The function creates a cross table of two categorical variables.
 }
 \section{Example Output}{
@@ -84,7 +81,6 @@ tbl_cross_ex2 <-
   trial \%>\%
   tbl_cross(row = stage, col = trt, percent = "cell") \%>\%
   add_p()
-
 }
 \seealso{
 Other tbl_cross tools: 

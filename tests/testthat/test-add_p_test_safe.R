@@ -1,5 +1,5 @@
-context("test-add_p_test_safe")
-testthat::skip_on_cran()
+skip_on_cran()
+skip_if_not(requireNamespace("lme4"))
 
 test_that("testing statistical tests", {
 

@@ -1,5 +1,4 @@
-context("test-add_n")
-testthat::skip_on_cran()
+skip_on_cran()
 
 t1 <- trial %>% tbl_summary()
 t2 <- trial %>% tbl_summary(by = trt)
@@ -67,7 +66,7 @@ test_that("no errors/warnings with standard use wit continuous2", {
 
 test_that("no errors/warnings with standard use for tbl_svysummary", {
   t <- trial %>%
-    survey::svydesign(data = ., ids = ~ 1, weights = ~ 1) %>%
+    survey::svydesign(data = ., ids = ~1, weights = ~1) %>%
     tbl_svysummary(by = trt)
 
   expect_error(t %>% add_n(), NA)
@@ -78,7 +77,7 @@ test_that("no errors/warnings with standard use for tbl_svysummary", {
 
   t <- Titanic %>%
     as.data.frame() %>%
-    survey::svydesign(data = ., ids = ~ 1, weights = ~ Freq) %>%
+    survey::svydesign(data = ., ids = ~1, weights = ~Freq) %>%
     tbl_svysummary(by = Survived)
 
   expect_error(t %>% add_n(
@@ -93,7 +92,7 @@ test_that("no errors/warnings with standard use for tbl_svysummary", {
 
 test_that("no errors/warnings with standard use for tbl_svysummary with continuous2", {
   t <- trial %>%
-    survey::svydesign(data = ., ids = ~ 1, weights = ~ 1) %>%
+    survey::svydesign(data = ., ids = ~1, weights = ~1) %>%
     tbl_svysummary(by = trt, type = all_continuous() ~ "continuous2")
 
   expect_error(t %>% add_n(), NA)
@@ -104,7 +103,7 @@ test_that("no errors/warnings with standard use for tbl_svysummary with continuo
 
   t <- Titanic %>%
     as.data.frame() %>%
-    survey::svydesign(data = ., ids = ~ 1, weights = ~ Freq) %>%
+    survey::svydesign(data = ., ids = ~1, weights = ~Freq) %>%
     tbl_svysummary(by = Survived, type = all_continuous() ~ "continuous2")
 
   expect_error(t %>% add_n(
@@ -118,7 +117,7 @@ test_that("no errors/warnings with standard use for tbl_svysummary with continuo
 })
 
 
-# add_nevent.tbl_surfit --------------------------------------------------------
+# add_n.tbl_surfit --------------------------------------------------------
 
 test_that("add_n.tbl_surfit", {
   library(survival)
@@ -133,5 +132,49 @@ test_that("add_n.tbl_surfit", {
   expect_error(
     add_n(tbl_survfit),
     NA
+  )
+})
+
+
+# add_n.tbl_regression ---------------------------------------------------------
+test_that("add_n.tbl_regression", {
+  tbl <-
+    glm(response ~ grade + age, trial, family = binomial) %>%
+    tbl_regression()
+
+  expect_error(
+    tbl %>% add_n(), NA
+  )
+
+  expect_error(
+    tbl %>% add_n(location = "level"), NA
+  )
+
+  expect_error(
+    tbl %>% add_n(location = c("label", "level")), NA
+  )
+})
+
+# add_n.tbl_uvregression ---------------------------------------------------------
+test_that("add_n.tbl_regression", {
+  tbl <-
+    trial %>%
+    select(response, age, grade) %>%
+    tbl_uvregression(
+      y = response,
+      method = glm,
+      method.args = list(family = binomial)
+    )
+
+  expect_error(
+    tbl %>% add_n(), NA
+  )
+
+  expect_error(
+    tbl %>% add_n(location = "level"), NA
+  )
+
+  expect_error(
+    tbl %>% add_n(location = c("label", "level")), NA
   )
 })

@@ -1,5 +1,4 @@
-context("test-tbl_summary_input_checks")
-testthat::skip_on_cran()
+skip_on_cran()
 
 test_that("input check", {
   expect_error(
@@ -55,5 +54,4 @@ test_that("input check", {
     tbl_summary(trial, digits = list(is.character)),
     NULL
   )
-
 })

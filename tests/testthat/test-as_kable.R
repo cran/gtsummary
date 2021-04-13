@@ -1,5 +1,4 @@
-context("test-as_kable")
-testthat::skip_on_cran()
+skip_on_cran()
 
 test_that("tbl_summary", {
   expect_error(tbl_summary(trial) %>% as_kable(), NA)
@@ -54,5 +53,4 @@ test_that("tbl_merge/tbl_stack", {
   expect_warning(tbl_merge_ex1 %>% as_kable(), NA)
   expect_error(tbl_stack_ex1 %>% as_kable(), NA)
   expect_warning(tbl_stack_ex1 %>% as_kable(), NA)
-
 })

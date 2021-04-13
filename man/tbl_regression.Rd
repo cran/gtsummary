@@ -17,7 +17,7 @@ tbl_regression(x, ...)
   intercept = FALSE,
   estimate_fun = NULL,
   pvalue_fun = NULL,
-  tidy_fun = broom::tidy,
+  tidy_fun = NULL,
   add_estimate_to_reference_rows = FALSE,
   show_yesno = NULL,
   exclude = NULL,
@@ -62,8 +62,9 @@ and return a string that is the rounded/formatted p-value (e.g.
 \code{purrr::partial(style_pvalue, digits = 2)}).}
 
 \item{tidy_fun}{Option to specify a particular tidier function if the
-model is not a \link[=vetted_models]{vetted model} or you need to implement a
-custom method. Default is \code{NULL}}
+model. Default is to use \code{broom::tidy}, but if an error occurs
+then tidying of the model is attempted with \code{parameters::model_parameters()},
+if installed.}
 
 \item{add_estimate_to_reference_rows}{add a reference value. Default is FALSE}
 
@@ -91,7 +92,8 @@ a few models that use \link[=tbl_regression_methods]{modifications}.
 \itemize{
 \item \code{"survreg"}: The scale parameter is removed, \code{broom::tidy(x) \%>\% dplyr::filter(term != "Log(scale)")}
 \item \code{"multinom"}: This multinomial outcome is complex, with one line per covariate per outcome (less the reference group)
-\item \code{"lmerMod"}, \code{"glmerMod"}, \code{"glmmTMB"}, \code{"glmmadmb"}, \code{"stanreg"}: These mixed effects
+\item \code{"gam"}: Uses the internal tidier \code{tidy_gam()} to print both parametric and smooth terms.
+\item \code{"lmerMod"}, \code{"glmerMod"}, \code{"glmmTMB"}, \code{"glmmadmb"}, \code{"stanreg"}, \code{"brmsfit"}: These mixed effects
 models use \code{broom.mixed::tidy(x, effects = "fixed")}. Specify \code{tidy_fun = broom.mixed::tidy}
 to print the random components.
 }
@@ -144,14 +146,12 @@ suppressMessages(library(lme4))
 tbl_regression_ex3 <-
   glmer(am ~ hp + (1 | gear), mtcars, family = binomial) \%>\%
   tbl_regression(exponentiate = TRUE)
-
 }
 \seealso{
 See tbl_regression \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html}{vignette} for detailed examples
 
 Other tbl_regression tools: 
 \code{\link{add_global_p}()},
-\code{\link{add_nevent.tbl_regression}()},
 \code{\link{add_q}()},
 \code{\link{bold_italicize_labels_levels}},
 \code{\link{combine_terms}()},

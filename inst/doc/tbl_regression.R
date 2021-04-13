@@ -15,6 +15,18 @@ gt_compact_fun <- function(x) {
                   row_group.padding = gt::px(1))
 }
 
+# exit if car package not installed (added to pass Cmd Checks on old R versions)
+if (!requireNamespace("car")) knitr::knit_exit()
+
+## ---- echo = FALSE, results = 'asis'------------------------------------------
+if (!identical(Sys.getenv("NOT_CRAN"), "true")) {
+  msg <- 
+    paste("View this vignette on the",
+          "[package website](http://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html).")
+  cat(msg)
+  knitr::knit_exit()
+}
+
 ## ----message = FALSE, warning=FALSE-------------------------------------------
 # install.packages("gtsummary")
 library(gtsummary)
@@ -44,15 +56,15 @@ tbl_regression(m1, exponentiate = TRUE)
 ## ---- echo = FALSE------------------------------------------------------------
 tibble::tribble(
   ~Argument,          ~Description,
-  "`label`",            "modify variable labels in table", 
-  "`exponentiate`",     "exponentiate model coefficients",
-  "`include`",          "names of variables to include in output. Default is all variables",
-  "`show_single_row`",  "By default, categorical variables are printed on multiple rows. If a variable is dichotomous and you wish to print the regression coefficient on a single row, include the variable name(s) here.", 
-  "`conf.level`",       "confidence level of confidence interval",  
-  "`intercept`",        "indicates whether to include the intercept",  
-  "`estimate_fun`",     "function to round and format coefficient estimates",  
-  "`pvalue_fun`",       "function to round and format p-values",
-  "`tidy_fun`",         "function to specify/customize tidier function"
+  "`label=`",            "modify variable labels in table", 
+  "`exponentiate=`",     "exponentiate model coefficients",
+  "`include=`",          "names of variables to include in output. Default is all variables",
+  "`show_single_row=`",  "By default, categorical variables are printed on multiple rows. If a variable is dichotomous and you wish to print the regression coefficient on a single row, include the variable name(s) here.", 
+  "`conf.level=`",       "confidence level of confidence interval",  
+  "`intercept=`",        "indicates whether to include the intercept",  
+  "`estimate_fun=`",     "function to round and format coefficient estimates",  
+  "`pvalue_fun=`",       "function to round and format p-values",
+  "`tidy_fun=`",         "function to specify/customize tidier function"
 ) %>%
   gt::gt() %>%
   gt::fmt_markdown(columns = vars(Argument)) %>%
@@ -60,9 +72,11 @@ tibble::tribble(
 
 ## ----echo = FALSE-------------------------------------------------------------
 tibble::tribble(
-  ~Function,             ~Description,
-  "`add_global_p()`",    "adds the global p-value for a categorical variables",   
-  "`add_q()`",           "add a column of q values to control for multiple comparisons"   
+  ~Function,                     ~Description,
+  "`add_global_p()`",           "adds the global p-value for a categorical variables",  
+  "`add_glance_source_note()`", "adds statistics from `broom::glance()` as source note",
+  "`add_vif()`",                "adds column of the variance inflation factors (VIF)",
+  "`add_q()`",                  "add a column of q values to control for multiple comparisons"   
 ) %>%
   gt::gt() %>%
   gt::fmt_markdown(columns = vars(Function)) %>%

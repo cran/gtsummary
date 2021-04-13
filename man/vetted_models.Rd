@@ -16,9 +16,9 @@ to \code{broom::tidy} or \code{broom.mixed::tidy}.
 \item{\link[survival:coxph]{survival::coxph}}
 \item{\link[survival:clogit]{survival::clogit}}
 \item{\link[survival:survreg]{survival::survreg}}
-\item{\link[lme4:glmer]{lme4::glmer}}
-\item{\link[lme4:lmer]{lme4::lmer}}
-\item{\link[geepack:geeglm]{geepack::geeglm}}
+\item{\code{lme4::glmer}}
+\item{\code{lme4::lmer}}
+\item{\code{geepack::geeglm}}
 }
 }
 \section{model support}{
@@ -53,8 +53,9 @@ my_tidy <- function(x, exponentiate = FALSE, conf.level = 0.95, ...) {
         rlang::set_names(c("conf.low", "conf.high"))
     )
   # exponentiating, if requested
-  if (exponentiate == TRUE)
+  if (exponentiate == TRUE) {
     tidy <- dplyr::mutate_at(vars(estimate, conf.low, conf.high), exp)
+  }
   tidy
 }
 

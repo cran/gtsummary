@@ -10,6 +10,8 @@
 \alias{tbl_regression.glmmTMB}
 \alias{tbl_regression.glmmadmb}
 \alias{tbl_regression.stanreg}
+\alias{tbl_regression.brmsfit}
+\alias{tbl_regression.gam}
 \alias{tbl_regression.multinom}
 \title{Methods for tbl_regression}
 \usage{
@@ -54,14 +56,23 @@
   ...
 )
 
+\method{tbl_regression}{brmsfit}(
+  x,
+  tidy_fun = function(x, ...) broom.mixed::tidy(x, ..., effects = "fixed"),
+  ...
+)
+
+\method{tbl_regression}{gam}(x, tidy_fun = tidy_gam, ...)
+
 \method{tbl_regression}{multinom}(x, ...)
 }
 \arguments{
 \item{x}{Regression model object}
 
 \item{tidy_fun}{Option to specify a particular tidier function if the
-model is not a \link[=vetted_models]{vetted model} or you need to implement a
-custom method. Default is \code{NULL}}
+model. Default is to use \code{broom::tidy}, but if an error occurs
+then tidying of the model is attempted with \code{parameters::model_parameters()},
+if installed.}
 
 \item{...}{arguments passed to \code{tbl_regression.default()}}
 }
@@ -80,7 +91,8 @@ a few models that use \link[=tbl_regression_methods]{modifications}.
 \itemize{
 \item \code{"survreg"}: The scale parameter is removed, \code{broom::tidy(x) \%>\% dplyr::filter(term != "Log(scale)")}
 \item \code{"multinom"}: This multinomial outcome is complex, with one line per covariate per outcome (less the reference group)
-\item \code{"lmerMod"}, \code{"glmerMod"}, \code{"glmmTMB"}, \code{"glmmadmb"}, \code{"stanreg"}: These mixed effects
+\item \code{"gam"}: Uses the internal tidier \code{tidy_gam()} to print both parametric and smooth terms.
+\item \code{"lmerMod"}, \code{"glmerMod"}, \code{"glmmTMB"}, \code{"glmmadmb"}, \code{"stanreg"}, \code{"brmsfit"}: These mixed effects
 models use \code{broom.mixed::tidy(x, effects = "fixed")}. Specify \code{tidy_fun = broom.mixed::tidy}
 to print the random components.
 }

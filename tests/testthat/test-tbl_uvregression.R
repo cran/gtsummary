@@ -1,28 +1,30 @@
-context("test-tbl_uvregression")
-testthat::skip_on_cran()
+skip_on_cran()
+skip_if_not(requireNamespace("lme4"))
 library(survival)
 library(lme4)
 
 
 test_that("lm: no errors/warnings with standard use", {
   expect_error(mtcars %>%
-                 tbl_uvregression(
-                   method = lm,
-                   y = mpg
-                 ), NA)
+    tbl_uvregression(
+      method = lm,
+      y = mpg
+    ), NA)
   expect_error(mtcars %>%
-                 tbl_uvregression(
-                   method = lm,
-                   y = "mpg"
-                 ), NA)
+    tbl_uvregression(
+      method = lm,
+      y = "mpg"
+    ), NA)
   expect_warning(mtcars %>%
-                   tbl_uvregression(
-                     method = lm,
-                     y = mpg
-                   ), NA)
+    tbl_uvregression(
+      method = lm,
+      y = mpg
+    ), NA)
 })
 
 test_that("geeglm: no errors/warnings with standard use", {
+  skip_if_not(requireNamespace("geepack"))
+
   expect_error(
     tbl_uvregression(
       na.omit(trial),
@@ -33,7 +35,8 @@ test_that("geeglm: no errors/warnings with standard use", {
         corstr = "exchangeable"
       ),
       include = -response
-    ), NA)
+    ), NA
+  )
   expect_warning(
     tbl_uvregression(
       na.omit(trial),
@@ -44,22 +47,23 @@ test_that("geeglm: no errors/warnings with standard use", {
         corstr = "exchangeable"
       ),
       include = -response
-    ), NA)
+    ), NA
+  )
 })
 
 test_that("lm specifying tidy_fun: no errors/warnings with standard use", {
   expect_error(mtcars %>%
-                 tbl_uvregression(
-                   method = lm,
-                   y = mpg,
-                   tidy_fun = broom::tidy
-                 ), NA)
+    tbl_uvregression(
+      method = lm,
+      y = mpg,
+      tidy_fun = broom::tidy
+    ), NA)
   expect_warning(mtcars %>%
-                   tbl_uvregression(
-                     method = lm,
-                     y = mpg,
-                     tidy_fun = broom::tidy
-                   ), NA)
+    tbl_uvregression(
+      method = lm,
+      y = mpg,
+      tidy_fun = broom::tidy
+    ), NA)
 })
 
 test_that("coxph: no errors/warnings with standard use", {
@@ -153,8 +157,8 @@ test_that("tbl_uvregression x= argument tests", {
     NA
   )
 
-  expect_equivalent(
-    ux_x$meta_data$label[1],
+  expect_equal(
+    ux_x$meta_data$label[1] %>% .[[1]],
     "PATIENT AGE"
   )
 
@@ -261,12 +265,12 @@ test_that("tbl_uvregression estimate_fun and pvalue_fun respected", {
     data = lung %>% select(age, inst),
     method = lm,
     y = age,
-    pvalue_fun = ~style_pvalue(.x, digits = 3),
-    estimate_fun = ~style_number(.x, digits = 3)
+    pvalue_fun = ~ style_pvalue(.x, digits = 3),
+    estimate_fun = ~ style_number(.x, digits = 3)
   )
 
-  expect_equivalent(
-    tbl_fmt %>% as_tibble(col_labels = FALSE) %>% purrr::map_chr(I),
+  expect_equal(
+    tbl_fmt %>% as_tibble(col_labels = FALSE) %>% purrr::map_chr(I) %>% as.vector(),
     c("inst", "227", "0.001", "-0.143, 0.144", "0.993")
   )
 })
@@ -275,5 +279,34 @@ test_that("tbl_uvregression estimate_fun and pvalue_fun respected", {
 test_that("tbl_uvregression throw error with odd variable names in `data=`", {
   expect_error(
     trial %>% dplyr::rename(`age person` = age) %>% tbl_uvregression(method = lm, y = `age person`)
+  )
+})
+
+test_that("tbl_uvregression throw error with bad arguments in model function", {
+  expect_error(
+    trial %>%
+      tbl_uvregression(method = glm, y = response, method.args = list(not_an_argument = letters))
+  )
+})
+
+test_that("tbl_uvregression works with survey object", {
+  svy <- survey::svydesign(ids = ~1, data = trial, weights = ~1)
+
+  expect_error(
+    tbl_uvreg <-
+      svy %>%
+      tbl_uvregression(
+        y = response,
+        method = survey::svyglm,
+        method.args = list(family = binomial),
+        hide_n = TRUE,
+        include = c(response, age, marker, grade)
+      ),
+    NA
+  )
+
+  expect_equal(
+    tbl_uvreg$tbls$age$model_obj %>% broom::tidy(),
+    survey::svyglm(response ~ age, design = svy, family = binomial) %>% broom::tidy()
   )
 })

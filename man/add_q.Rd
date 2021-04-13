@@ -47,16 +47,18 @@ add_q_ex1 <-
   add_q()
 
 # Example 2 ----------------------------------
-add_q_ex2 <-
-  trial[c("trt", "age", "grade", "response")] \%>\%
-  tbl_uvregression(
-    y = response,
-    method = glm,
-    method.args = list(family = binomial),
-    exponentiate = TRUE
-  ) \%>\%
-  add_global_p() \%>\%
-  add_q()
+if (requireNamespace("car")) {
+  add_q_ex2 <-
+    trial[c("trt", "age", "grade", "response")] \%>\%
+    tbl_uvregression(
+      y = response,
+      method = glm,
+      method.args = list(family = binomial),
+      exponentiate = TRUE
+    ) \%>\%
+    add_global_p() \%>\%
+    add_q()
+}
 }
 \seealso{
 Other tbl_summary tools: 
@@ -84,7 +86,6 @@ Other tbl_svysummary tools:
 
 Other tbl_regression tools: 
 \code{\link{add_global_p}()},
-\code{\link{add_nevent.tbl_regression}()},
 \code{\link{bold_italicize_labels_levels}},
 \code{\link{combine_terms}()},
 \code{\link{inline_text.tbl_regression}()},
@@ -95,7 +96,6 @@ Other tbl_regression tools:
 
 Other tbl_uvregression tools: 
 \code{\link{add_global_p}()},
-\code{\link{add_nevent.tbl_uvregression}()},
 \code{\link{bold_italicize_labels_levels}},
 \code{\link{inline_text.tbl_uvregression}()},
 \code{\link{modify}},

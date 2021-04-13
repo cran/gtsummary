@@ -1,6 +1,5 @@
 # test-add_p.tbl_cross----------------------------------------------------------
-context("test-add_p.tbl_summary")
-testthat::skip_on_cran()
+skip_on_cran()
 
 test_that("add_p.tbl_cross", {
   expect_error(
@@ -22,4 +21,3 @@ test_that("add_p.tbl_cross", {
     NA
   )
 })
-

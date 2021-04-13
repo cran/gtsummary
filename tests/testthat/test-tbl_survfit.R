@@ -1,5 +1,4 @@
-context("test-tbl_survfit")
-testthat::skip_on_cran()
+skip_on_cran()
 library(survival)
 
 test_that("no errors/warnings with stratified variable", {
@@ -161,12 +160,36 @@ test_that("no errors/warnings with competing events", {
   )
 
   # output is identical in tbl_survfit and summary
-  summod <- summary(cr_2, times = c(12,24))
+  summod <- summary(cr_2, times = c(12, 24))
+  outcome_index <- which(summod$states %in% "death from cancer")
 
-  summod1b <- data.frame(strata = summod$strata,Time = summod$time,
-                         cancerdeath = summod$pstate[,2])
+  summod1b <- data.frame(
+    strata = summod$strata, Time = summod$time,
+    cancerdeath = summod$pstate[, outcome_index]
+  )
 
-  expect_equal(summod1b$cancerdeath,
-               summod2$meta_data$df_stats[[1]]$estimate)
+  expect_equal(
+    summod1b$cancerdeath,
+    summod2$meta_data$df_stats[[1]]$estimate
+  )
 })
 
+test_that("Factor ordering preserved", {
+  trial2 <- mutate(trial,
+    trt = ifelse(trt == "Drug A", 1, 0),
+    trt = factor(trt, levels = c(0, 1), labels = c("Drug B", "Drug A"))
+  )
+  mod1 <- survfit(Surv(ttdeath, death) ~ trt, trial2)
+
+  tbl1 <- tbl_survfit(mod1, times = 12)
+  tbl2 <- tbl_survfit(mod1, probs = 0.2)
+
+  expect_equal(
+    tbl1$table_body$label,
+    c("trt", "Drug B", "Drug A")
+  )
+  expect_equal(
+    tbl2$table_body$label,
+    c("trt", "Drug B", "Drug A")
+  )
+})

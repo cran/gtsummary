@@ -20,71 +20,86 @@
 #       - without errors, warnings, messages
 #       - works with add_global_p(), add_nevent(), add_q()
 
-context("test-vetted_models-lm")
-testthat::skip_on_cran()
+skip_on_cran()
+# vetted models checks take a long time--only perform on CI checks
+testthat::skip_if(!isTRUE(as.logical(Sys.getenv("CI"))))
+skip_if_not(requireNamespace("car"))
 library(dplyr)
 
 # lm() ------------------------------------------------------------------------
 test_that("vetted_models lm()", {
   # building models to check
   mod_lm_lin <- lm(marker ~ age + trt + grade,
-                     data = trial)
+    data = trial
+  )
   mod_lm_int <- lm(marker ~ age + trt * grade,
-                     data = trial)
+    data = trial
+  )
 
   # 1.  Runs as expected with standard use
   #       - without errors, warnings, messages
   expect_error(
     tbl_lm_lin <- tbl_regression(mod_lm_lin,
-                                  label = list(age ~ "Age",
-                                               trt ~ "Chemotherapy Treatment",
-                                               grade ~ "Grade")), NA
+      label = list(
+        age ~ "Age",
+        trt ~ "Chemotherapy Treatment",
+        grade ~ "Grade"
+      )
+    ), NA
   )
   expect_warning(
     tbl_lm_lin, NA
   )
   expect_error(
     tbl_lm_int <- tbl_regression(mod_lm_int,
-                                  label = list(age ~ "Age",
-                                               trt ~ "Chemotherapy Treatment",
-                                               grade ~ "Grade")), NA
+      label = list(
+        age ~ "Age",
+        trt ~ "Chemotherapy Treatment",
+        grade ~ "Grade"
+      )
+    ), NA
   )
   expect_warning(
     tbl_lm_int, NA
   )
   #       - numbers in table are correct
-  expect_equivalent(
+  expect_equal(
     coef(mod_lm_lin)[-1],
-    coefs_in_gt(tbl_lm_lin)
+    coefs_in_gt(tbl_lm_lin),
+    ignore_attr = TRUE
   )
-  expect_equivalent(
+  expect_equal(
     coef(mod_lm_int)[-1],
-    coefs_in_gt(tbl_lm_int)
+    coefs_in_gt(tbl_lm_int),
+    ignore_attr = TRUE
   )
 
   #       - labels are correct
-  expect_equivalent(
+  expect_equal(
     tbl_lm_lin$table_body %>%
       filter(row_type == "label") %>%
       pull(label),
-    c("Age", "Chemotherapy Treatment", "Grade")
+    c("Age", "Chemotherapy Treatment", "Grade"),
+    ignore_attr = TRUE
   )
-  expect_equivalent(
+  expect_equal(
     tbl_lm_int$table_body %>%
       filter(row_type == "label") %>%
       pull(label),
-    c("Age", "Chemotherapy Treatment", "Grade", "Chemotherapy Treatment * Grade")
+    c("Age", "Chemotherapy Treatment", "Grade", "Chemotherapy Treatment * Grade"),
+    ignore_attr = TRUE
   )
 
   # 2.  If applicable, runs as expected with logit and log link
 
   # 3.  Interaction terms are correctly printed in output table
   #       - interaction labels are correct
-  expect_equivalent(
+  expect_equal(
     tbl_lm_int$table_body %>%
       filter(var_type == "interaction") %>%
       pull(label),
-    c("Chemotherapy Treatment * Grade", "Drug B * II", "Drug B * III")
+    c("Chemotherapy Treatment * Grade", "Drug B * II", "Drug B * III"),
+    ignore_attr = TRUE
   )
   # 4.  Other gtsummary functions work with model: add_global_p(), combine_terms(), add_nevent()
   #       - without errors, warnings, messages
@@ -103,7 +118,7 @@ test_that("vetted_models lm()", {
   )
 
   #       - numbers in table are correct
-  expect_equivalent(
+  expect_equal(
     tbl_lm_lin2$table_body %>%
       pull(p.value) %>%
       na.omit() %>%
@@ -113,7 +128,7 @@ test_that("vetted_models lm()", {
       filter(!rownames(.) %in% c("Residuals", "(Intercept)")) %>%
       pull(`Pr(>F)`)
   )
-  expect_equivalent(
+  expect_equal(
     tbl_lm_int2$table_body %>%
       pull(p.value) %>%
       na.omit() %>%

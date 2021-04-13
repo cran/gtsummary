@@ -24,16 +24,18 @@
 #'   add_q()
 #'
 #' # Example 2 ----------------------------------
-#' add_q_ex2 <-
-#'   trial[c("trt", "age", "grade", "response")] %>%
-#'   tbl_uvregression(
-#'     y = response,
-#'     method = glm,
-#'     method.args = list(family = binomial),
-#'     exponentiate = TRUE
-#'   ) %>%
-#'   add_global_p() %>%
-#'   add_q()
+#' if (requireNamespace("car")) {
+#'   add_q_ex2 <-
+#'     trial[c("trt", "age", "grade", "response")] %>%
+#'     tbl_uvregression(
+#'       y = response,
+#'       method = glm,
+#'       method.args = list(family = binomial),
+#'       exponentiate = TRUE
+#'     ) %>%
+#'     add_global_p() %>%
+#'     add_q()
+#' }
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
@@ -44,6 +46,7 @@
 #' \if{html}{\figure{add_q_ex2.png}{options: width=60\%}}
 
 add_q <- function(x, method = "fdr", pvalue_fun = NULL, quiet = NULL) {
+  updated_call_list <- c(x$call_list, list(add_q = match.call()))
   # setting defaults -----------------------------------------------------------
   quiet <- quiet %||% get_theme_element("pkgwide-lgl:quiet") %||% FALSE
 
@@ -56,7 +59,8 @@ add_q <- function(x, method = "fdr", pvalue_fun = NULL, quiet = NULL) {
   # checking input table has a p.value column
   if (!"p.value" %in% names(x$table_body)) {
     stop("There is no p-value column. `x$table_body` must have a column called 'p.value'",
-         call. = FALSE)
+      call. = FALSE
+    )
   }
 
   # setting defaults from gtsummary theme --------------------------------------
@@ -66,7 +70,7 @@ add_q <- function(x, method = "fdr", pvalue_fun = NULL, quiet = NULL) {
     get_theme_element("add_q-arg:pvalue_fun") %||%
     get_theme_element("pkgwide-fn:pvalue_fun") %||%
     # default from p-value formatting function
-    (filter(x$table_header, .data$column == "p.value") %>% pull(.data$fmt_fun) %>% pluck(1)) %>%
+    (filter(x$table_styling$fmt_fun, .data$column == "p.value") %>% pull(.data$fmt_fun) %>% pluck(1)) %>%
     gts_mapper("add_q(pvalue_fun=)")
 
   # checking pvalue_fun are functions
@@ -78,27 +82,23 @@ add_q <- function(x, method = "fdr", pvalue_fun = NULL, quiet = NULL) {
   expr_p.adjust <-
     rlang::expr(stats::p.adjust(x$table_body$p.value, method = !!method)) %>%
     deparse()
-  if (quiet == FALSE)
+  if (quiet == FALSE) {
     rlang::inform(glue("add_q: Adjusting p-values with\n`{expr_p.adjust}`"))
+  }
 
   x$table_body$q.value <- x$table_body$p.value %>% stats::p.adjust(method = method)
 
-  # update table_header --------------------------------------------------------
+  # update table_styling -------------------------------------------------------
   # footnote text
   footnote_text <-
     add_q_method_lookup[add_q_method_lookup$method == method, ]$method_label %>%
     translate_text()
-
-  x$table_header <-
-    tibble(column = names(x$table_body)) %>%
-    left_join(x$table_header, by = "column") %>%
-    table_header_fill_missing() %>%
-    # table_header_fmt(q.value = "x$qvalue_fun") %>%
-    table_header_fmt_fun(q.value = pvalue_fun) %>%
-    mutate(
-      footnote = ifelse(.data$column == "q.value",
-                        footnote_text,
-                        .data$footnote)
+  x <-
+    modify_table_styling(
+      x,
+      columns = "q.value",
+      footnote = footnote_text,
+      fmt_fun = pvalue_fun
     )
 
   # adding  column header
@@ -106,7 +106,7 @@ add_q <- function(x, method = "fdr", pvalue_fun = NULL, quiet = NULL) {
 
   # return final object --------------------------------------------------------
   # adding call
-  x$call_list <- c(x$call_list, list(add_q = match.call()))
+  x$call_list <- updated_call_list
 
   x
 }

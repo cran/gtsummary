@@ -14,6 +14,15 @@ gt_compact_fun <- function(x) {
                   row_group.padding = gt::px(1))
 }
 
+## ---- echo = FALSE, results = 'asis'------------------------------------------
+if (!identical(Sys.getenv("NOT_CRAN"), "true")) {
+  msg <- 
+    paste("View this vignette on the",
+          "[package website](http://www.danieldsjoberg.com/gtsummary/articles/inline_text.html).")
+  cat(msg)
+  knitr::knit_exit()
+}
+
 ## ----message = FALSE, warning=FALSE-------------------------------------------
 # install.packages("gtsummary")
 library(gtsummary)

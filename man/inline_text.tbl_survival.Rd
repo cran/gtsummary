@@ -41,6 +41,7 @@ which is a string. Default is x$estimate_fun}
 A string reporting results from a gtsummary table
 }
 \description{
+\lifecycle{deprecated}
 for inline reporting in an R markdown document.
 }
 \section{pattern argument}{
@@ -73,10 +74,6 @@ inline_text(surv_table,
   strata = "Drug A",
   time = 12
 )
-}
-\seealso{
-Other tbl_survival tools: 
-\code{\link{tbl_survival.survfit}()}
 }
 \author{
 Karissa Whiting

@@ -38,7 +38,7 @@
 #' t3 <-
 #'   trial[c("age", "grade", "response")] %>%
 #'   tbl_summary(missing = "no") %>%
-#'   add_n %>%
+#'   add_n() %>%
 #'   modify_header(stat_0 ~ "**Summary Statistics**")
 #' t4 <-
 #'   tbl_uvregression(
@@ -52,7 +52,6 @@
 #' tbl_merge_ex2 <-
 #'   tbl_merge(tbls = list(t3, t4)) %>%
 #'   modify_spanning_header(everything() ~ NA_character_)
-#'
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
@@ -64,18 +63,13 @@
 #'
 tbl_merge <- function(tbls, tab_spanner = NULL) {
   # input checks ---------------------------------------------------------------
-  # if tab spanner is null, default is Table 1, Table 2, etc....
-  if (is.null(tab_spanner)) {
-    tab_spanner <- paste0(c("**Table "), seq_len(length(tbls)), "**")
-  }
-
   # class of tbls
   if (!inherits(tbls, "list")) {
     stop("Expecting 'tbls' to be a list, e.g. 'tbls = list(tbl1, tbl2)'")
   }
 
   # checking all inputs are class gtsummary
-  if (!purrr::every(tbls, ~inherits(.x, "gtsummary"))) {
+  if (!purrr::every(tbls, ~ inherits(.x, "gtsummary"))) {
     stop("All objects in 'tbls' must be class 'gtsummary'", call. = FALSE)
   }
 
@@ -83,10 +77,28 @@ tbl_merge <- function(tbls, tab_spanner = NULL) {
   tbls_length <- length(tbls)
   if (tbls_length < 2) stop("Supply 2 or more gtsummary regression objects to 'tbls ='")
 
+  # if tab spanner is null, default is Table 1, Table 2, etc....
+  if (is.null(tab_spanner)) {
+    tab_spanner <- paste0(c("**Table "), seq_len(length(tbls)), "**")
+  }
+
   # length of spanning header matches number of models passed
   if (tbls_length != length(tab_spanner)) {
     stop("'tbls' and 'tab_spanner' must be the same length")
   }
+
+  # adding tab_spanners
+  tbls <-
+    map2(
+      tbls, seq_along(tbls),
+      ~ modify_spanning_header(
+        .x, vars(
+          everything(),
+          -any_of(c("variable", "row_type", "var_label", "label"))
+        ) ~ tab_spanner[.y]
+      )
+    )
+
 
   # merging tables -------------------------------------------------------------
   # nesting data by variable (one line per variable), and renaming columns with number suffix
@@ -104,7 +116,26 @@ tbl_merge <- function(tbls, tab_spanner = NULL) {
           vars(-c("variable", "row_type", "var_label", "label")),
           ~ glue("{.}_{y}")
         )
-    })
+    }
+  )
+
+  # checking that merging rows are unique --------------------------------------
+  nested_table %>%
+    purrr::some(
+      ~ nrow(.x) !=
+        select(.x, all_of(c("variable", "row_type", "var_label", "label"))) %>%
+          distinct() %>%
+          nrow()
+    ) %>%
+    switch(paste(
+      "The merging columns (variable name, variable label, row type, and label column)",
+      "are not unique and the merge may fail or result in a malformed table.",
+      "If you previously 'tbl_stack'ed your tables, then 'tbl_merge'ing",
+      "before you 'tbl_stack' may resolve the issue."
+    ) %>%
+      stringr::str_wrap() %>%
+      inform()
+    )
 
   # nesting results within variable
   nested_table <- map(
@@ -145,84 +176,199 @@ tbl_merge <- function(tbls, tab_spanner = NULL) {
   # unnesting results from within variable column tibbles
   table_body <-
     merged_table %>%
-    select(-.data$var_label) %>%
     unnest("table") %>%
-    select(.data$label, everything())
+    select(.data$variable, .data$var_label, .data$row_type, .data$label, everything())
 
-  # stacking all table_header dfs together and renaming ------------------------
-  table_header <-
-    purrr::map2_dfr(
-      tbls, seq_along(tbls),
-      ~ pluck(.x, "table_header") %>%
-        # tidying the code in these columns (giving it space to breathe),
-        # that is can be properly pasred in the next step
-        mutate_at(
-          vars(.data$missing_emdash, .data$indent, .data$bold, .data$italic),
-          ~map_chr(., function(t) ifelse(is.na(t), t, rlang::parse_expr(t) %>% rlang::expr_deparse()))
-        ) %>%
-        # updating code with new variable names
-        mutate_at(
-          vars(.data$missing_emdash, .data$indent, .data$bold, .data$italic),
-          function(x) tbl_merge_update_chr_code(code = x, names = names(.x$table_body), n = .y)
-        ) %>%
-        # updating column names to include the index
-        mutate(
-          column = ifelse(
-            .data$column %in% c("label", "variable", "row_type"),
-            .data$column,
-            paste(.data$column, .y, sep = "_")
-          ),
-          spanning_header = ifelse(
-            !.data$column %in% c("label", "variable", "row_type"),
-            tab_spanner[.y],
-            .data$spanning_header
-          )
-        )
-    ) %>%
-    group_by(.data$column) %>%
-    filter(dplyr::row_number() == 1) %>%
-    ungroup()
-
-  table_header <-
-    tibble(column = names(table_body)) %>%
-    left_join(table_header, by = "column") %>%
-    table_header_fill_missing()
-
-  # returning results
-  results <- list(
+  # renaming columns in stylings and updating ----------------------------------
+  x <- .create_gtsummary_object(
     table_body = table_body,
-    table_header = table_header,
     tbls = tbls,
     call_list = list(tbl_merge = match.call())
   )
 
-  class(results) <- c("tbl_merge", "gtsummary")
-  results
+  x <- .tbl_merge_update_table_styling(x, tbls)
+
+  # returning results
+  class(x) <- c("tbl_merge", class(x))
+  x
 }
 
-# this function names a chr code string, variable names, and the merge number,
-# and returns the updated code string with updated variable names
-# > tbl_merge_update_chr_code("longvarname == 'label' & varname == TRUE",
-#                             c("varname", "longvarname"), 2)
-# [1] "longvarname_2 == 'label' & varname_2 == TRUE"
-tbl_merge_update_chr_code <- function(code, names, n) {
-  new_names <- ifelse(
-    names %in% c("label", "variable", "row_type"),
-    names, paste(names, n, sep = "_")
-  )
+.tbl_merge_update_table_styling <- function(x, tbls) {
+  # update table_styling$header
+  x$table_styling$header <-
+    map2(
+      tbls, seq_along(tbls),
+      ~ .x$table_styling$header %>%
+        filter(!(.data$column %in% c("label", "variable", "var_label", "row_type") & .y != 1)) %>%
+        mutate(
+          column = ifelse(
+            .data$column %in% c("label", "variable", "var_label", "row_type") & .y == 1,
+            .data$column,
+            paste0(.data$column, "_", .y)
+          )
+        )
+    ) %>%
+    purrr::reduce(dplyr::rows_update, by = "column", .init = x$table_styling$header)
 
-  code %>%
-    map_chr(
-      function(code) {
-        if (is.na(code)) return(code)
-        stringr::str_split_fixed(code, pattern = " ", n = Inf) %>%
-        as.vector() %>%
-        purrr::map_chr(function(x) {
-          lgl_match <- names %in% x
-          if (!any(lgl_match)) return(x)
-          new_names[lgl_match]
-        }) %>%
-        paste(collapse = " ")
-      }
-    )
+  for (style_type in c("footnote", "footnote_abbrev", "fmt_fun", "text_format", "fmt_missing", "cols_merge")) {
+    x$table_styling[[style_type]] <-
+      map_dfr(
+        rev(seq_along(tbls)),
+        function(i) {
+          style_updated <- tbls[[i]]$table_styling[[style_type]]
+
+          # return if there are no rows
+          if (!is.data.frame(style_updated) || nrow(style_updated) == 0) {
+            return(style_updated)
+          }
+
+          # renaming column variable
+          style_updated$column <-
+            ifelse(
+              style_updated$column %in% c("label", "variable", "var_label", "row_type"),
+              style_updated$column,
+              paste0(style_updated$column, "_", i)
+            ) %>%
+            as.character()
+
+          # updating column names in rows expr/quo
+          if ("rows" %in% names(style_updated)) {
+            style_updated$rows <-
+              map(
+                style_updated$rows,
+                ~ .rename_variables_in_expression(.x, i, tbls[[i]])
+              )
+          }
+
+          # updating column names in pattern string
+          if ("pattern" %in% names(style_updated)) {
+            style_updated$pattern <-
+              map_chr(
+                style_updated$pattern,
+                ~ .rename_variables_in_pattern(.x, i, tbls[[i]])
+              )
+          }
+
+
+
+          # style_updated <-
+          #   tbls[[i]]$table_styling[[style_type]] %>%
+          #   filter(!(.data$column %in% c("label", "variable", "var_label", "row_type") & i != 1)) %>%
+          #   rowwise() %>%
+          #   mutate(
+          #     rows =
+          #       switch(nrow(.) == 0, list()) %||%
+          #       .rename_variables_in_expression(.data$rows, i, tbls[[i]]) %>% list(),
+          #     column = ifelse(
+          #       .data$column %in% c("label", "variable", "var_label", "row_type") & i == 1,
+          #       .data$column,
+          #       paste0(.data$column, "_", i)
+          #     ) %>%
+          #       as.character()
+          #   ) %>%
+          #   ungroup()
+
+          # if ("pattern" %in% names(style_updated)) {
+          #   style_updated$pattern <-
+          #     .rename_variables_in_pattern(style_updated$pattern, i, tbls[[i]])
+          # }
+          style_updated
+        }
+      )
+  }
+
+  # take the first non-NULL element from tbls[[.]]
+  for (style_type in c("caption", "source_note")) {
+    x$table_styling[[style_type]] <-
+      map(seq_along(tbls), ~ pluck(tbls, .x, "table_styling", style_type)) %>%
+      purrr::reduce(.f = `%||%`)
+  }
+
+  # # rename variables in expressions, and take first non-NULL element
+  for (style_type in "horizontal_line_above") {
+    x$table_styling[[style_type]] <-
+      map(
+        seq_along(tbls),
+        ~ .rename_variables_in_expression(
+          rows = pluck(tbls, .x, "table_styling", style_type),
+          id = .x,
+          tbl = tbls[[.x]]
+        )
+      ) %>%
+      purrr::reduce(.f = `%||%`)
+  }
+
+  x
+}
+
+.rename_variables_in_expression <- function(rows, id, tbl) {
+  # if NULL, return rows expression unmodified
+  rows_evaluated <- rlang::eval_tidy(rows, data = tbl$table_body)
+  if (is.null(rows_evaluated)) {
+    return(rows)
+  }
+
+  # convert rows to proper expression
+  expr <- switch(inherits(rows, "quosure"),
+    rlang::f_rhs(rows)
+  ) %||% rows
+
+  # get all variable names in expression to be renamed
+  columns <- tbl$table_styling$header$column
+  var_list <-
+    expr(~ !!expr) %>%
+    eval() %>%
+    all.vars() %>%
+    setdiff(c("label", "variable", "var_label", "row_type")) %>%
+    intersect(columns)
+
+  # if no variables to rename, return rows unaltered
+  if (identical(var_list, character())) {
+    return(rows)
+  }
+
+  # creating arguments list for `substitute()`
+  substitute_args <- paste0(var_list, "_", id) %>%
+    map(~ expr(as.name(!!.x))) %>%
+    set_names(var_list)
+
+  # renaming columns in expression
+  expr_renamed <- expr(do.call("substitute", list(expr, list(!!!substitute_args)))) %>% eval()
+
+  # if original rows was a quosure, convert it back to one
+  if (inherits(rows, "quosure")) {
+    expr_renamed <-
+      rlang::quo(!!expr_renamed) %>% structure(.Environment = attr(rows, ".Environment"))
+  }
+
+  expr_renamed
+}
+
+.rename_variables_in_pattern <- function(pattern, id, tbl) {
+  # get all variable names in expression to be renamed
+  columns <- tbl$table_styling$header$column
+  var_list <-
+    stringr::str_extract_all(pattern, "\\{.*?\\}") %>%
+    map(stringr::str_remove_all, pattern = fixed("}")) %>%
+    map(stringr::str_remove_all, pattern = fixed("{")) %>%
+    unlist() %>%
+    setdiff(c("label", "variable", "var_label", "row_type")) %>%
+    intersect(columns)
+
+  # if no variables to rename, return rows unaltered
+  if (identical(var_list, character())) {
+    return(pattern)
+  }
+
+  # replace variables with new names in pattern string.
+  for (v in var_list) {
+    pattern <-
+      stringr::str_replace_all(
+        string = pattern,
+        pattern = fixed(paste0("{", v, "}")),
+        replacement = fixed(paste0("{", v, "_", id, "}"))
+      )
+  }
+
+  pattern
 }
