@@ -1,6 +1,7 @@
 ## ----setup, include = FALSE---------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
+  warning = FALSE,
   comment = "#>"
 )
 
@@ -19,7 +20,9 @@ gt_compact_fun <- function(x) {
 if (!requireNamespace("car")) knitr::knit_exit()
 
 ## ---- echo = FALSE, results = 'asis'------------------------------------------
-if (!identical(Sys.getenv("NOT_CRAN"), "true")) {
+# we do NOT want the vignette to build on CRAN...it's taking too long
+if (!identical(Sys.getenv("IN_PKGDOWN"), "true") && 
+    !tolower(as.list(Sys.info())$user) %in% c("sjobergd", "currym", "whitingk")) {
   msg <- 
     paste("View this vignette on the",
           "[package website](http://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html).")
@@ -39,7 +42,7 @@ trial %>%
                     Label = attr(.x, "label"))) %>%
   gt::gt() %>%
   gt::tab_source_note("Includes mix of continuous, dichotomous, and categorical variables") %>%
-  gt::fmt_markdown(columns = vars(Variable)) %>%
+  gt::fmt_markdown(columns = c(Variable)) %>%
   gt::cols_align("left") %>%
   gt_compact_fun()
 
@@ -67,7 +70,7 @@ tibble::tribble(
   "`tidy_fun=`",         "function to specify/customize tidier function"
 ) %>%
   gt::gt() %>%
-  gt::fmt_markdown(columns = vars(Argument)) %>%
+  gt::fmt_markdown(columns = c(Argument)) %>%
   gt_compact_fun()
 
 ## ----echo = FALSE-------------------------------------------------------------
@@ -79,7 +82,7 @@ tibble::tribble(
   "`add_q()`",                  "add a column of q values to control for multiple comparisons"   
 ) %>%
   gt::gt() %>%
-  gt::fmt_markdown(columns = vars(Function)) %>%
+  gt::fmt_markdown(columns = c(Function)) %>%
   gt_compact_fun()
 
 ## ----echo = FALSE-------------------------------------------------------------
@@ -88,6 +91,7 @@ tibble::tribble(
   "`modify_header()`",           "update column headers",   
   "`modify_footnote()`",         "update column footnote",   
   "`modify_spanning_header()`",  "update spanning headers",   
+  "`modify_caption()`",          "update table caption/title",   
   "`bold_labels()`",             "bold variable labels",  
   "`bold_levels()`",             "bold variable levels",  
   "`italicize_labels()`",        "italicize variable labels",  
@@ -95,7 +99,7 @@ tibble::tribble(
   "`bold_p()`",                  "bold significant p-values"
 ) %>%
   gt::gt() %>%
-  gt::fmt_markdown(columns = vars(Function)) %>%
+  gt::fmt_markdown(columns = c(Function)) %>%
   gt_compact_fun()
 
 ## -----------------------------------------------------------------------------

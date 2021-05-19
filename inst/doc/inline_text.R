@@ -1,6 +1,7 @@
 ## ---- include = FALSE---------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
+  warning = FALSE,
   comment = "#>"
 )
 gt_compact_fun <- function(x) {
@@ -15,7 +16,9 @@ gt_compact_fun <- function(x) {
 }
 
 ## ---- echo = FALSE, results = 'asis'------------------------------------------
-if (!identical(Sys.getenv("NOT_CRAN"), "true")) {
+# we do NOT want the vignette to build on CRAN...it's taking too long
+if (!identical(Sys.getenv("IN_PKGDOWN"), "true") && 
+    !tolower(as.list(Sys.info())$user) %in% c("sjobergd", "currym", "whitingk")) {
   msg <- 
     paste("View this vignette on the",
           "[package website](http://www.danieldsjoberg.com/gtsummary/articles/inline_text.html).")
@@ -56,6 +59,6 @@ tibble::tribble(
   "`{N}`",          "number of observations"  
 ) %>%
   gt::gt() %>%
-  gt::fmt_markdown(columns = vars(Parameter)) %>%
+  gt::fmt_markdown(columns = c(Parameter)) %>%
   gt_compact_fun()
 

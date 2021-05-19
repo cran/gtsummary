@@ -1,6 +1,7 @@
 ## ---- include = FALSE---------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
+  warning = FALSE,
   comment = "#>"
 )
 
@@ -72,7 +73,7 @@ gtsummary:::df_theme_elements %>%
   gt::cols_align(columns = everything(), align = "left") %>%
   gt::cols_label(name = "Theme Element", desc = "Description",
                  example = "Example") %>%
-  gt::fmt_markdown(columns = vars(name, desc, example)) %>%
+  gt::fmt_markdown(columns = c(name, desc, example)) %>%
   gt::fmt_missing(columns = everything(), missing_text = "") %>%
   gt::tab_options(table.font.size = 'small',
                   data_row.padding = gt::px(1),
@@ -89,7 +90,7 @@ gtsummary:::df_theme_elements %>%
   distinct() %>%
   gt() %>%
   cols_label(arg_list = "Theme Element") %>%
-  fmt_markdown(columns = vars(arg_list)) %>%
+  fmt_markdown(columns = c(arg_list)) %>%
   tab_options(table.font.size = 'small',
                   data_row.padding = gt::px(1),
                   row_group.padding = gt::px(1))
