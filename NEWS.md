@@ -1,3 +1,23 @@
+# gtsummary 1.4.2
+
+* Update to the internals of `tbl_stack()` to better handle when two or more stacked tables are then stacked again (#906)
+
+* Updates to make `tbl_svysummary()` compatible with {survey} package updates in v4.1 (#930)
+
+* The `as_hux_table()` function previously stripped markdown old syntax from column headers and spanning headers. The output now uses markdown syntax in the headers by default utilizing `huxtable::set_markdown()` (#885)
+
+* Variables passed in the `tbl_svysummary(by=)` argument will now automatically be added to `include=`. (#925)
+
+* Bold and italic requests are now ignored for kableExtra output. These are carried out via markdown syntax, which is not supported by {kableExtra} (#917)
+
+* Bug fix for `add_p.tbl_cross(pvalue_fun=)`; argument was being ignored.
+
+* Updated `style_pvalue()` to format p-values slightly larger than 1 and slightly lower than 0 (due to imprecise numeric storage). (#907)
+
+* Fix allowing for factor vectors to be passed in `tbl_stack(group_header=)`. (#908)
+
+* Updated arguments `y=` and `x=` in `tbl_uvregression()` to allow for non-standard names (#912)
+
 # gtsummary 1.4.1
 
 * Updated `tbl_regression()` to be compatible with models created with the {parsnip} and {workflows} packages (#890, #647)

@@ -25,8 +25,7 @@ Default is \code{everything()}.}
 as a list of expressions.}
 
 \item{strip_md_bold}{When TRUE, all double asterisk (markdown language for
-bold weight) in column labels and spanning headers are removed.
-Default is TRUE}
+bold weight) in column labels and spanning headers are removed.}
 
 \item{...}{Additional arguments passed to \link[knitr:kable]{knitr::kable}}
 }
@@ -36,9 +35,8 @@ A {kableExtra} object
 \description{
 Function converts a gtsummary object to a knitr_kable + kableExtra object.
 A user can use this function if they wish to add customized formatting
-available via \link[knitr:kable]{knitr::kable} and {kableExtra}. Note that {gtsummary}
-uses the standard markdown \verb{**} to bold headers, and they may need to be
-changed manually with kableExtra output.
+available via \link[knitr:kable]{knitr::kable} and {kableExtra}. Bold
+and italic cells are not supported for {kableExtra} output via gtsummary.
 }
 \examples{
 if (requireNamespace("kableExtra"))

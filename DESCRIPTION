@@ -1,6 +1,6 @@
 Package: gtsummary
 Title: Presentation-Ready Data Summary and Analytic Result Tables
-Version: 1.4.1
+Version: 1.4.2
 Authors@R: 
     c(person(given = "Daniel D.",
              family = "Sjoberg",
@@ -60,12 +60,12 @@ URL: https://github.com/ddsjoberg/gtsummary,
         http://www.danieldsjoberg.com/gtsummary/
 BugReports: https://github.com/ddsjoberg/gtsummary/issues
 Depends: R (>= 3.4)
-Imports: broom (>= 0.7.6), broom.helpers (>= 1.3.0), cli (>= 2.3.0),
+Imports: broom (>= 0.7.8), broom.helpers (>= 1.3.0), cli (>= 2.3.0),
         dplyr (>= 1.0.3), forcats (>= 0.5.0), glue (>= 1.4.1), gt (>=
         0.3.0), knitr (>= 1.29), lifecycle (>= 0.2.0), purrr (>=
         0.3.4), rlang (>= 0.4.10), stringr (>= 1.4.0), survival, tibble
         (>= 3.0.3), tidyr (>= 1.1.1)
-Suggests: broom.mixed (>= 0.2.6), car, covr, effectsize, flextable (>=
+Suggests: broom.mixed (>= 0.2.7), car, covr, effectsize, flextable (>=
         0.5.10), geepack, GGally (>= 2.1.0), Hmisc, huxtable (>=
         5.0.0), kableExtra, lme4, mgcv, mice, nnet, officer,
         parameters, parsnip, rmarkdown, scales, spelling (>= 2.2),
@@ -79,7 +79,7 @@ RoxygenNote: 7.1.1
 Config/testthat/edition: 3
 Config/testthat/parallel: true
 NeedsCompilation: no
-Packaged: 2021-05-19 01:35:46 UTC; SjobergD
+Packaged: 2021-07-13 13:12:49 UTC; SjobergD
 Author: Daniel D. Sjoberg [aut, cre] (<https://orcid.org/0000-0003-0862-2018>),
   Michael Curry [aut] (<https://orcid.org/0000-0002-0261-4044>),
   Margie Hannum [aut] (<https://orcid.org/0000-0002-2953-0449>),
@@ -93,4 +93,4 @@ Author: Daniel D. Sjoberg [aut, cre] (<https://orcid.org/0000-0003-0862-2018>),
   Gustavo Zapata Wainberg [ctb] (<https://orcid.org/0000-0002-2524-3637>)
 Maintainer: Daniel D. Sjoberg <danield.sjoberg@gmail.com>
 Repository: CRAN
-Date/Publication: 2021-05-19 04:20:02 UTC
+Date/Publication: 2021-07-13 13:40:02 UTC

@@ -67,7 +67,6 @@
 #' @family tbl_svysummary tools
 #' @author Joseph Larmarange
 #' @examples
-#' # Example 1 ----------------------------------
 #' # A simple weighted dataset
 #' tbl_svysummary_ex1 <-
 #'   survey::svydesign(~1, data = as.data.frame(Titanic), weights = ~Freq) %>%
@@ -95,10 +94,25 @@ tbl_svysummary <- function(data, by = NULL, label = NULL, statistic = NULL,
   assert_package("survey", "tbl_svysummary()")
 
   # test if data is a survey object
-  if (!is_survey(data)) stop("'data' should be a survey object (see svydesign()).", call. = FALSE)
+  if (!is_survey(data))
+    stop("'data' should be a survey object (see svydesign()).", call. = FALSE)
 
-  # eval -----------------------------------------------------------------------
-  include <- select(.remove_survey_cols(data), {{ include }}) %>% names()
+  # converting bare arguments to string ----------------------------------------
+  by <-
+    .select_to_varnames(
+      select = {{ by }},
+      data = .remove_survey_cols(data),
+      arg_name = "by",
+      select_single = TRUE
+    )
+
+  include <-
+    .select_to_varnames(
+      select = {{ include }},
+      data = .remove_survey_cols(data),
+      arg_name = "include"
+    ) %>%
+    union(by)
 
   # setting defaults from gtsummary theme --------------------------------------
   label <- label %||%
@@ -130,15 +144,6 @@ tbl_svysummary <- function(data, by = NULL, label = NULL, statistic = NULL,
   percent <- percent %||%
     get_theme_element("tbl_svysummary-arg:percent") %||%
     get_theme_element("tbl_summary-arg:percent", default = "column")
-
-  # converting bare arguments to string ----------------------------------------
-  by <-
-    .select_to_varnames(
-      select = {{ by }},
-      data = data$variables,
-      arg_name = "by",
-      select_single = TRUE
-    )
 
   # matching arguments ---------------------------------------------------------
   missing <- match.arg(missing, choices = c("ifany", "always", "no"))
@@ -416,7 +421,7 @@ compute_survey_stat <- function(data, variable, by, f) {
     fun <- survey::svyvar
   }
   if (f == "median") {
-    fun <- survey::svyquantile
+    fun <- svyquantile_version
     args$quantiles <- .5
   }
   if (f == "min") {
@@ -426,7 +431,7 @@ compute_survey_stat <- function(data, variable, by, f) {
     fun <- svymax
   }
   if (f %in% paste0("p", 0:100)) {
-    fun <- survey::svyquantile
+    fun <- svyquantile_version
     args$quantiles <- as.numeric(stringr::str_replace(f, pattern = "^p", "")) / 100
   }
 
@@ -632,4 +637,18 @@ svymin <- function(x, design, na.rm = FALSE, ...) {
 svymax <- function(x, design, na.rm = FALSE, ...) {
   x <- all.vars(x)
   max(design$variables[[x]], na.rm = na.rm)
+}
+
+# function chooses which quantile function to sue based on the survey pkg version
+svyquantile_version <- function(...) {
+  fn <-
+    ifelse(
+      utils::packageVersion("survey") >= "4.1",
+      "survey::oldsvyquantile",
+      "survey::svyquantile"
+    ) %>%
+    rlang::parse_expr() %>%
+    eval()
+
+  fn(...)
 }
