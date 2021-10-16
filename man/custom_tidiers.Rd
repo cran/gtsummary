@@ -4,6 +4,7 @@
 \alias{custom_tidiers}
 \alias{tidy_standardize}
 \alias{tidy_bootstrap}
+\alias{tidy_robust}
 \alias{pool_and_tidy_mice}
 \alias{tidy_gam}
 \title{Collection of custom tidiers}
@@ -22,6 +23,18 @@ tidy_bootstrap(
   exponentiate = FALSE,
   conf.level = 0.95,
   conf.int = TRUE,
+  ...,
+  quiet = FALSE
+)
+
+tidy_robust(
+  x,
+  exponentiate = FALSE,
+  conf.level = 0.95,
+  conf.int = TRUE,
+  vcov_estimation = NULL,
+  vcov_type = NULL,
+  vcov_args = NULL,
   ...,
   quiet = FALSE
 )
@@ -50,16 +63,20 @@ interval in the tidied output. Defaults to \code{FALSE}.}
 \item \code{pool_and_tidy_mice()}: \code{mice::tidy(x, ...)}
 \item \code{tidy_standardize()}: \code{effectsize::standardize_parameters(x, ...)}
 \item \code{tidy_bootstrap()}: \code{parameters::bootstrap_parameters(x, ...)}
+\item \code{tidy_robust()}: \code{parameters::model_parameters(x, ...)}
 }}
 
 \item{quiet}{Logical indicating whether to print messages in console. Default is
 \code{FALSE}}
 
+\item{vcov_estimation, vcov_type, vcov_args}{arguments passed to
+\code{parameters::model_parameters()}}
+
 \item{pool.args}{named list of arguments passed to \code{mice::pool()} in
 \code{pool_and_tidy_mice()}. Default is \code{NULL}}
 }
 \description{
-\lifecycle{experimental}
+\lifecycle{maturing}
 Collection of tidiers that can be passed to \code{tbl_regression()}
 and \code{tbl_uvregression()} to obtain modified results. See examples below.
 }
@@ -76,6 +93,14 @@ merely takes the result and puts it in \code{broom::tidy()} format.
 package includes a wonderful function to estimate bootstrapped coefficients.
 The tidier uses the output from \code{parameters::bootstrap_parameters(test = "p")}, and
 merely takes the result and puts it in \code{broom::tidy()} format.
+\item \code{tidy_robust()} tidier to report robust standard errors, confidence intervals,
+and p-values. The \href{https://easystats.github.io/parameters/reference/model_parameters.default.html}{parameters}
+package includes a wonderful function to calculate robust standard errors, confidence intervals, and p-values
+The tidier uses the output from \code{parameters::model_parameters()}, and
+merely takes the result and puts it in \code{broom::tidy()} format. To use this
+function with \code{tbl_regression()}, pass a function with the arguments for
+\code{tidy_robust()} populated. This is easily done using \code{purrr::partial()} e.g.
+\code{tbl_regression(tidy_fun = partial(tidy_robust, vcov_estimation = "CL"))}
 \item \code{pool_and_tidy_mice()} tidier to report models resulting from multiply imputed data
 using the mice package. Pass the mice model object \emph{before} the model results
 have been pooled. See example.
@@ -101,6 +126,7 @@ the model parameters before attempting to use the tidier with \code{tbl_regressi
 }
 
 \examples{
+\dontshow{if (assert_package("effectsize", boolean = TRUE) && assert_package("parameters", boolean = TRUE) && assert_package("mice", boolean = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 \donttest{
 # Example 1 ----------------------------------
 mod <- lm(age ~ marker + grade, trial)
@@ -108,29 +134,24 @@ mod <- lm(age ~ marker + grade, trial)
 tbl_stnd <- tbl_regression(mod, tidy_fun = tidy_standardize)
 tbl <- tbl_regression(mod)
 
-if (requireNamespace("effectsize")) {
-  tidy_standardize_ex1 <-
-    tbl_merge(
-      list(tbl_stnd, tbl),
-      tab_spanner = c("**Standardized Model**", "**Original Model**")
-    )
-}
+tidy_standardize_ex1 <-
+  tbl_merge(
+    list(tbl_stnd, tbl),
+    tab_spanner = c("**Standardized Model**", "**Original Model**")
+  )
 
 # Example 2 ----------------------------------
 # use "posthoc" method for coef calculation
-if (requireNamespace("parameters")) {
-  tidy_standardize_ex2 <-
-    tbl_regression(mod, tidy_fun = purrr::partial(tidy_standardize, method = "posthoc"))
-}
+tidy_standardize_ex2 <-
+  tbl_regression(mod, tidy_fun = purrr::partial(tidy_standardize, method = "posthoc"))
 
 # Example 3 ----------------------------------
 # Multiple Imputation using the mice package
 set.seed(1123)
-if (requireNamespace("mice")) {
-  pool_and_tidy_mice_ex3 <-
-    suppressWarnings(mice::mice(trial, m = 2)) \%>\%
-    with(lm(age ~ marker + grade)) \%>\%
-    tbl_regression()
-} # mice method called that uses `pool_and_tidy_mice()` as tidier
+pool_and_tidy_mice_ex3 <-
+  suppressWarnings(mice::mice(trial, m = 2)) \%>\%
+  with(lm(age ~ marker + grade)) \%>\%
+  tbl_regression()
 }
+\dontshow{\}) # examplesIf}
 }

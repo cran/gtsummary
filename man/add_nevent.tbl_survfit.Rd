@@ -12,7 +12,7 @@
 \item{...}{Not used}
 }
 \description{
-\lifecycle{experimental}
+\lifecycle{maturing}
 For each \code{survfit()} object summarized with \code{tbl_survfit()} this function
 will add the total number of events observed in a new column.
 }
@@ -41,7 +41,9 @@ Other tbl_survfit tools:
 \code{\link{add_p.tbl_survfit}()},
 \code{\link{modify}},
 \code{\link{tbl_merge}()},
+\code{\link{tbl_split}()},
 \code{\link{tbl_stack}()},
+\code{\link{tbl_strata}()},
 \code{\link{tbl_survfit}()}
 }
 \concept{tbl_survfit tools}

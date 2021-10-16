@@ -23,6 +23,8 @@ tbl_regression.model_fit <- function(x, ...) {
 #' @export
 #' @rdname tbl_regression_methods
 tbl_regression.workflow <- function(x, ...) {
+  assert_package("workflows", "tbl_regression.workflow()")
+
   if (isTRUE(!x$pre$actions$formula$blueprint$indicators %in% "none")) {
     paste("To take full advantage of model formatting, e.g. grouping categorical",
           "variables, please add the following argument to the `workflows::add_model()` call:") %>%
@@ -33,10 +35,10 @@ tbl_regression.workflow <- function(x, ...) {
   }
 
   paste("Extracting {workflows} model fit with",
-        "`workflows::pull_workflow_fit(x) %>% tbl_regression(...)`") %>%
+        "`workflows::extract_fit_parsnip(x) %>% tbl_regression(...)`") %>%
   message()
 
-  tbl_regression(x = workflows::pull_workflow_fit(x), ...)
+  tbl_regression(x = workflows::extract_fit_parsnip(x), ...)
 }
 
 #' @export

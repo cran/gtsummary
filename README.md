@@ -2,15 +2,13 @@
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 <!-- badges: start -->
 
-[![Codecov test
-coverage](https://codecov.io/gh/ddsjoberg/gtsummary/branch/master/graph/badge.svg)](https://codecov.io/gh/ddsjoberg/gtsummary?branch=master)
-[![R build
-status](https://github.com/ddsjoberg/gtsummary/workflows/R-CMD-check/badge.svg)](https://github.com/ddsjoberg/gtsummary/actions)
+[![R-CMD-check](https://github.com/ddsjoberg/gtsummary/workflows/R-CMD-check/badge.svg)](https://github.com/ddsjoberg/gtsummary/actions)
 [![CRAN
 status](https://www.r-pkg.org/badges/version/gtsummary)](https://cran.r-project.org/package=gtsummary)
+[![Codecov test
+coverage](https://codecov.io/gh/ddsjoberg/gtsummary/branch/master/graph/badge.svg)](https://app.codecov.io/gh/ddsjoberg/gtsummary?branch=master)
 [![](https://cranlogs.r-pkg.org/badges/gtsummary)](https://cran.r-project.org/package=gtsummary)
-[![Lifecycle:
-maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html)
+[![DOI:10.32614/RJ-2021-053](https://zenodo.org/badge/DOI/10.32614/RJ-2021-053.svg)](https://doi.org/10.32614/RJ-2021-053)
 <!-- badges: end -->
 
 ## gtsummary <a href='https://github.com/ddsjoberg/gtsummary'><img src='man/figures/logo.png' align="right" height="120" /></a>
@@ -208,6 +206,61 @@ tbl %>%
   flextable::save_as_docx()
 ```
 
+## Additional Resources
+
+-   The best resources are the gtsummary vignettes: [table
+    gallery](https://www.danieldsjoberg.com/gtsummary/articles/gallery.html),
+    [`tbl_summary()`
+    tutorial](https://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html),
+    [`tbl_regression()`
+    tutorial](https://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html),
+    [`inline_text()`
+    tutorial](https://www.danieldsjoberg.com/gtsummary/articles/inline_text.html),
+    [gtsummary
+    themes](https://www.danieldsjoberg.com/gtsummary/articles/themes.html),
+    [gtsummary+R
+    markdown](https://www.danieldsjoberg.com/gtsummary/articles/rmarkdown.html).
+
+-   The R Journal Article [*Reproducible Summary Tables with the
+    gtsummary
+    Package*](https://github.com/ddsjoberg/gtsummary/raw/master/data-raw/RJ-2021-053.pdf).
+
+-   The [RStudio Education
+    Blog](https://education.rstudio.com/blog/2020/07/gtsummary/)
+    includes a post with a brief introduction to the package.
+
+-   A [recording of a
+    presentation](https://www.youtube.com/watch?v=tANo9E1SYJE) given to
+    the Weill Cornell Biostatistics Department and the Memorial Sloan
+    Kettering R Users Group.
+
+    <iframe width="560" height="315" src="https://www.youtube.com/embed/tANo9E1SYJE" title="YouTube video player" frameborder="0" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+## Cite gtsummary
+
+``` text
+> citation("gtsummary")
+
+To cite gtsummary in publications use:
+
+  Sjoberg DD, Whiting K, Curry M, Lavery JA, Larmarange J. Reproducible summary tables with the gtsummary package.
+  The R Journal 2021;13:570–80. https://doi.org/10.32614/RJ-2021-053.
+
+A BibTeX entry for LaTeX users is
+
+  @Article{gtsummary,
+    author = {Daniel D. Sjoberg and Karissa Whiting and Michael Curry and Jessica A. Lavery and Joseph Larmarange},
+    title = {Reproducible Summary Tables with the gtsummary Package},
+    journal = {{The R Journal}},
+    year = {2021},
+    url = {https://doi.org/10.32614/RJ-2021-053},
+    doi = {10.32614/RJ-2021-053},
+    volume = {13},
+    issue = {1},
+    pages = {570-580},
+  }
+```
+
 ## Contributing
 
 Big thank you to [@jeffreybears](https://www.jeffreybears.com/) for the
@@ -219,13 +272,13 @@ Conduct](http://www.danieldsjoberg.com/gtsummary/CODE_OF_CONDUCT.html).
 By contributing to this project, you agree to abide by its terms. Thank
 you to all contributors!  
 [@ablack3](https://github.com/ablack3),
+[@ABorakati](https://github.com/ABorakati),
 [@aghaynes](https://github.com/aghaynes),
 [@ahinton-mmc](https://github.com/ahinton-mmc),
 [@albertostefanelli](https://github.com/albertostefanelli),
 [@alexis-catherine](https://github.com/alexis-catherine),
 [@anaavu](https://github.com/anaavu),
 [@andrader](https://github.com/andrader),
-[@anevaluator](https://github.com/anevaluator),
 [@angelgar](https://github.com/angelgar),
 [@arbet003](https://github.com/arbet003),
 [@arnmayer](https://github.com/arnmayer),
@@ -234,12 +287,15 @@ you to all contributors!
 [@barthelmes](https://github.com/barthelmes),
 [@BeauMeche](https://github.com/BeauMeche),
 [@benediktclaus](https://github.com/benediktclaus),
+[@bwiernik](https://github.com/bwiernik),
+[@bx259](https://github.com/bx259),
 [@calebasaraba](https://github.com/calebasaraba),
 [@CarolineXGao](https://github.com/CarolineXGao),
 [@Chris-M-P](https://github.com/Chris-M-P),
 [@chrisleitzinger](https://github.com/chrisleitzinger),
 [@clmawhorter](https://github.com/clmawhorter),
 [@CodieMonster](https://github.com/CodieMonster),
+[@coeus-analytics](https://github.com/coeus-analytics),
 [@coreysparks](https://github.com/coreysparks),
 [@ctlamb](https://github.com/ctlamb),
 [@davidgohel](https://github.com/davidgohel),
@@ -248,17 +304,22 @@ you to all contributors!
 [@ddsjoberg](https://github.com/ddsjoberg),
 [@DeFilippis](https://github.com/DeFilippis),
 [@denis-or](https://github.com/denis-or),
+[@dieuv0](https://github.com/dieuv0),
+[@discoleo](https://github.com/discoleo),
 [@djbirke](https://github.com/djbirke),
 [@eamoncaddigan](https://github.com/eamoncaddigan),
 [@ElfatihHasabo](https://github.com/ElfatihHasabo),
 [@emilyvertosick](https://github.com/emilyvertosick),
 [@ercbk](https://github.com/ercbk),
+[@erikvona](https://github.com/erikvona),
+[@eweisbrod](https://github.com/eweisbrod),
 [@fh-jsnider](https://github.com/fh-jsnider),
 [@gjones1219](https://github.com/gjones1219),
 [@gorkang](https://github.com/gorkang),
 [@GuiMarthe](https://github.com/GuiMarthe),
 [@hughjonesd](https://github.com/hughjonesd),
 [@iaingallagher](https://github.com/iaingallagher),
+[@ilyamusabirov](https://github.com/ilyamusabirov),
 [@IndrajeetPatil](https://github.com/IndrajeetPatil),
 [@IsadoraBM](https://github.com/IsadoraBM),
 [@j-tamad](https://github.com/j-tamad),
@@ -275,8 +336,8 @@ you to all contributors!
 [@juseer](https://github.com/juseer),
 [@jwilliman](https://github.com/jwilliman),
 [@karissawhiting](https://github.com/karissawhiting),
-[@khizzr](https://github.com/khizzr),
 [@kmdono02](https://github.com/kmdono02),
+[@kwakuduahc1](https://github.com/kwakuduahc1),
 [@larmarange](https://github.com/larmarange),
 [@leejasme](https://github.com/leejasme),
 [@loukesio](https://github.com/loukesio),
@@ -294,12 +355,15 @@ you to all contributors!
 [@MyKo101](https://github.com/MyKo101),
 [@oranwutang](https://github.com/oranwutang),
 [@Pascal-Schmidt](https://github.com/Pascal-Schmidt),
+[@polc1410](https://github.com/polc1410),
 [@proshano](https://github.com/proshano),
 [@raphidoc](https://github.com/raphidoc),
+[@roman2023](https://github.com/roman2023),
 [@ryzhu75](https://github.com/ryzhu75),
 [@sachijay](https://github.com/sachijay),
 [@sammo3182](https://github.com/sammo3182),
 [@sbalci](https://github.com/sbalci),
+[@ShixiangWang](https://github.com/ShixiangWang),
 [@simonpcouch](https://github.com/simonpcouch),
 [@slb2240](https://github.com/slb2240),
 [@slobaugh](https://github.com/slobaugh),
@@ -318,5 +382,6 @@ you to all contributors!
 [@zabore](https://github.com/zabore),
 [@zachariae](https://github.com/zachariae),
 [@zeyunlu](https://github.com/zeyunlu),
+[@zhengnow](https://github.com/zhengnow),
 [@zlkrvsm](https://github.com/zlkrvsm), and
 [@zongell-star](https://github.com/zongell-star)

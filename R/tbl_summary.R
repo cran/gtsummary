@@ -48,7 +48,6 @@
 #' @param percent Indicates the type of percentage to return. Must be one of
 #' `"column"`, `"row"`, or `"cell"`. Default is `"column"`.
 #' @param include variables to include in the summary table. Default is `everything()`
-#' @param group DEPRECATED. Migrated to [add_p]
 #'
 #' @section select helpers:
 #' \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html#select_helpers}{Select helpers}
@@ -61,10 +60,12 @@
 #' All columns with class logical are displayed as dichotomous variables showing
 #' the proportion of events that are `TRUE` on a single row. To show both rows
 #' (i.e. a row for `TRUE` and a row for `FALSE`) use
-#' `type = list(all_logical() ~ "categorical")`.
+#' `type = list(where(is.logical) ~ "categorical")`.
 #'
 #' The select helpers are available for use in any argument that accepts a list
 #' of formulas (e.g. `statistic`, `type`, `digits`, `value`, `sort`, etc.)
+#'
+#' Read more on the [syntax] used through the package.
 #'
 #' @section type argument:
 #' The `tbl_summary()` function has four summary types:
@@ -191,7 +192,7 @@
 tbl_summary <- function(data, by = NULL, label = NULL, statistic = NULL,
                         digits = NULL, type = NULL, value = NULL,
                         missing = NULL, missing_text = NULL, sort = NULL,
-                        percent = NULL, include = everything(), group = NULL) {
+                        percent = NULL, include = everything()) {
   # ungrouping data ------------------------------------------------------------
   data <- data %>% ungroup()
 
@@ -246,15 +247,6 @@ tbl_summary <- function(data, by = NULL, label = NULL, statistic = NULL,
     ))
 
     data <- filter(data, !is.na(.data[[by]]))
-  }
-
-  # deprecation note about group -----------------------------------------------
-  if (!rlang::quo_is_null(rlang::enquo(group))) {
-    lifecycle::deprecate_stop(
-      "1.2.0",
-      "gtsummary::tbl_summary(group=)",
-      "add_p(group=)"
-    )
   }
 
   # will return call, and all object passed to in tbl_summary call -------------

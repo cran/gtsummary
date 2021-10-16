@@ -180,13 +180,16 @@ and IQR.  To change all continuous variables to mean and standard deviation use
 All columns with class logical are displayed as dichotomous variables showing
 the proportion of events that are \code{TRUE} on a single row. To show both rows
 (i.e. a row for \code{TRUE} and a row for \code{FALSE}) use
-\code{type = list(all_logical() ~ "categorical")}.
+\code{type = list(where(is.logical) ~ "categorical")}.
 
 The select helpers are available for use in any argument that accepts a list
 of formulas (e.g. \code{statistic}, \code{type}, \code{digits}, \code{value}, \code{sort}, etc.)
+
+Read more on the \link{syntax} used through the package.
 }
 
 \examples{
+\dontshow{if (assert_package("survey", boolean = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 # A simple weighted dataset
 tbl_svysummary_ex1 <-
   survey::svydesign(~1, data = as.data.frame(Titanic), weights = ~Freq) \%>\%
@@ -198,6 +201,7 @@ data(api, package = "survey")
 tbl_svysummary_ex2 <-
   survey::svydesign(id = ~dnum, weights = ~pw, data = apiclus1, fpc = ~fpc) \%>\%
   tbl_svysummary(by = "both", include = c(cname, api00, api99, both))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 Other tbl_svysummary tools: 
@@ -207,8 +211,11 @@ Other tbl_svysummary tools:
 \code{\link{add_q}()},
 \code{\link{add_stat_label}()},
 \code{\link{modify}},
+\code{\link{separate_p_footnotes}()},
 \code{\link{tbl_merge}()},
-\code{\link{tbl_stack}()}
+\code{\link{tbl_split}()},
+\code{\link{tbl_stack}()},
+\code{\link{tbl_strata}()}
 }
 \author{
 Joseph Larmarange

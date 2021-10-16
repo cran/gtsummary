@@ -315,11 +315,11 @@ modify_spanning_header <- function(x, update = NULL,
 #' @name modify
 #' @export
 modify_caption <- function(x, caption, text_interpret = c("md", "html")) {
-  updated_call_list <- c(x$call_list, list(modify_caption = match.call()))
   # checking inputs ------------------------------------------------------------
   if (!inherits(x, "gtsummary")) abort("`x=` must be class 'gtsummary'.")
   if (!rlang::is_string(caption)) abort("`caption=` must be a string.")
   text_interpret <- match.arg(text_interpret)
+  updated_call_list <- c(x$call_list, list(modify_caption = match.call()))
 
   # first interpreting caption in case user passed glue args -----------------
   caption <-
@@ -401,7 +401,8 @@ show_header_names <- function(x = NULL, quiet = NULL) {
   }
 
   # tbl_summary with by variable
-  if (inherits(x, c("tbl_summary", "tbl_svysummary")) && !is.null(x$df_by)) {
+  if (inherits(x, c("tbl_summary", "tbl_svysummary", "tbl_continuous")) &&
+      !is.null(x$df_by)) {
     return(
       x$table_styling$header %>%
         select(.data$column) %>%

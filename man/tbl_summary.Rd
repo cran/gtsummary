@@ -16,8 +16,7 @@ tbl_summary(
   missing_text = NULL,
   sort = NULL,
   percent = NULL,
-  include = everything(),
-  group = NULL
+  include = everything()
 )
 }
 \arguments{
@@ -75,8 +74,6 @@ e.g. \code{sort = list(everything() ~ "frequency")}}
 \code{"column"}, \code{"row"}, or \code{"cell"}. Default is \code{"column"}.}
 
 \item{include}{variables to include in the summary table. Default is \code{everything()}}
-
-\item{group}{DEPRECATED. Migrated to \link{add_p}}
 }
 \value{
 A \code{tbl_summary} object
@@ -99,10 +96,12 @@ and IQR.  To change all continuous variables to mean and standard deviation use
 All columns with class logical are displayed as dichotomous variables showing
 the proportion of events that are \code{TRUE} on a single row. To show both rows
 (i.e. a row for \code{TRUE} and a row for \code{FALSE}) use
-\code{type = list(all_logical() ~ "categorical")}.
+\code{type = list(where(is.logical) ~ "categorical")}.
 
 The select helpers are available for use in any argument that accepts a list
 of formulas (e.g. \code{statistic}, \code{type}, \code{digits}, \code{value}, \code{sort}, etc.)
+
+Read more on the \link{syntax} used through the package.
 }
 
 \section{type argument}{
@@ -236,6 +235,7 @@ See \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html}{tbl
 See \href{http://www.danieldsjoberg.com/gtsummary/articles/gallery.html}{table gallery} for additional examples
 
 Other tbl_summary tools: 
+\code{\link{add_ci}()},
 \code{\link{add_n.tbl_summary}()},
 \code{\link{add_overall}()},
 \code{\link{add_p.tbl_summary}()},
@@ -245,8 +245,12 @@ Other tbl_summary tools:
 \code{\link{inline_text.tbl_summary}()},
 \code{\link{inline_text.tbl_survfit}()},
 \code{\link{modify}},
+\code{\link{separate_p_footnotes}()},
+\code{\link{tbl_custom_summary}()},
 \code{\link{tbl_merge}()},
-\code{\link{tbl_stack}()}
+\code{\link{tbl_split}()},
+\code{\link{tbl_stack}()},
+\code{\link{tbl_strata}()}
 }
 \author{
 Daniel D. Sjoberg

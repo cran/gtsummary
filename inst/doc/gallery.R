@@ -90,22 +90,24 @@ trial %>%
 # imagine that each patient received Drug A and Drug B (adding ID showing their paired measurements)
 trial_paired <-
   trial %>%
-  select(trt, marker) %>%
+  select(trt, marker, response) %>%
   group_by(trt) %>%
   mutate(id = row_number()) %>%
   ungroup()
 
 # you must first delete incomplete pairs from the data, then you can build the table
 trial_paired %>%
-  # delete missing marker values
-  filter(!is.na(marker)) %>%
+  # delete missing values
+  filter(complete.cases(.)) %>%
   # keep IDs with both measurements
   group_by(id) %>%
   filter(n() == 2) %>%
   ungroup() %>%
   # summarize data
   tbl_summary(by = trt, include = -id) %>%
-  add_p(test = marker ~ "paired.t.test", group = id)
+  add_p(test = list(marker ~ "paired.t.test",
+                    response ~ "mcnemar.test"), 
+        group = id)
 
 ## -----------------------------------------------------------------------------
 # table summarizing data with no p-values

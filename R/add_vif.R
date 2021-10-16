@@ -1,6 +1,6 @@
 #' Add Variance Inflation Factor
 #'
-#' \lifecycle{experimental}
+#' \lifecycle{maturing}
 #' Add the variance inflation factor (VIF) or
 #' generalized VIF (GVIF) to the regression table.
 #' Function uses `car::vif()` to calculate the VIF.
@@ -11,22 +11,18 @@
 #' @param estimate_fun Default is [`style_sigfig()`].
 #' @export
 #'
-#' @examples
+#' @examplesIf assert_package("car", boolean = TRUE)
 #' # Example 1 ----------------------------------
-#' if (requireNamespace("car")) {
-#'   add_vif_ex1 <-
-#'     lm(age ~ grade + marker, trial) %>%
-#'     tbl_regression() %>%
-#'     add_vif()
-#' }
+#' add_vif_ex1 <-
+#'   lm(age ~ grade + marker, trial) %>%
+#'   tbl_regression() %>%
+#'   add_vif()
 #'
 #' # Example 2 ----------------------------------
-#' if (requireNamespace("car")) {
-#'   add_vif_ex2 <-
-#'     lm(age ~ grade + marker, trial) %>%
-#'     tbl_regression() %>%
-#'     add_vif(c("aGVIF", "df"))
-#' }
+#' add_vif_ex2 <-
+#'   lm(age ~ grade + marker, trial) %>%
+#'   tbl_regression() %>%
+#'   add_vif(c("aGVIF", "df"))
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
@@ -41,7 +37,7 @@ add_vif <- function(x, statistic = NULL, estimate_fun = NULL) {
   if (!inherits(x, "tbl_regression")) {
     stop("`x=` must be class 'tbl_regression'")
   }
-  assert_package("car")
+  assert_package("car", "add_vif()")
   estimate_fun <- estimate_fun %||% style_sigfig %>% gts_mapper("add_vif(estimate_fun=)")
 
   # calculating VIF ------------------------------------------------------------

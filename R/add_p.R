@@ -129,8 +129,11 @@ add_p.tbl_summary <- function(x, test = NULL, pvalue_fun = NULL,
     ) %>%
       stop(call. = FALSE)
   }
-  if ("add_difference" %in% names(x$call_list)) {
-    stop("`add_p()` cannot be run after `add_difference()`, and vice versa")
+  if ("add_difference" %in% names(x$call_list) &&
+      "p.value" %in% names(x$table_body)) {
+    paste("`add_p()` cannot be run after `add_difference()` when a",
+          "'p.value' column is already present.") %>%
+    stop(call. = FALSE)
   }
 
   # test -----------------------------------------------------------------------
@@ -157,24 +160,28 @@ add_p.tbl_summary <- function(x, test = NULL, pvalue_fun = NULL,
     select(.data$variable, .data$summary_type) %>%
     filter(.data$variable %in% include) %>%
     mutate(
-      test = map2(
-        .data$variable, .data$summary_type,
-        function(variable, summary_type) {
-          .assign_test_tbl_summary(
-            data = x$inputs$data, variable = variable, summary_type = summary_type,
-            by = x$by, group = group, test = test
-          )
-        }
-      ),
-      test_info = map(
-        .data$test,
-        function(test) .get_add_p_test_fun("tbl_summary", test = test, env = caller_env)
-      ),
+      test =
+        map2(
+          .data$variable, .data$summary_type,
+          function(variable, summary_type) {
+            .assign_test_tbl_summary(
+              data = x$inputs$data, variable = variable, summary_type = summary_type,
+              by = x$by, group = group, test = test
+            )
+          }
+        ),
+      test_info =
+        map(
+          .data$test,
+          function(test) .get_add_p_test_fun("tbl_summary", test = test, env = caller_env)
+        ),
       test_name = map_chr(.data$test_info, ~ pluck(.x, "test_name"))
     )
   # adding test_name to table body so it can be used to select vars by the test
   x$table_body <-
-    left_join(x$table_body, meta_data[c("variable", "test_name")], by = "variable") %>%
+    x$table_body %>%
+    select(-any_of(c("test_name", "test_result"))) %>%
+    left_join(meta_data[c("variable", "test_name")], by = "variable") %>%
     select(.data$variable, .data$test_name, everything())
 
   # converting to named list
@@ -205,7 +212,10 @@ add_p.tbl_summary <- function(x, test = NULL, pvalue_fun = NULL,
     ) %>%
     select(.data$variable, .data$test_result, .data$p.value, .data$stat_test_lbl) %>%
     {
-      left_join(x$meta_data, ., by = "variable")
+      left_join(
+        x$meta_data %>% select(-any_of(c("test_result", "p.value", "stat_test_lbl"))),
+        .,
+        by = "variable")
     }
 
   x$call_list <- updated_call_list
@@ -251,7 +261,11 @@ add_p_merge_p_values <- function(x, lgl_add_p = TRUE,
           row_type = "label"
         ) %>%
         unnest(.data$df_result) %>%
-        select(-any_of("method")),
+        select(
+          -any_of("method"),
+          # removing any columns already present in table_body
+          -any_of(names(x$table_body) %>% setdiff(c("variable", "row_type")))
+        ),
       by = c("variable", "row_type")
     ) %>%
     # adding print instructions for p-value column
@@ -452,7 +466,7 @@ add_p.tbl_cross <- function(x, test = NULL, pvalue_fun = NULL,
 
 #' Adds p-value to survfit table
 #'
-#' \lifecycle{experimental}
+#' \lifecycle{maturing}
 #' Calculate and add a p-value
 #' @param x Object of class `"tbl_survfit"`
 #' @param test string indicating test to use. Must be one of `"logrank"`, `"survdiff"`,
@@ -636,7 +650,7 @@ add_p.tbl_survfit <- function(x, test = "logrank", test.args = NULL,
 #' @export
 #' @return A `tbl_svysummary` object
 #' @author Joseph Larmarange
-#' @examples
+#' @examplesIf assert_package("survey", boolean = TRUE)
 #' # Example 1 ----------------------------------
 #' # A simple weighted dataset
 #' add_p_svysummary_ex1 <-

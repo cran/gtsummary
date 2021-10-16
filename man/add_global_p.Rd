@@ -63,26 +63,24 @@ Output from \code{tbl_regression} and \code{tbl_uvregression} objects supported.
 }
 
 \examples{
+\dontshow{if (assert_package("car", boolean = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 # Example 1 ----------------------------------
-if (requireNamespace("car")) {
-  tbl_lm_global_ex1 <-
-    lm(marker ~ age + grade, trial) \%>\%
-    tbl_regression() \%>\%
-    add_global_p()
-}
+tbl_lm_global_ex1 <-
+  lm(marker ~ age + grade, trial) \%>\%
+  tbl_regression() \%>\%
+  add_global_p()
 
 # Example 2 ----------------------------------
-if (requireNamespace("car")) {
-  tbl_uv_global_ex2 <-
-    trial[c("response", "trt", "age", "grade")] \%>\%
-    tbl_uvregression(
-      method = glm,
-      y = response,
-      method.args = list(family = binomial),
-      exponentiate = TRUE
-    ) \%>\%
-    add_global_p()
-}
+tbl_uv_global_ex2 <-
+  trial[c("response", "trt", "age", "grade")] \%>\%
+  tbl_uvregression(
+    method = glm,
+    y = response,
+    method.args = list(family = binomial),
+    exponentiate = TRUE
+  ) \%>\%
+  add_global_p()
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 Other tbl_uvregression tools: 
@@ -91,7 +89,9 @@ Other tbl_uvregression tools:
 \code{\link{inline_text.tbl_uvregression}()},
 \code{\link{modify}},
 \code{\link{tbl_merge}()},
+\code{\link{tbl_split}()},
 \code{\link{tbl_stack}()},
+\code{\link{tbl_strata}()},
 \code{\link{tbl_uvregression}()}
 
 Other tbl_regression tools: 
@@ -102,7 +102,9 @@ Other tbl_regression tools:
 \code{\link{modify}},
 \code{\link{tbl_merge}()},
 \code{\link{tbl_regression}()},
-\code{\link{tbl_stack}()}
+\code{\link{tbl_split}()},
+\code{\link{tbl_stack}()},
+\code{\link{tbl_strata}()}
 }
 \author{
 Daniel D. Sjoberg

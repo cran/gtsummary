@@ -6,7 +6,9 @@ test_inline1 <- trial %>% tbl_summary()
 test_inline2 <- trial %>% tbl_summary(by = trt)
 test_inline2b <- trial %>%
   tbl_summary(by = trt) %>%
+  add_overall() %>%
   add_p()
+
 
 test_that("inline_text.tbl_summary: no by", {
   expect_error(
@@ -37,14 +39,15 @@ test_that("inline_text.tbl_summary: no by", {
 })
 
 test_that("inline_text.tbl_summary: with by", {
-  expect_error(
+  expect_equal(
     inline_text(test_inline2, variable = "age", column = "Drug B"),
-    NA
+    "48 (39, 56)"
   )
   expect_warning(
     inline_text(test_inline2, variable = "age", column = "Drug B"),
     NA
   )
+
   expect_error(
     inline_text(test_inline2, variable = "stage", level = "T1", column = "Drug B"),
     NA
@@ -60,6 +63,24 @@ test_that("inline_text.tbl_summary: with by", {
   expect_warning(
     inline_text(test_inline2b, variable = "stage", column = "p.value"),
     NA
+  )
+
+  # add_overall checks
+  expect_equal(
+    inline_text(test_inline2b, variable = "age", column = "stat_1", pattern = "{median}"),
+    "46"
+  )
+  expect_equal(
+    inline_text(test_inline2b, variable = "age", column = "stat_0", pattern = "{median}"),
+    "47"
+  )
+  expect_equal(
+    inline_text(test_inline2b, variable = "stage", level = "T1", column = "stat_0", pattern = "{n}"),
+    "53"
+  )
+  expect_equal(
+    inline_text(test_inline2b, variable = "stage", level = "T1", column = "stat_1", pattern = "{n}"),
+    "28"
   )
 })
 
@@ -213,19 +234,20 @@ tbl1 <-
   ) %>%
   add_p()
 
-tbl2 <- tbl_survfit(
-  fit2,
-  probs = 0.5
-)
+tbl2 <-
+  tbl_survfit(
+    fit2,
+    probs = 0.5
+  )
 
 test_that("inline_text.tbl_survfit", {
-  expect_error(
+  expect_equal(
     inline_text(tbl1, time = 24, level = "Drug A"),
-    NA
+    "47% (38%, 58%)"
   )
-  expect_warning(
-    inline_text(tbl1, time = 24, level = "Drug A"),
-    NA
+  expect_equal(
+    inline_text(tbl1, time = 24, level = "Drug A", pattern = "{estimate}"),
+    "47%"
   )
 
   expect_error(
@@ -236,9 +258,12 @@ test_that("inline_text.tbl_survfit", {
 
   expect_error(
     tbl1_pattern <-
-      inline_text(tbl1,
-        time = 24, level = "Drug A",
-        pattern = "{estimate}", estimate_fun = ~ style_percent(., digits = 3, symbol = TRUE)
+      inline_text(
+        tbl1,
+        time = 24,
+        level = "Drug A",
+        pattern = "{estimate}",
+        estimate_fun = ~ style_percent(., digits = 3, symbol = TRUE)
       ),
     NA
   )
@@ -248,9 +273,9 @@ test_that("inline_text.tbl_survfit", {
     inline_text(tbl2, prob = 0.5),
     NA
   )
-  expect_warning(
+  expect_equal(
     inline_text(tbl2, prob = 0.5),
-    NA
+    "22 (21, —)"
   )
 })
 

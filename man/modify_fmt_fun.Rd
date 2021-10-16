@@ -18,7 +18,7 @@ and the RHS is the updated formatting function.}
 Default is \code{NULL}. See details below.}
 }
 \description{
-\lifecycle{experimental}
+\lifecycle{maturing}
 Use this function to update the way numeric columns and rows of \code{.$table_body}
 are formatted
 }
@@ -61,6 +61,7 @@ modify_fmt_fun_ex1 <-
 }
 \seealso{
 Other Advanced modifiers: 
+\code{\link{modify_cols_merge}()},
 \code{\link{modify_column_hide}()},
 \code{\link{modify_table_body}()},
 \code{\link{modify_table_styling}()}

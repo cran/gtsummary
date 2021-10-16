@@ -93,6 +93,7 @@ add_p_ex2 <-
 See tbl_summary \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html}{vignette} for detailed examples
 
 Other tbl_summary tools: 
+\code{\link{add_ci}()},
 \code{\link{add_n.tbl_summary}()},
 \code{\link{add_overall}()},
 \code{\link{add_q}()},
@@ -101,8 +102,12 @@ Other tbl_summary tools:
 \code{\link{inline_text.tbl_summary}()},
 \code{\link{inline_text.tbl_survfit}()},
 \code{\link{modify}},
+\code{\link{separate_p_footnotes}()},
+\code{\link{tbl_custom_summary}()},
 \code{\link{tbl_merge}()},
+\code{\link{tbl_split}()},
 \code{\link{tbl_stack}()},
+\code{\link{tbl_strata}()},
 \code{\link{tbl_summary}()}
 }
 \author{

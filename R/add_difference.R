@@ -3,7 +3,7 @@
 #' Add the difference between two groups (typically mean difference),
 #' along with the difference confidence interval and p-value.
 #'
-#' @param x `"tbl_summary"` object
+#' @param x `"tbl_summary"` or `"tbl_svysummary"` object
 #' @inheritParams  add_p.tbl_summary
 #' @inheritParams tbl_regression
 #' @param adj.vars Variables to include in mean difference adjustment (e.g. in ANCOVA models)
@@ -62,14 +62,14 @@ add_difference <- function(x, test = NULL, group = NULL,
                            pvalue_fun = NULL, estimate_fun = NULL) {
   # checking inputs ------------------------------------------------------------
   updated_call_list <- c(x$call_list, list(add_difference = match.call()))
-  if (!inherits(x, "tbl_summary")) {
-    stop("`x=` must be class 'tbl_summary'")
+  if (!inherits(x, c("tbl_summary", "tbl_svysummary"))) {
+    stop("`x=` must be class 'tbl_summary' or 'tbl_svysummary'", call. = FALSE)
   }
   if (is.null(x$by) || nrow(x$df_by) != 2) {
-    stop("'tbl_summary' object must have a `by=` value with exactly two levels")
+    stop("'tbl_summary'/'tbl_svysummary' object must have a `by=` value with exactly two levels", call. = FALSE)
   }
   if ("add_p" %in% names(x$call_list)) {
-    stop("`add_difference()` cannot be run after `add_p()`, and vice versa")
+    stop("`add_difference()` cannot be run after `add_p()`", call. = FALSE)
   }
   if (rlang::is_function(estimate_fun)) {
     lifecycle::deprecate_warn(
@@ -85,15 +85,23 @@ add_difference <- function(x, test = NULL, group = NULL,
   include <-
     .select_to_varnames(
       select = {{ include }},
-      data = select(x$inputs$data, any_of(x$meta_data$variable)),
+      data = select(use_data_frame(x$inputs$data), any_of(x$meta_data$variable)),
       var_info = x$table_body,
       arg_name = "include"
     )
 
+  test <-
+    .formula_list_to_named_list(
+      x = test,
+      data = select(use_data_frame(x$inputs$data), any_of(include)),
+      var_info = x$table_body,
+      arg_name = "test"
+    )
+
   estimate_fun <-
-    .select_to_varnames(
-      select = {{ estimate_fun }},
-      data = select(x$inputs$data, any_of(x$meta_data$variable)),
+    .formula_list_to_named_list(
+      x = {{ estimate_fun }},
+      data = select(use_data_frame(x$inputs$data), any_of(x$meta_data$variable)),
       var_info = x$table_body,
       arg_name = "estimate_fun"
     )
@@ -101,29 +109,21 @@ add_difference <- function(x, test = NULL, group = NULL,
     x$meta_data$variable %>%
     map(
       ~ estimate_fun[[.x]] %||%
-        switch(x$meta_data %>%
-          filter(.data$variable %in% .x) %>%
-          pull(.data$summary_type) %in% c("continuous", "continuous2"),
-        style_sigfig
+        switch(
+          x$meta_data[x$meta_data$variable %in% .x,]$summary_type %in% "dichotomous" &&
+            !identical(test[[.x]], "smd"),
+          function(x) ifelse(!is.na(x), paste0(style_sigfig(x * 100), "%"), NA_character_)
         ) %||%
-        (function(x) ifelse(!is.na(x), paste0(style_sigfig(x * 100), "%"), NA_character_))
+        style_sigfig
     ) %>%
     set_names(x$meta_data$variable)
 
   adj.vars <-
     .select_to_varnames(
       select = {{ adj.vars }},
-      data = x$inputs$data,
+      data = use_data_frame(x$inputs$data),
       var_info = x$table_body,
       arg_name = "adj.vars"
-    )
-
-  test <-
-    .formula_list_to_named_list(
-      x = test,
-      data = select(x$inputs$data, any_of(include)),
-      var_info = x$table_body,
-      arg_name = "test"
     )
 
   pvalue_fun <-
@@ -136,28 +136,12 @@ add_difference <- function(x, test = NULL, group = NULL,
   group <-
     .select_to_varnames(
       select = {{ group }},
-      data = x$inputs$data,
+      data = use_data_frame(x$inputs$data),
       var_info = x$table_body,
       arg_name = "group",
       select_single = TRUE
     )
 
-  # removing categorical variables
-  if ("categorical" %in% dplyr::filter(x$meta_data, .data$variable %in% include)$summary_type) {
-    cat_vars <-
-      dplyr::filter(
-        x$meta_data,
-        .data$variable %in% include,
-        .data$summary_type %in% "categorical"
-      ) %>%
-      dplyr::pull(.data$variable)
-    glue(
-      "Variable(s) {quoted_list(cat_vars)} are summary type 'categorical' ",
-      "and not compatible with `add_difference()`."
-    ) %>%
-      rlang::inform()
-    include <- include %>% setdiff(cat_vars)
-  }
   # checking for `tbl_summary(percent = c("cell", "row"))`, which don't apply
   if (!identical(x$inputs$percent, "column")) {
     bad_percent_vars <-
@@ -200,10 +184,10 @@ add_difference <- function(x, test = NULL, group = NULL,
       test_info = map(
         .data$test,
         function(test) {
-          .get_add_p_test_fun("tbl_summary",
-            test = test,
-            env = caller_env, parent_fun = "add_difference"
-          )
+          .get_add_p_test_fun(class(x)[1],
+                              test = test,
+                              env = caller_env,
+                              parent_fun = "add_difference")
         }
       ),
       test_name = map_chr(.data$test_info, ~ pluck(.x, "test_name"))
@@ -217,7 +201,7 @@ add_difference <- function(x, test = NULL, group = NULL,
   test.args <-
     .formula_list_to_named_list(
       x = test.args,
-      data = select(x$inputs$data, any_of(include)),
+      data = select(use_data_frame(x$inputs$data), any_of(include)),
       var_info = x$table_body,
       arg_name = "test.args"
     )
@@ -263,4 +247,9 @@ add_difference <- function(x, test = NULL, group = NULL,
 
   # return results -------------------------------------------------------------
   x
+}
+
+use_data_frame <- function(x) {
+  if (is.data.frame(x)) return(x)
+  x$variables # return survey object data frame
 }

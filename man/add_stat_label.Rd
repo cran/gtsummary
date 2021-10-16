@@ -39,7 +39,7 @@ Therefore, when you want to merge a table that has run \code{add_stat_label(loca
 you need to match the \code{"label"} column values before the \code{"stat_column"}
 is merged with it.
 
-For example, the following two tables merge properly\if{html}{\out{<div class="r">}}\preformatted{tbl1 <- trial \%>\% select(age, grade) \%>\% tbl_summary() \%>\% add_stat_label()
+For example, the following two tables merge properly\if{html}{\out{<div class="sourceCode r">}}\preformatted{tbl1 <- trial \%>\% select(age, grade) \%>\% tbl_summary() \%>\% add_stat_label()
 tbl2 <- lm(marker ~ age + grade, trial) \%>\% tbl_regression()
 
 tbl_merge(list(tbl1, tbl2))
@@ -96,6 +96,7 @@ add_stat_label_ex3 <-
 }
 \seealso{
 Other tbl_summary tools: 
+\code{\link{add_ci}()},
 \code{\link{add_n.tbl_summary}()},
 \code{\link{add_overall}()},
 \code{\link{add_p.tbl_summary}()},
@@ -104,8 +105,12 @@ Other tbl_summary tools:
 \code{\link{inline_text.tbl_summary}()},
 \code{\link{inline_text.tbl_survfit}()},
 \code{\link{modify}},
+\code{\link{separate_p_footnotes}()},
+\code{\link{tbl_custom_summary}()},
 \code{\link{tbl_merge}()},
+\code{\link{tbl_split}()},
 \code{\link{tbl_stack}()},
+\code{\link{tbl_strata}()},
 \code{\link{tbl_summary}()}
 
 Other tbl_svysummary tools: 
@@ -114,8 +119,11 @@ Other tbl_svysummary tools:
 \code{\link{add_p.tbl_svysummary}()},
 \code{\link{add_q}()},
 \code{\link{modify}},
+\code{\link{separate_p_footnotes}()},
 \code{\link{tbl_merge}()},
+\code{\link{tbl_split}()},
 \code{\link{tbl_stack}()},
+\code{\link{tbl_strata}()},
 \code{\link{tbl_svysummary}()}
 }
 \author{

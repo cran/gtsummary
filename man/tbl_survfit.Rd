@@ -72,7 +72,7 @@ Default is \code{FALSE}.  Does not apply to survival quantile requests}
 \item{include}{Variable to include as stratifying variables.}
 }
 \description{
-\lifecycle{experimental}
+\lifecycle{maturing}
 Function takes a \code{survfit} object as an argument, and provides a
 formatted summary table of the results
 }
@@ -96,6 +96,7 @@ formatted summary table of the results
 }
 
 \examples{
+\dontshow{if (assert_package("survival", boolean = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 library(survival)
 
 # Example 1 ----------------------------------
@@ -141,6 +142,7 @@ trial2 <- trial \%>\%
 survfit_cr_ex4 <-
   survfit(Surv(ttdeath, death_cr) ~ grade, data = trial2) \%>\%
   tbl_survfit(times = c(12, 24), label = "Tumor Grade")
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 Other tbl_survfit tools: 
@@ -149,7 +151,9 @@ Other tbl_survfit tools:
 \code{\link{add_p.tbl_survfit}()},
 \code{\link{modify}},
 \code{\link{tbl_merge}()},
-\code{\link{tbl_stack}()}
+\code{\link{tbl_split}()},
+\code{\link{tbl_stack}()},
+\code{\link{tbl_strata}()}
 }
 \author{
 Daniel D. Sjoberg

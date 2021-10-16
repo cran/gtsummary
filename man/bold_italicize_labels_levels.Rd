@@ -52,6 +52,7 @@ tbl_bold_ital_ex <-
 }
 \seealso{
 Other tbl_summary tools: 
+\code{\link{add_ci}()},
 \code{\link{add_n.tbl_summary}()},
 \code{\link{add_overall}()},
 \code{\link{add_p.tbl_summary}()},
@@ -60,8 +61,12 @@ Other tbl_summary tools:
 \code{\link{inline_text.tbl_summary}()},
 \code{\link{inline_text.tbl_survfit}()},
 \code{\link{modify}},
+\code{\link{separate_p_footnotes}()},
+\code{\link{tbl_custom_summary}()},
 \code{\link{tbl_merge}()},
+\code{\link{tbl_split}()},
 \code{\link{tbl_stack}()},
+\code{\link{tbl_strata}()},
 \code{\link{tbl_summary}()}
 
 Other tbl_regression tools: 
@@ -72,7 +77,9 @@ Other tbl_regression tools:
 \code{\link{modify}},
 \code{\link{tbl_merge}()},
 \code{\link{tbl_regression}()},
-\code{\link{tbl_stack}()}
+\code{\link{tbl_split}()},
+\code{\link{tbl_stack}()},
+\code{\link{tbl_strata}()}
 
 Other tbl_uvregression tools: 
 \code{\link{add_global_p}()},
@@ -80,7 +87,9 @@ Other tbl_uvregression tools:
 \code{\link{inline_text.tbl_uvregression}()},
 \code{\link{modify}},
 \code{\link{tbl_merge}()},
+\code{\link{tbl_split}()},
 \code{\link{tbl_stack}()},
+\code{\link{tbl_strata}()},
 \code{\link{tbl_uvregression}()}
 }
 \author{

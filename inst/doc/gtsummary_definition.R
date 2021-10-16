@@ -32,7 +32,17 @@ tibble::tribble(
   "spanning_header", "Includes text printed above columns as spanning headers.",
   "interpret_spanning_header", "the {gt} function that is used to interpret the column spanning headers, `gt::md()` or `gt::html()`"
 ) %>%
-  knitr::kable() 
+  gt::gt() %>%
+  gt::fmt_markdown(columns = everything()) %>%
+  gt::tab_options(
+            table.font.size = "small",
+            data_row.padding = gt::px(1),
+            summary_row.padding = gt::px(1),
+            grand_summary_row.padding = gt::px(1),
+            footnotes.padding = gt::px(1),
+            source_notes.padding = gt::px(1),
+            row_group.padding = gt::px(1)
+          )
 
 ## ---- echo=FALSE--------------------------------------------------------------
 tibble::tribble(
@@ -41,7 +51,17 @@ tibble::tribble(
   "rows", "expression selecting rows in `.$table_body`, `NA` indicates to add footnote to header",
   "footnote", "string containing footnote to add to column/row"
 ) %>%
-  knitr::kable() 
+  gt::gt() %>%
+  gt::fmt_markdown(columns = everything()) %>%
+  gt::tab_options(
+            table.font.size = "small",
+            data_row.padding = gt::px(1),
+            summary_row.padding = gt::px(1),
+            grand_summary_row.padding = gt::px(1),
+            footnotes.padding = gt::px(1),
+            source_notes.padding = gt::px(1),
+            row_group.padding = gt::px(1)
+          )
 
 ## ---- echo=FALSE--------------------------------------------------------------
 tibble::tribble(
@@ -50,7 +70,17 @@ tibble::tribble(
   "rows", "expression selecting rows in `.$table_body`",
   "fmt_fun", "list of formatting/styling functions"
 ) %>%
-  knitr::kable() 
+  gt::gt() %>%
+  gt::fmt_markdown(columns = everything()) %>%
+  gt::tab_options(
+            table.font.size = "small",
+            data_row.padding = gt::px(1),
+            summary_row.padding = gt::px(1),
+            grand_summary_row.padding = gt::px(1),
+            footnotes.padding = gt::px(1),
+            source_notes.padding = gt::px(1),
+            row_group.padding = gt::px(1)
+          )
 
 ## ---- echo=FALSE--------------------------------------------------------------
 tibble::tribble(
@@ -59,8 +89,18 @@ tibble::tribble(
   "rows", "expression selecting rows in `.$table_body`",
   "format_type", "one of `c('bold', 'italic', 'indent')`",
   "undo_text_format", "logical indicating where the formatting indicated should be undone/removed."
-) %>%
-  knitr::kable() 
+)%>%
+  gt::gt() %>%
+  gt::fmt_markdown(columns = everything()) %>%
+  gt::tab_options(
+            table.font.size = "small",
+            data_row.padding = gt::px(1),
+            summary_row.padding = gt::px(1),
+            grand_summary_row.padding = gt::px(1),
+            footnotes.padding = gt::px(1),
+            source_notes.padding = gt::px(1),
+            row_group.padding = gt::px(1)
+          )
 
 ## ---- echo=FALSE--------------------------------------------------------------
 tibble::tribble(
@@ -69,7 +109,17 @@ tibble::tribble(
   "rows", "expression selecting rows in `.$table_body`",
   "symbol", "string to replace missing values with, e.g. an em-dash"
 ) %>%
-  knitr::kable() 
+  gt::gt() %>%
+  gt::fmt_markdown(columns = everything()) %>%
+  gt::tab_options(
+            table.font.size = "small",
+            data_row.padding = gt::px(1),
+            summary_row.padding = gt::px(1),
+            grand_summary_row.padding = gt::px(1),
+            footnotes.padding = gt::px(1),
+            source_notes.padding = gt::px(1),
+            row_group.padding = gt::px(1)
+          )
 
 ## ---- echo=FALSE--------------------------------------------------------------
 tibble::tribble(
@@ -78,7 +128,17 @@ tibble::tribble(
   "rows", "expression selecting rows in `.$table_body`",
   "pattern", "glue pattern directing how to combine/merge columns. The merged columns will replace the column indicated in 'column'."
 ) %>%
-  knitr::kable() 
+  gt::gt() %>%
+  gt::fmt_markdown(columns = everything()) %>%
+  gt::tab_options(
+            table.font.size = "small",
+            data_row.padding = gt::px(1),
+            summary_row.padding = gt::px(1),
+            grand_summary_row.padding = gt::px(1),
+            footnotes.padding = gt::px(1),
+            source_notes.padding = gt::px(1),
+            row_group.padding = gt::px(1)
+          )
 
 ## -----------------------------------------------------------------------------
 tbl_regression_ex$table_styling
@@ -100,4 +160,25 @@ tbl_regression_ex %>%
 #      ) %>%
 #      print()
 #  }
+
+## ---- echo = FALSE------------------------------------------------------------
+tibble::tribble(
+  ~Column, ~Description,
+  "`variable`", "String of the variable name",
+  "`label`", "String matching the variable's values in `.$table_body$label`",
+  "`col_name`", "The column name the statistics appear under in `.$table_body`, e.g. `'stat_0'`, `'stat_1'`",
+  "`variable_levels`", "This column appears if and only if the variable being summarized has multiple levels. The column is equal to the variable's levels.",
+  "`<statistics>`", "Primarily, the tibble stores the summary statistics for each variable. For example, when the mean is requested in `tbl_summary()`, there will be a column called `'mean'`."
+)%>%
+  gt::gt() %>%
+  gt::fmt_markdown(columns = everything()) %>%
+  gt::tab_options(
+            table.font.size = "small",
+            data_row.padding = gt::px(1),
+            summary_row.padding = gt::px(1),
+            grand_summary_row.padding = gt::px(1),
+            footnotes.padding = gt::px(1),
+            source_notes.padding = gt::px(1),
+            row_group.padding = gt::px(1)
+          )
 

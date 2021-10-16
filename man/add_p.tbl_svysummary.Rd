@@ -75,6 +75,7 @@ Adds p-values to tables created by \code{tbl_svysummary} by comparing values acr
 }
 
 \examples{
+\dontshow{if (assert_package("survey", boolean = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 # Example 1 ----------------------------------
 # A simple weighted dataset
 add_p_svysummary_ex1 <-
@@ -101,6 +102,7 @@ add_p_svysummary_ex3 <-
       all_categorical() ~ "svy.wald.test"
     )
   )
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 Other tbl_svysummary tools: 
@@ -109,8 +111,11 @@ Other tbl_svysummary tools:
 \code{\link{add_q}()},
 \code{\link{add_stat_label}()},
 \code{\link{modify}},
+\code{\link{separate_p_footnotes}()},
 \code{\link{tbl_merge}()},
+\code{\link{tbl_split}()},
 \code{\link{tbl_stack}()},
+\code{\link{tbl_strata}()},
 \code{\link{tbl_svysummary}()}
 }
 \author{

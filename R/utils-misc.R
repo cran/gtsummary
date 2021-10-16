@@ -1,32 +1,3 @@
-
-#' Check that a package is installed, stopping otherwise
-#'
-#' @param pkg Package required
-#' @param fn Calling function from the user perspective
-#'
-#' @return Returns NULL or not at all.
-#'
-#' @noRd
-#' @keywords internal
-#' @author David Hugh-Jones
-assert_package <- function(pkg, fn, version = NULL) {
-  if (is.null(version) && !requireNamespace(pkg, quietly = TRUE)) {
-    cli_alert_danger("The {.val {pkg}} package is required for function {.code {fn}}.")
-    cli_ul("Install {.val {pkg}} with the code below.")
-    cli_code(glue('install.packages("{pkg}")'))
-    stop("Install required package", call. = FALSE)
-  }
-
-  if (!is.null(version) &&
-    (!requireNamespace(pkg, quietly = TRUE) ||
-      (requireNamespace(pkg, quietly = TRUE) && utils::packageVersion(pkg) < version))) {
-    cli_alert_danger("The {.val {pkg}} package {.field v{version}} or greater is required for function {.code {fn}}.")
-    cli_ul("Install/update {.val {pkg}} with the code below.")
-    cli_code(glue('install.packages("{pkg}")'))
-    stop("Install required package", call. = FALSE)
-  }
-}
-
 # converts a character vector into a quotes list separated by a comma, eg 'a', 'b'
 quoted_list <- function(x) {
   paste(shQuote(x, type = "csh"), collapse = ", ")
@@ -66,8 +37,8 @@ gts_mapper <- function(x, context) {
       "e.g. `fun = function(x) style_pvalue(x, digits = 2)`, or\n",
       "`fun = ~style_pvalue(., digits = 2)`"
     ) %>%
-      stringr::str_glue()
-    rlang::abort()
+      stringr::str_glue() %>%
+      rlang::abort()
   }
 
   purrr::as_mapper(x)

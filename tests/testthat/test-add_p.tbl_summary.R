@@ -202,19 +202,19 @@ test_that("p-values are replicated within tbl_summary()", {
   tbl_test.args <-
     trial %>%
     select(trt,
-      var_t.test = age,
-      var_t.test_dots = age,
-      var_kruskal.test = age,
-      var_wilcox.test = age,
-      var_wilcox.test_dots = age,
-      var_aov = age,
-      var_chisq.test = response,
-      var_chisq.test_dots = response,
-      var_chisq.test.no.correct = response,
-      var_fisher.test = response,
-      var_fisher.test_dots = response,
-      var_mcnemar.test = response,
-      var_mcnemar.test_dots = response,
+           var_t.test = age,
+           var_t.test_dots = age,
+           var_kruskal.test = age,
+           var_wilcox.test = age,
+           var_wilcox.test_dots = age,
+           var_aov = age,
+           var_chisq.test = response,
+           var_chisq.test_dots = response,
+           var_chisq.test.no.correct = response,
+           var_fisher.test = response,
+           var_fisher.test_dots = response,
+           var_mcnemar.test = response,
+           var_mcnemar.test_dots = response,
     ) %>%
     tbl_summary(by = trt, missing = "no") %>%
     add_p(
@@ -225,15 +225,13 @@ test_that("p-values are replicated within tbl_summary()", {
         contains("aov") ~ aov,
         contains("chisq.test") ~ chisq.test,
         contains("chisq.test.no.correct") ~ "chisq.test.no.correct",
-        contains("fisher.test") ~ fisher.test,
-        contains("mcnemar.test") ~ mcnemar.test
+        contains("fisher.test") ~ fisher.test
       ),
       test.args = list(
         var_t.test_dots = list(var.equal = TRUE),
         var_wilcox.test_dots = list(correct = FALSE),
         var_chisq.test_dots = list(correct = FALSE),
-        var_fisher.test_dots = list(alternative = "greater"),
-        var_mcnemar.test_dots = list(correct = FALSE)
+        var_fisher.test_dots = list(alternative = "greater")
       )
     )
 
@@ -294,20 +292,14 @@ test_that("p-values are replicated within tbl_summary()", {
     fisher.test(trial[["response"]], as.factor(trial[["trt"]]), alternative = "greater")$p.value
   )
 
-  expect_equal(
-    filter(tbl_test.args$meta_data, variable == "var_mcnemar.test")$p.value,
-    mcnemar.test(trial[["response"]], as.factor(trial[["trt"]]))$p.value
-  )
-
-  expect_equal(
-    filter(tbl_test.args$meta_data, variable == "var_mcnemar.test_dots")$p.value,
-    mcnemar.test(trial[["response"]], as.factor(trial[["trt"]]), correct = FALSE)$p.value
-  )
-
   tbl_groups <-
     trial_group %>%
-    select(trt, id,
+    select(
+      trt, id,
       grade_lme4 = grade,
+      grade_mcnemar.test = grade,
+      response_mcnemar.test = response,
+      response_mcnemar.test_dots = response,
       age_paired.t.test = age,
       age_paired.t.test_dots = age,
       age_paired.wilcox.test = age,
@@ -317,14 +309,32 @@ test_that("p-values are replicated within tbl_summary()", {
     add_p(
       test = list(
         contains("paired.t.test") ~ "paired.t.test",
+        contains("mcnemar.test") ~ "mcnemar.test",
         contains("paired.wilcox.test") ~ "paired.wilcox.test"
       ),
       test.args = list(
         age_paired.t.test_dots ~ list(mu = 1),
+        response_mcnemar.test_dots ~ list(correct  = FALSE),
         age_paired.wilcox.test_dots ~ list(mu = 1)
       ),
       group = "id"
     )
+
+  expect_equal(
+    filter(tbl_groups$meta_data, variable == "response_mcnemar.test_dots")$p.value,
+    mcnemar.test(trial_group_wide[["response.x"]], trial_group_wide[["response.y"]],
+                 correct  = FALSE)$p.value
+  )
+
+  expect_equal(
+    filter(tbl_groups$meta_data, variable == "response_mcnemar.test")$p.value,
+    mcnemar.test(trial_group_wide[["response.x"]], trial_group_wide[["response.y"]])$p.value
+  )
+
+  expect_equal(
+    filter(tbl_groups$meta_data, variable == "grade_mcnemar.test")$p.value,
+    mcnemar.test(trial_group_wide[["grade.x"]], trial_group_wide[["grade.y"]])$p.value
+  )
 
   expect_equal(
     filter(tbl_groups$meta_data, variable == "age_paired.t.test")$p.value,
@@ -354,7 +364,7 @@ test_that("Groups arg and lme4", {
   tbl_groups <-
     trial_group %>%
     select(trt, id,
-      age_lme4 = age
+           age_lme4 = age
     ) %>%
     tbl_summary(by = trt, missing = "no", include = -id) %>%
     add_p(
@@ -388,13 +398,58 @@ test_that("no error with missing data", {
   expect_message(
     t1 <-
       mtcars %>%
-      mutate(mpg = NA, hp = NA) %>%
-      select(mpg, hp, am) %>%
+      mutate(mpg = NA, hp = NA, has_banana = factor(NA, levels = c("Yes", "No"))) %>%
+      select(has_banana, mpg, hp, am) %>%
       tbl_summary(by = "am", type = hp ~ "continuous") %>%
       add_p()
   )
   expect_equal(
     t1 %>% as_tibble(col_labels = FALSE) %>% dplyr::pull(p.value),
-    rep_len(NA_character_, 4)
+    rep_len(NA_character_, 8)
   )
+})
+
+test_that("add_p can be run after add_difference", {
+  expect_error(
+    trial %>%
+      select(age, trt) %>%
+      tbl_summary(by = trt) %>%
+      add_difference() %>%
+      add_p(all_continuous() ~ "t.test")
+  )
+
+  expect_error(
+    tbl <-
+      trial %>%
+      select(age, trt) %>%
+      tbl_summary(
+        by = trt,
+        missing = "no",
+        statistic = all_continuous() ~ "{mean}",
+        digits = all_continuous() ~ 3
+      ) %>%
+      add_difference(all_continuous() ~ "cohens_d") %>%
+      add_p(all_continuous() ~ "t.test") %>%
+      as_tibble(col_labels = FALSE),
+    NA
+  )
+
+  expect_equal(
+    tbl %>%
+      unlist(),
+    c(label = "Age",
+      stat_1 = "47.011",
+      stat_2 = "47.449",
+      estimate = "-0.03",
+      ci = "-0.32, 0.25",
+      p.value = "0.8")
+  )
+  expect_true(
+    tbl %>%
+      select(ends_with(".x") | ends_with(".y")) %>%
+      names() %>%
+      rlang::is_empty()
+  )
+
+
 })

@@ -2,7 +2,7 @@
 add_p_test_t.test <- function(data, variable, by, test.args, conf.level = 0.95, ...) {
   .superfluous_args(variable, ...)
   expr(stats::t.test(!!rlang::sym(variable) ~ as.factor(!!rlang::sym(by)),
-    data = !!data, conf.level = !!conf.level, !!!test.args
+                     data = !!data, conf.level = !!conf.level, !!!test.args
   )) %>%
     eval() %>%
     broom::tidy()
@@ -10,13 +10,13 @@ add_p_test_t.test <- function(data, variable, by, test.args, conf.level = 0.95, 
 
 add_p_test_aov <- function(data, variable, by, ...) {
   .superfluous_args(variable, ...)
-  p.value <-
-    rlang::expr(stats::aov(!!rlang::sym(variable) ~ as.factor(!!rlang::sym(by)), data = !!data)) %>%
-    eval() %>%
-    summary() %>%
-    pluck(1, "Pr(>F)", 1)
 
-  tibble::tibble(p.value = p.value, method = "One-way ANOVA")
+  rlang::expr(stats::aov(!!rlang::sym(variable) ~ as.factor(!!rlang::sym(by)), data = !!data)) %>%
+    eval() %>%
+    broom::tidy() %>%
+    dplyr::mutate(method = "One-way ANOVA") %>%
+    select(-.data$term) %>%
+    dplyr::slice(1)
 }
 
 add_p_test_kruskal.test <- function(data, variable, by, ...) {
@@ -28,7 +28,7 @@ add_p_test_kruskal.test <- function(data, variable, by, ...) {
 add_p_test_wilcox.test <- function(data, variable, by, test.args, ...) {
   .superfluous_args(variable, ...)
   expr(stats::wilcox.test(as.numeric(!!rlang::sym(variable)) ~ as.factor(!!rlang::sym(by)),
-    data = !!data, !!!test.args
+                          data = !!data, !!!test.args
   )) %>%
     eval() %>%
     broom::tidy() %>%
@@ -71,19 +71,6 @@ add_p_test_fisher.test <- function(data, variable, by, test.args, conf.level = 0
     )
 }
 
-add_p_test_mcnemar.test <- function(data, variable, by, test.args = NULL, ...) {
-  .superfluous_args(variable, ...)
-  rlang::expr(stats::mcnemar.test(data[[variable]], data[[by]], !!!test.args)) %>%
-    eval() %>%
-    broom::tidy() %>%
-    mutate(
-      method = case_when(
-        .data$method == "McNemar's Chi-squared test with continuity correction" ~ "McNemar's Chi-squared test",
-        TRUE ~ .data$method
-      )
-    )
-}
-
 add_p_test_lme4 <- function(data, variable, by, group, type, ...) {
   .superfluous_args(variable, ...)
   assert_package("lme4", "add_p(test = variable ~ 'lme4')")
@@ -109,10 +96,10 @@ add_p_test_lme4 <- function(data, variable, by, group, type, ...) {
 
   # building base and full models
   mod0 <- lme4::glmer(stats::as.formula(formula0),
-    data = data, family = stats::binomial
+                      data = data, family = stats::binomial
   )
   mod1 <- lme4::glmer(stats::as.formula(formula1),
-    data = data, family = stats::binomial
+                      data = data, family = stats::binomial
   )
 
   # returning p-value
@@ -129,16 +116,16 @@ add_p_tbl_summary_paired.t.test <- function(data, variable, by, group,
     stop("`by=` must have exactly 2 levels", call. = FALSE)
   }
   if (dplyr::group_by_at(data, c(by, group)) %>% dplyr::count(name = "..n..") %>%
-    pull(.data$..n..) %>% max(na.rm = TRUE) > 1) {
+      pull(.data$..n..) %>% max(na.rm = TRUE) > 1) {
     stop("'{variable}': There may only be one observation per `group=` per `by=` level.", call. = FALSE)
   }
 
   # reshaping data
   data_wide <-
     tidyr::pivot_wider(data,
-      id_cols = all_of(group),
-      names_from = all_of(by),
-      values_from = all_of(variable)
+                       id_cols = all_of(group),
+                       names_from = all_of(by),
+                       values_from = all_of(variable)
     )
 
   # message about missing data
@@ -155,9 +142,61 @@ add_p_tbl_summary_paired.t.test <- function(data, variable, by, group,
 
   # calculate p-value
   expr(stats::t.test(data_wide[[2]], data_wide[[3]],
-    paired = TRUE,
-    conf.level = !!conf.level, !!!test.args
+                     paired = TRUE,
+                     conf.level = !!conf.level, !!!test.args
   )) %>%
+    eval() %>%
+    broom::tidy()
+}
+
+
+add_p_test_mcnemar.test <- function(data, variable, by, group = NULL,
+                                    test.args = NULL, ...) {
+  quiet <- FALSE # need to add support for quiet later
+  .superfluous_args(variable, ...)
+
+  # note about deprecated method without a `group=` argument
+  if (is.null(group)) {
+    lifecycle::deprecate_stop(
+      when = "1.5.0",
+      what = "gtsummary::add_p(group='cannot be NULL with `mcnemar.test()`')",
+      details =
+        paste(
+          "Follow the link for an example of the updated syntax",
+          "https://www.danieldsjoberg.com/gtsummary/articles/gallery.html#paired-test")
+    )
+  }
+
+  # checking inputs
+  if (length(data[[by]] %>% stats::na.omit() %>% unique()) != 2) {
+    stop("`by=` must have exactly 2 levels", call. = FALSE)
+  }
+  if (dplyr::group_by_at(data, c(by, group)) %>% dplyr::count(name = "..n..") %>%
+      pull(.data$..n..) %>% max(na.rm = TRUE) > 1) {
+    stop("'{variable}': There may only be one observation per `group=` per `by=` level.", call. = FALSE)
+  }
+
+  # reshaping data
+  data_wide <-
+    tidyr::pivot_wider(data,
+                       id_cols = all_of(group),
+                       names_from = all_of(by),
+                       values_from = all_of(variable)
+    )
+
+  # message about missing data
+  if (quiet && any(is.na(data_wide[[2]]) + is.na(data_wide[[3]]) == 1)) {
+    glue(
+      "Note for variable '{variable}': Some observations included in the ",
+      "calculation of summary statistics ",
+      "were omitted from the p-value calculation due to unbalanced missingness ",
+      "within group."
+    ) %>%
+      rlang::inform()
+  }
+
+  # calculate p-value
+  rlang::expr(stats::mcnemar.test(data_wide[[2]], data_wide[[3]], !!!test.args)) %>%
     eval() %>%
     broom::tidy()
 }
@@ -171,16 +210,16 @@ add_p_tbl_summary_paired.wilcox.test <- function(data, variable, by, group,
     stop("`by=` must have exactly 2 levels", call. = FALSE)
   }
   if (dplyr::group_by_at(data, c(by, group)) %>% dplyr::count(name = "..n..") %>%
-    pull(.data$..n..) %>% max(na.rm = TRUE) > 1) {
+      pull(.data$..n..) %>% max(na.rm = TRUE) > 1) {
     stop("'{variable}': There may only be one observation per `group=` per `by=` level.", call. = FALSE)
   }
 
   # reshaping data
   data_wide <-
     tidyr::pivot_wider(data,
-      id_cols = all_of(group),
-      names_from = all_of(by),
-      values_from = all_of(variable)
+                       id_cols = all_of(group),
+                       names_from = all_of(by),
+                       values_from = all_of(variable)
     )
 
   # message about missing data
@@ -215,7 +254,7 @@ add_p_test_prop.test <- function(tbl, variable, test.args = NULL, conf.level = 0
     mutate(
       method = case_when(
         .data$method == "2-sample test for equality of proportions with continuity correction" ~
-        "Two sample test for equality of proportions",
+          "Two sample test for equality of proportions",
         TRUE ~ .data$method
       )
     )
@@ -226,7 +265,7 @@ add_p_test_ancova <- function(data, variable, by, conf.level = 0.95, adj.vars = 
   # reverse coding the 'by' variable
   data[[by]] <-
     switch(!is.factor(data[[by]]),
-      forcats::fct_rev(factor(data[[by]]))
+           forcats::fct_rev(factor(data[[by]]))
     ) %||%
     forcats::fct_rev(data[[by]])
 
@@ -260,7 +299,7 @@ add_p_test_ancova_lme4 <- function(data, variable, by, group, conf.level = 0.95,
   # reverse coding the 'by' variable
   data[[by]] <-
     switch(!is.factor(data[[by]]),
-      forcats::fct_rev(factor(data[[by]]))
+           forcats::fct_rev(factor(data[[by]]))
     ) %||%
     forcats::fct_rev(data[[by]])
 
@@ -298,6 +337,35 @@ add_p_test_cohens_d <- function(data, variable, by, conf.level = 0.95, test.args
     tibble::as_tibble() %>%
     select(estimate = .data$Cohens_d, conf.low = .data$CI_low, conf.high = .data$CI_high) %>%
     dplyr::mutate(method = "Cohen's D")
+}
+
+add_p_test_smd <- function(data, variable, by, tbl, type,
+                           conf.level = 0.95, ...) {
+  # formulas from https://support.sas.com/resources/papers/proceedings12/335-2012.pdf
+  assert_package("smd")
+  if (is_survey(data)) assert_package("survey")
+
+  if (use_data_frame(data)[[by]] %>% stats::na.omit() %>% unique() %>% length() != 2L) {
+    stop("SMD requires exactly two levels of `by=` variable", call. = FALSE)
+  }
+
+  smd_args <-
+    list(x = use_data_frame(data)[[variable]],
+         g = use_data_frame(data)[[by]],
+         std.error = TRUE,
+         na.rm = TRUE)
+
+  if (is_survey(data)) {
+    smd_args <- c(smd_args, list(w = stats::weights(data)))
+  }
+
+  rlang::inject(smd::smd(!!!smd_args)) %>%
+    select(.data$estimate, .data$std.error) %>%
+    mutate(
+      conf.low = .data$estimate + stats::qnorm((1 - .env$conf.level) / 2) * .data$std.error,
+      conf.high = .data$estimate - stats::qnorm((1 - .env$conf.level) / 2) * .data$std.error,
+      method = "Standardized Mean Difference"
+    )
 }
 
 # add_p.tbl_svysummary ---------------------------------------------------------
@@ -429,12 +497,12 @@ add_p_tbl_survfit_survdiff <- function(data, variable, test.args, ...) {
     dplyr::mutate(
       method =
         switch(is.null(test.args$rho) || test.args$rho == 0,
-          "Log-rank test"
+               "Log-rank test"
         ) %||%
-          switch(test.args$rho == 1,
-            "Peto & Peto modification of Gehan-Wilcoxon test"
-          ) %||%
-          stringr::str_glue("G-rho (\U03C1 = {test.args$rho}) test")
+        switch(test.args$rho == 1,
+               "Peto & Peto modification of Gehan-Wilcoxon test"
+        ) %||%
+        stringr::str_glue("G-rho (\U03C1 = {test.args$rho}) test")
     )
 }
 
@@ -461,9 +529,9 @@ add_p_tbl_survfit_coxph <- function(data, variable, test_type, test.args, ...) {
 
   # returning p-value
   method <- switch(test_type,
-    "log" = "Cox regression (LRT)",
-    "wald" = "Cox regression (Wald)",
-    "sc" = "Cox regression (Score)"
+                   "log" = "Cox regression (LRT)",
+                   "wald" = "Cox regression (Wald)",
+                   "sc" = "Cox regression (Score)"
   )
   broom::glance(coxph_result) %>%
     select(all_of(paste0(c("statistic.", "p.value."), test_type))) %>%

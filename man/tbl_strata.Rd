@@ -10,7 +10,9 @@ tbl_strata(
   .tbl_fun,
   ...,
   .sep = ", ",
-  .combine_with = c("tbl_merge", "tbl_stack")
+  .combine_with = c("tbl_merge", "tbl_stack"),
+  .stack_group_header = TRUE,
+  .quiet = NULL
 )
 }
 \arguments{
@@ -29,9 +31,15 @@ used to separate the levels in the spanning header. Default is \code{", "}}
 
 \item{.combine_with}{One of \code{c("tbl_merge", "tbl_stack")}. Names the function
 used to combine the stratified tables.}
+
+\item{.stack_group_header}{When \code{TRUE} and \code{.combine_with = 'tbl_stack'},
+the stratum are passed in \code{tbl_stack(group_header=)}. Default is \code{TRUE}}
+
+\item{.quiet}{Logical indicating whether to print messages in console.
+Default is \code{FALSE}}
 }
 \description{
-\lifecycle{experimental}
+\lifecycle{maturing}
 Build a stratified gtsummary table. Any gtsummary table that accepts
 a data frame as its first argument can be stratified.
 }
@@ -72,6 +80,76 @@ tbl_strata_ex1 <-
         add_n()
   )
 }
+\seealso{
+Other tbl_regression tools: 
+\code{\link{add_global_p}()},
+\code{\link{add_q}()},
+\code{\link{bold_italicize_labels_levels}},
+\code{\link{combine_terms}()},
+\code{\link{inline_text.tbl_regression}()},
+\code{\link{modify}},
+\code{\link{tbl_merge}()},
+\code{\link{tbl_regression}()},
+\code{\link{tbl_split}()},
+\code{\link{tbl_stack}()}
+
+Other tbl_uvregression tools: 
+\code{\link{add_global_p}()},
+\code{\link{add_q}()},
+\code{\link{bold_italicize_labels_levels}},
+\code{\link{inline_text.tbl_uvregression}()},
+\code{\link{modify}},
+\code{\link{tbl_merge}()},
+\code{\link{tbl_split}()},
+\code{\link{tbl_stack}()},
+\code{\link{tbl_uvregression}()}
+
+Other tbl_summary tools: 
+\code{\link{add_ci}()},
+\code{\link{add_n.tbl_summary}()},
+\code{\link{add_overall}()},
+\code{\link{add_p.tbl_summary}()},
+\code{\link{add_q}()},
+\code{\link{add_stat_label}()},
+\code{\link{bold_italicize_labels_levels}},
+\code{\link{inline_text.tbl_summary}()},
+\code{\link{inline_text.tbl_survfit}()},
+\code{\link{modify}},
+\code{\link{separate_p_footnotes}()},
+\code{\link{tbl_custom_summary}()},
+\code{\link{tbl_merge}()},
+\code{\link{tbl_split}()},
+\code{\link{tbl_stack}()},
+\code{\link{tbl_summary}()}
+
+Other tbl_survfit tools: 
+\code{\link{add_n.tbl_survfit}()},
+\code{\link{add_nevent.tbl_survfit}()},
+\code{\link{add_p.tbl_survfit}()},
+\code{\link{modify}},
+\code{\link{tbl_merge}()},
+\code{\link{tbl_split}()},
+\code{\link{tbl_stack}()},
+\code{\link{tbl_survfit}()}
+
+Other tbl_svysummary tools: 
+\code{\link{add_n.tbl_summary}()},
+\code{\link{add_overall}()},
+\code{\link{add_p.tbl_svysummary}()},
+\code{\link{add_q}()},
+\code{\link{add_stat_label}()},
+\code{\link{modify}},
+\code{\link{separate_p_footnotes}()},
+\code{\link{tbl_merge}()},
+\code{\link{tbl_split}()},
+\code{\link{tbl_stack}()},
+\code{\link{tbl_svysummary}()}
+}
 \author{
 Daniel D. Sjoberg
 }
+\concept{tbl_regression tools}
+\concept{tbl_summary tools}
+\concept{tbl_survfit tools}
+\concept{tbl_svysummary tools}
+\concept{tbl_uvregression tools}

@@ -241,7 +241,7 @@
     )
 
   # if expected counts >= 5 for all cells, chisq, otherwise Fishers exact
-  if (min_exp >= 5) {
+  if (isTRUE(min_exp >= 5 || is.nan(min_exp))) {
     test_func <-
       get_theme_element("add_p.tbl_summary-attr:test.categorical") %||%
       getOption("gtsummary.add_p.test.categorical", default = "chisq.test.no.correct")
@@ -287,23 +287,32 @@
   }
 }
 
-.assign_test_add_diff <- function(data, variable, summary_type, by, group, test, adj.vars) {
+.assign_test_add_diff <- function(data, variable, summary_type, by, group, test,
+                                  adj.vars) {
   # if user supplied a test, use that test -------------------------------------
   if (!is.null(test[[variable]])) {
     return(test[[variable]])
   }
 
-  if (summary_type %in% c("continuous", "continuous2") && is.null(group) && is.null(adj.vars)) {
+  if (summary_type %in% c("continuous", "continuous2") &&
+      is.null(group) && is.null(adj.vars) && is.data.frame(data)) {
     return("t.test")
   }
-  if (summary_type %in% c("continuous", "continuous2") && is.null(group)) {
+  if (summary_type %in% c("continuous", "continuous2")
+      && is.null(group) && is.data.frame(data)) {
     return("ancova")
   }
-  if (summary_type %in% "dichotomous" && is.null(group) && is.null(adj.vars)) {
+  if (summary_type %in% "dichotomous" && is.null(group) &&
+      is.null(adj.vars) && is.data.frame(data)) {
     return("prop.test")
   }
+  if (summary_type %in% "categorical" && is.null(group) &&
+      is.null(adj.vars) && is.data.frame(data)) {
+    return("smd")
+  }
 
-  if (summary_type %in% c("continuous", "continuous2") && !is.null(group)) {
+  if (summary_type %in% c("continuous", "continuous2") &&
+      !is.null(group) && is.data.frame(data)) {
     return("ancova_lme4")
   }
 
