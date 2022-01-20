@@ -105,9 +105,11 @@
 #' @export
 #' @family tbl_summary tools
 #' @family tbl_custom_summary tools
+#' @seealso Review [list, formula, and selector syntax][syntax] used throughout gtsummary
 #' @return A `tbl_custom_summary` and `tbl_summary` object
 #' @author Joseph Larmarange
 #' @examples
+#' \donttest{
 #' # Example 1 ----------------------------------
 #' my_stats <- function(data, ...) {
 #'   marker_sum = sum(data$marker, na.rm = TRUE)
@@ -161,10 +163,9 @@
 #'     update = all_stat_cols() ~ "mean [95% CI]"
 #'   )
 #'
-#' # Example 2 ----------------------------------
+#' # Example 3 ----------------------------------
 #' # Use `full_data` to access the full datasets
-#' # Returned statistic can also be a character, but you need to
-#' # define `digits` accordingly
+#' # Returned statistic can also be a character
 #' diff_to_great_mean <- function(data, full_data, ...) {
 #'   mean <- mean(data$marker, na.rm = TRUE)
 #'   great_mean <- mean(full_data$marker, na.rm = TRUE)
@@ -184,19 +185,22 @@
 #'     by = "trt",
 #'     stat_fns = ~ diff_to_great_mean,
 #'     statistic = ~ "{mean} ({level}, diff: {diff})",
-#'     digits = ~ list(1, as.character, 1),
 #'     overall_row = TRUE
 #'   ) %>%
 #'   bold_labels()
+#' }
 #' @section Example Output:
 #' \if{html}{Example 1}
-#' \if{html}{\figure{tbl_custom_summary_ex1.png}{options: width=31\%}}
+#'
+#' \if{html}{\figure{tbl_custom_summary_ex1.png}{options: width=45\%}}
 #'
 #' \if{html}{Example 2}
-#' \if{html}{\figure{tbl_custom_summary_ex2.png}{options: width=31\%}}
+#'
+#' \if{html}{\figure{tbl_custom_summary_ex2.png}{options: width=45\%}}
 #'
 #' \if{html}{Example 3}
-#' \if{html}{\figure{tbl_custom_summary_ex3.png}{options: width=31\%}}
+#'
+#' \if{html}{\figure{tbl_custom_summary_ex3.png}{options: width=35\%}}
 
 tbl_custom_summary <- function(
                         data, by = NULL, label = NULL,
@@ -283,7 +287,6 @@ tbl_custom_summary <- function(
   tbl_custom_summary_inputs <- as.list(environment())
 
   # checking function inputs ---------------------------------------------------
-  # verify if checks about stat_fns should be added at this stage
   tbl_summary_input_checks(
     data, by, label, type, value, statistic,
     digits, missing, missing_text, sort = NULL # sort to NULL
@@ -407,7 +410,9 @@ generate_metadata_custom_summary <- function(data, stat_fns, include,
     x = type,
     data = data,
     var_info = meta_data_to_var_info(meta_data),
-    arg_name = "type"
+    arg_name = "type",
+    type_check = chuck(type_check, "is_string", "fn"),
+    type_check_msg = chuck(type_check, "is_string", "msg")
   )
 
   # updating meta data object with new types
@@ -426,25 +431,33 @@ generate_metadata_custom_summary <- function(data, stat_fns, include,
       x = stat_fns,
       data = data %>% select(any_of(include)),
       var_info = meta_data_to_var_info(meta_data),
-      arg_name = "stat_fns"
+      arg_name = "stat_fns",
+      type_check = chuck(type_check, "is_function_or_string", "fn"),
+      type_check_msg = chuck(type_check, "is_function_or_string", "msg")
     )
   label <- .formula_list_to_named_list(
     x = label,
     data = data %>% select(any_of(include)), # adding a select
     var_info = meta_data_to_var_info(meta_data),
-    arg_name = "label"
+    arg_name = "label",
+    type_check = chuck(type_check, "is_character", "fn"),
+    type_check_msg = chuck(type_check, "is_character", "msg")
   )
   statistic <- .formula_list_to_named_list(
     x = statistic,
     data = data %>% select(any_of(include)), # adding a select
     var_info = meta_data_to_var_info(meta_data),
-    arg_name = "statistic"
+    arg_name = "statistic",
+    type_check = chuck(type_check, "is_character", "fn"),
+    type_check_msg = chuck(type_check, "is_character", "msg")
   )
   digits <- .formula_list_to_named_list(
     x = digits,
     data = data,
     var_info = meta_data_to_var_info(meta_data),
-    arg_name = "digits"
+    arg_name = "digits",
+    type_check = chuck(type_check, "digits", "fn"),
+    type_check_msg = chuck(type_check, "digits", "msg")
   )
 
   # assigning variable characteristics -----------------------------------------
@@ -624,38 +637,4 @@ summarize_custom <- function(data, stat_fn, variable, by, stat_display,
 
   # returning final object
   return
-}
-
-#' @rdname add_overall
-#' @export
-add_overall.tbl_custom_summary <- function(x, last = FALSE, col_label = NULL) {
-  updated_call_list <- c(x$call_list, list(add_overall = match.call()))
-  # checking that input x has a by var
-  if (is.null(x$inputs[["by"]])) {
-    stop(
-      "Cannot add Overall column when no 'by' variable in original tbl_custom_summary"
-    )
-  }
-
-  x_copy <- x
-
-  # removing 'by' variable from data
-  # (so it won't show up in the overall tbl_summary)
-  x_copy$inputs[["data"]] <- select(x$inputs[["data"]], -x[["by"]])
-  x_copy$inputs$include <- x_copy$inputs$include %>% setdiff(x[["by"]])
-
-  # replacing the function call by variable to NULL to get results overall
-  x_copy$inputs[["by"]] <- NULL
-
-  # if overall row, already included in data
-  x_copy$inputs$overall_row <- FALSE
-
-  # calculating stats overall, and adding header row
-  tbl_overall <- do.call(tbl_custom_summary, x_copy$inputs)
-
-  # merging overall results
-  x <- add_overall_merge(x, tbl_overall, last, col_label)
-
-  x$call_list <- updated_call_list
-  x
 }

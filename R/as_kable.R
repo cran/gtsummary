@@ -1,9 +1,7 @@
 #' Convert gtsummary object to a kable object
 #'
 #' @description Function converts a gtsummary object to a knitr_kable object.
-#' This function is used in the background when the results are printed or knit.
-#' A user can use this function if they wish to add customized formatting
-#' available via [knitr::kable].
+#' This function may be used in the background when the tables are printed or knitted.
 #'
 #' @description Output from [knitr::kable] is less full featured compared to
 #' summary tables produced with [gt](https://gt.rstudio.com/index.html).
@@ -30,7 +28,7 @@
 #'   bold_labels() %>%
 #'   as_kable()
 as_kable <- function(x, include = everything(), return_calls = FALSE,
-                     exclude = NULL, ...) {
+                     exclude = NULL, fmt_missing = TRUE, ...) {
   # DEPRECATION notes ----------------------------------------------------------
   if (!rlang::quo_is_null(rlang::enquo(exclude))) {
     lifecycle::deprecate_stop(
@@ -53,7 +51,7 @@ as_kable <- function(x, include = everything(), return_calls = FALSE,
 
   # creating list of kable calls -----------------------------------------------
   kable_calls <-
-    table_styling_to_kable_calls(x = x, ...)
+    table_styling_to_kable_calls(x = x, fmt_missing = fmt_missing, ...)
   if (return_calls == TRUE) {
     return(kable_calls)
   }
@@ -83,26 +81,39 @@ as_kable <- function(x, include = everything(), return_calls = FALSE,
     eval()
 }
 
-table_styling_to_kable_calls <- function(x, ...) {
+table_styling_to_kable_calls <- function(x, fmt_missing = TRUE, ...) {
   dots <- rlang::enexprs(...)
 
-  kable_calls <- table_styling_to_tibble_calls(x, col_labels = FALSE)
-
+  kable_calls <-
+    table_styling_to_tibble_calls(x, col_labels = FALSE, fmt_missing = fmt_missing)
 
   # fmt_missing ----------------------------------------------------------------
-  kable_calls[["fmt_missing"]] <- expr(dplyr::mutate_all(~ ifelse(is.na(.), "", .)))
+  kable_calls[["fmt_missing"]] <-
+    c(kable_calls[["fmt_missing"]],
+      list(expr(dplyr::mutate_all(~ ifelse(is.na(.), "", .)))))
 
   # kable ----------------------------------------------------------------------
-  df_col_labels <-
-    dplyr::filter(x$table_styling$header, .data$hide == FALSE)
-
-  if (!is.null(x$table_styling$caption)) {
-    kable_calls[["kable"]] <-
-      expr(knitr::kable(caption = !!x$table_styling$caption, col.names = !!df_col_labels$label, !!!dots))
-  } else {
-    kable_calls[["kable"]] <-
-      expr(knitr::kable(col.names = !!df_col_labels$label, !!!dots))
-  }
+  kable_calls[["kable"]] <- .construct_call_to_kable(x, ...)
 
   kable_calls
+}
+
+# constructs call to kable, and allows users to overwrite default arg values.
+.construct_call_to_kable <- function(x, ...) {
+  dots <- rlang::dots_list(...)
+  kable_args <-
+    # default args
+    list(
+      caption = x$table_styling$caption,
+      col.names = dplyr::filter(x$table_styling$header, .data$hide == FALSE)$label,
+      align =
+        filter(x$table_styling$header, .data$hide == FALSE) %>%
+        dplyr::pull(.data$align) %>%
+        stringr::str_sub(1, 1)
+    ) %>%
+    # update with any args user passed values
+    purrr::list_modify(!!!dots) %>%
+    purrr::compact()
+
+  expr(knitr::kable(!!!kable_args))
 }

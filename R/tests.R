@@ -8,15 +8,24 @@
 #' `tbl_summary(trial, by = trt) %>% add_p(age ~ "t.test", test.args = age ~ list(var.equal = TRUE))`
 #'
 #' @name tests
+#' @keywords internal
 #' @section tbl_summary() %>% add_p():
 #'
 #' ```{r, echo = FALSE}
+#' options(knitr.kable.NA = '')
+#' remove_na_details_column <- function(data) {
+#'   if (all(is.na(data[["**details**"]]))) return(dplyr::select(data, -`**details**`))
+#'   data
+#' }
+#'
 #' gtsummary:::df_add_p_tests %>%
 #'   dplyr::filter(class == "tbl_summary", add_p == TRUE) %>%
 #'   dplyr::mutate(test_name = shQuote(test_name) %>% {stringr::str_glue('`{.}`')}) %>%
 #'   select(`**alias**` = test_name,
 #'          `**description**` = description,
-#'          `**pseudo-code**` = pseudo_code) %>%
+#'          `**pseudo-code**` = pseudo_code,
+#'          `**details**` = details) %>%
+#'   remove_na_details_column() %>%
 #'   knitr::kable()
 #' ```
 #'
@@ -26,7 +35,11 @@
 #' gtsummary:::df_add_p_tests %>%
 #'   dplyr::filter(class == "tbl_svysummary", add_p == TRUE) %>%
 #'   dplyr::mutate(test_name = shQuote(test_name) %>% {stringr::str_glue('`{.}`')}) %>%
-#'   select(`**alias**` = test_name, `**description**` = description, `**pseudo-code**` = pseudo_code) %>%
+#'   select(`**alias**` = test_name,
+#'          `**description**` = description,
+#'          `**pseudo-code**` = pseudo_code,
+#'          `**details**` = details) %>%
+#'   remove_na_details_column() %>%
 #'   knitr::kable()
 #' ```
 #'
@@ -36,7 +49,25 @@
 #' gtsummary:::df_add_p_tests %>%
 #'   dplyr::filter(class == "tbl_survfit", add_p == TRUE) %>%
 #'   dplyr::mutate(test_name = shQuote(test_name) %>% {stringr::str_glue('`{.}`')}) %>%
-#'   select(`**alias**` = test_name, `**description**` = description, `**pseudo-code**` = pseudo_code) %>%
+#'   select(`**alias**` = test_name,
+#'          `**description**` = description,
+#'          `**pseudo-code**` = pseudo_code,
+#'          `**details**` = details) %>%
+#'   remove_na_details_column() %>%
+#'   knitr::kable()
+#' ```
+#'
+#' @section tbl_continuous() %>% add_p():
+#'
+#' ```{r, echo = FALSE}
+#' gtsummary:::df_add_p_tests %>%
+#'   dplyr::filter(class == "tbl_continuous", add_p == TRUE) %>%
+#'   dplyr::mutate(test_name = shQuote(test_name) %>% {stringr::str_glue('`{.}`')}) %>%
+#'   select(`**alias**` = test_name,
+#'          `**description**` = description,
+#'          `**pseudo-code**` = pseudo_code,
+#'          `**details**` = details) %>%
+#'   remove_na_details_column() %>%
 #'   knitr::kable()
 #' ```
 #'
@@ -49,7 +80,9 @@
 #'   select(`**alias**` = test_name,
 #'          `**description**` = description,
 #'          `**difference statistic**` = diff_statistic,
-#'          `**pseudo-code**` = pseudo_code) %>%
+#'          `**pseudo-code**` = pseudo_code,
+#'          `**details**` = details) %>%
+#'   remove_na_details_column() %>%
 #'   knitr::kable()
 #' ```
 #'
@@ -62,7 +95,9 @@
 #'   select(`**alias**` = test_name,
 #'          `**description**` = description,
 #'          `**difference statistic**` = diff_statistic,
-#'          `**pseudo-code**` = pseudo_code) %>%
+#'          `**pseudo-code**` = pseudo_code,
+#'          `**details**` = details) %>%
+#'   remove_na_details_column() %>%
 #'   knitr::kable()
 #' ```
 #'
@@ -113,14 +148,15 @@
 #'
 #' ```{r, echo = FALSE}
 #' tibble::tribble(
-#'   ~`**argument**`, ~`**tbl_summary**`, ~`**tbl_svysummary**`, ~`**tbl_survfit**`,
-#'   "`data=`", "A data frame", "A survey object", "A `survfit()` object",
-#'   "`variable=`", "String variable name", "String variable name", "`NA`",
-#'   "`by=`", "String variable name", "String variable name", "`NA`",
-#'   "`group=`", "String variable name", "`NA`", "`NA`",
-#'   "`type=`", "Summary type", "Summary type", "`NA`",
-#'   "`conf.level=`", "Confidence interval level", "`NA`", "`NA`",
-#'   "`adj.vars=`", "Character vector of adjustment variable names (e.g. used in ANCOVA)", "`NA`", "`NA`"
+#'   ~`**argument**`, ~`**tbl_summary**`, ~`**tbl_svysummary**`, ~`**tbl_survfit**`, ~`**tbl_continuous**`,
+#'   "`data=`", "A data frame", "A survey object", "A `survfit()` object", "A data frame",
+#'   "`variable=`", "String variable name", "String variable name", "`NA`", "String variable name",
+#'   "`by=`", "String variable name", "String variable name", "`NA`", "String variable name",
+#'   "`group=`", "String variable name", "`NA`", "`NA`", "String variable name",
+#'   "`type=`", "Summary type", "Summary type", "`NA`", "`NA`",
+#'   "`conf.level=`", "Confidence interval level", "`NA`", "`NA`", "`NA`",
+#'   "`adj.vars=`", "Character vector of adjustment variable names (e.g. used in ANCOVA)", "`NA`", "`NA`", "Character vector of adjustment variable names (e.g. used in ANCOVA)",
+#'   "`continuous_variable=`", "`NA`", "`NA`", "`NA`", "String of the continuous variable name"
 #' ) %>%
 #' knitr::kable()
 #' ```

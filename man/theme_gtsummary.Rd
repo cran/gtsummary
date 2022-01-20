@@ -16,7 +16,7 @@ theme_gtsummary_journal(
   set_theme = TRUE
 )
 
-theme_gtsummary_compact(set_theme = TRUE)
+theme_gtsummary_compact(set_theme = TRUE, font_size = NULL)
 
 theme_gtsummary_printer(
   print_engine = c("gt", "kable", "kable_extra", "flextable", "huxtable", "tibble"),
@@ -48,6 +48,9 @@ theme_gtsummary_eda(set_theme = TRUE)
 
 \item{set_theme}{Logical indicating whether to set the theme. Default is \code{TRUE}.
 When \code{FALSE} the named list of theme elements is returned invisibly}
+
+\item{font_size}{Numeric font size for compact theme.
+Default is 13 for gt tables, and 8 for all other output types}
 
 \item{print_engine}{String indicating the print method. Must be one of
 \code{"gt"}, \code{"kable"}, \code{"kable_extra"}, \code{"flextable"}, \code{"tibble"}}
@@ -85,7 +88,7 @@ will default to an en dash}
 \lifecycle{maturing}
 The following themes are available to use within the gtsummary package.
 Print theme elements with \code{theme_gtsummary_journal(set_theme = FALSE) \%>\% print()}.
-Review the \href{http://www.danieldsjoberg.com/gtsummary/articles/themes.html}{themes vignette}
+Review the \href{https://www.danieldsjoberg.com/gtsummary/articles/themes.html}{themes vignette}
 for details.
 }
 \section{Themes}{
@@ -141,7 +144,7 @@ for details.
 
 Use \code{reset_gtsummary_theme()} to restore the default settings
 
-Review the \href{http://www.danieldsjoberg.com/gtsummary/articles/themes.html}{themes vignette}
+Review the \href{https://www.danieldsjoberg.com/gtsummary/articles/themes.html}{themes vignette}
 to create your own themes.
 }
 
@@ -168,7 +171,7 @@ set_gtsummary_theme_ex1 <-
 reset_gtsummary_theme()
 }
 \seealso{
-\href{http://www.danieldsjoberg.com/gtsummary/articles/themes.html}{Themes vignette}
+\href{https://www.danieldsjoberg.com/gtsummary/articles/themes.html}{Themes vignette}
 
 \code{\link[=set_gtsummary_theme]{set_gtsummary_theme()}}, \code{\link[=reset_gtsummary_theme]{reset_gtsummary_theme()}}
 }

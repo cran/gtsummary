@@ -2,8 +2,9 @@
 #'
 #' @param x Object created from a gtsummary function
 #' @param ... Additional arguments passed to other methods.
+#' @keywords internal
 #' @author Daniel D. Sjoberg
-#' @seealso [add_p.tbl_summary], [add_p.tbl_cross], [add_p.tbl_svysummary], [add_p.tbl_survfit]
+#' @seealso [add_p.tbl_summary], [add_p.tbl_cross], [add_p.tbl_svysummary], [add_p.tbl_survfit], [add_p.tbl_continuous]
 #' @export
 add_p <- function(x, ...) {
   UseMethod("add_p")
@@ -31,11 +32,13 @@ add_p <- function(x, ...) {
 #' @param test.args List of formulas containing additional arguments to pass to
 #' tests that accept arguments. For example, add an argument for all t-tests,
 #' use `test.args = all_tests("t.test") ~ list(var.equal = TRUE)`
+#' @param exclude DEPRECATED.
 #' @param ... Not used
 #' @inheritParams tbl_regression
 #' @inheritParams tbl_summary
 #' @family tbl_summary tools
-#' @seealso See tbl_summary \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html}{vignette} for detailed examples
+#' @seealso See tbl_summary \href{https://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html}{vignette} for detailed examples
+#' @seealso Review [list, formula, and selector syntax][syntax] used throughout gtsummary
 #' @export
 #' @return A `tbl_summary` object
 #' @author Daniel D. Sjoberg, Emily C. Zabor
@@ -133,7 +136,7 @@ add_p.tbl_summary <- function(x, test = NULL, pvalue_fun = NULL,
       "p.value" %in% names(x$table_body)) {
     paste("`add_p()` cannot be run after `add_difference()` when a",
           "'p.value' column is already present.") %>%
-    stop(call. = FALSE)
+      stop(call. = FALSE)
   }
 
   # test -----------------------------------------------------------------------
@@ -143,7 +146,9 @@ add_p.tbl_summary <- function(x, test = NULL, pvalue_fun = NULL,
       x = test,
       data = select(x$inputs$data, any_of(include)),
       var_info = x$table_body,
-      arg_name = "test"
+      arg_name = "test",
+      type_check = chuck(type_check, "is_function_or_string", "fn"),
+      type_check_msg = chuck(type_check, "is_function_or_string", "msg")
     )
 
   # checking pvalue_fun are functions
@@ -190,7 +195,9 @@ add_p.tbl_summary <- function(x, test = NULL, pvalue_fun = NULL,
       x = test.args,
       data = select(x$inputs$data, any_of(include)),
       var_info = x$table_body,
-      arg_name = "test.args"
+      arg_name = "test.args",
+      type_check = chuck(type_check, "is_named", "fn"),
+      type_check_msg = chuck(type_check, "is_named", "msg")
     )
 
   x$meta_data <-
@@ -284,12 +291,12 @@ add_p_merge_p_values <- function(x, lgl_add_p = TRUE,
       modify_table_styling(
         columns = any_of("estimate"),
         label = ifelse(is.null(adj.vars),
-          paste0("**", translate_text("Difference"), "**"),
-          paste0("**", translate_text("Adjusted Difference"), "**")
+                       paste0("**", translate_text("Difference"), "**"),
+                       paste0("**", translate_text("Adjusted Difference"), "**")
         ),
         hide = FALSE,
         fmt_fun = switch(is_function(estimate_fun),
-          estimate_fun
+                         estimate_fun
         ),
         footnote = footnote_add_p(meta_data)
       )
@@ -305,8 +312,8 @@ add_p_merge_p_values <- function(x, lgl_add_p = TRUE,
             mutate(
               column =
                 c("estimate", "conf.low", "conf.high") %>%
-                  intersect(names(x$table_body)) %>%
-                  list(),
+                intersect(names(x$table_body)) %>%
+                list(),
               rows = glue(".data$variable == '{variable}'") %>% rlang::parse_expr() %>% list()
             ) %>%
             ungroup() %>%
@@ -318,7 +325,7 @@ add_p_merge_p_values <- function(x, lgl_add_p = TRUE,
 
     # adding formatted CI column
     if (all(c("conf.low", "conf.high") %in% names(x$table_body)) &&
-      !"ci" %in% names(x$table_body)) {
+        !"ci" %in% names(x$table_body)) {
       ci.sep <- get_theme_element("pkgwide-str:ci.sep", default = ", ")
       x <- x %>%
         modify_table_body(
@@ -328,10 +335,10 @@ add_p_merge_p_values <- function(x, lgl_add_p = TRUE,
                 list(variable, conf.low, conf.high),
                 ~ case_when(
                   !is.na(..2) | !is.na(..3) ~
-                  paste(do.call(estimate_fun[[..1]], list(..2)),
-                    do.call(estimate_fun[[..1]], list(..3)),
-                    sep = ci.sep
-                  )
+                    paste(do.call(estimate_fun[[..1]], list(..2)),
+                          do.call(estimate_fun[[..1]], list(..3)),
+                          sep = ci.sep
+                    )
                 )
               )
             )
@@ -367,6 +374,10 @@ add_p_merge_p_values <- function(x, lgl_add_p = TRUE,
 #' @param test A string specifying statistical test to perform. Default is
 #' "`chisq.test`" when expected cell counts >=5 and "`fisher.test`" when
 #' expected cell counts <5.
+#' @param test.args Named list containing additional arguments to pass to
+#' the test (if it accepts additional arguments).
+#' For example, add an argument for a chi-squared test with
+#' `test.args = list(correct = TRUE)`
 #' @inheritParams add_p.tbl_summary
 #' @family tbl_cross tools
 #' @author Karissa Whiting
@@ -392,7 +403,8 @@ add_p_merge_p_values <- function(x, lgl_add_p = TRUE,
 #'
 #' \if{html}{\figure{add_p_cross_ex2.png}{options: width=45\%}}
 add_p.tbl_cross <- function(x, test = NULL, pvalue_fun = NULL,
-                            source_note = NULL, ...) {
+                            source_note = NULL,
+                            test.args = NULL, ...) {
   updated_call_list <- c(x$call_list, list(add_p = match.call()))
   # setting defaults -----------------------------------------------------------
   test <- test %||% get_theme_element("add_p.tbl_cross-arg:test")
@@ -415,7 +427,10 @@ add_p.tbl_cross <- function(x, test = NULL, pvalue_fun = NULL,
 
   # adding test name if supplied (NULL otherwise)
   input_test <- switch(!is.null(test),
-    rlang::expr(everything() ~ !!test)
+                       rlang::expr(everything() ~ !!test)
+  )
+  input_test.args <- switch(!is.null(test.args),
+    rlang::expr(everything() ~ !!test.args)
   )
 
   # running add_p to add the p-value to the output
@@ -426,23 +441,19 @@ add_p.tbl_cross <- function(x, test = NULL, pvalue_fun = NULL,
     expr(
       add_p.tbl_summary(x,
                         test = !!input_test,
+                        test.args = !!input_test.args,
                         pvalue_fun = !!pvalue_fun,
                         include = -any_of("..total.."))
     ) %>%
     eval()
-  # replacing the input dataset with the original from the `tbl_cross()` call
+  # replacing the input data set with the original from the `tbl_cross()` call
   x$inputs$data <- x_copy$inputs$data
 
-  # updating footnote
-  test_name <- x$meta_data$stat_test_lbl %>% discard(is.na)
-  x <-
-    modify_table_styling(
-      x,
-      columns = "p.value",
-      footnote = test_name
-    )
-
   if (source_note == TRUE) {
+    test_name <-
+      x$meta_data$stat_test_lbl %>%
+      discard(is.na) %>%
+      translate_text()
     #  report p-value as a source_note
     # hiding p-value from output
     x <-
@@ -547,7 +558,9 @@ add_p.tbl_survfit <- function(x, test = "logrank", test.args = NULL,
     .formula_list_to_named_list(
       x = test,
       var_info = x$table_body,
-      arg_name = "test"
+      arg_name = "test",
+      type_check = chuck(type_check, "is_function_or_string", "fn"),
+      type_check_msg = chuck(type_check, "is_function_or_string", "msg")
     )
 
   # adding pvalue to meta data -------------------------------------------------
@@ -577,7 +590,9 @@ add_p.tbl_survfit <- function(x, test = "logrank", test.args = NULL,
     .formula_list_to_named_list(
       x = test.args,
       var_info = x$table_body,
-      arg_name = "test.args"
+      arg_name = "test.args",
+      type_check = chuck(type_check, "is_named", "fn"),
+      type_check_msg = chuck(type_check, "is_named", "msg")
     )
 
   # checking the formula and data from survfit object are available
@@ -650,7 +665,8 @@ add_p.tbl_survfit <- function(x, test = "logrank", test.args = NULL,
 #' @export
 #' @return A `tbl_svysummary` object
 #' @author Joseph Larmarange
-#' @examplesIf assert_package("survey", boolean = TRUE)
+#' @examplesIf broom.helpers::.assert_package("survey", boolean = TRUE)
+#' \donttest{
 #' # Example 1 ----------------------------------
 #' # A simple weighted dataset
 #' add_p_svysummary_ex1 <-
@@ -677,6 +693,7 @@ add_p.tbl_survfit <- function(x, test = "logrank", test.args = NULL,
 #'       all_categorical() ~ "svy.wald.test"
 #'     )
 #'   )
+#' }
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
@@ -733,7 +750,9 @@ add_p.tbl_svysummary <- function(x, test = NULL, pvalue_fun = NULL,
       x = test,
       data = select(x$inputs$data$variables, any_of(x$meta_data$variable)),
       var_info = x$table_body,
-      arg_name = "test"
+      arg_name = "test",
+      type_check = chuck(type_check, "is_function_or_string", "fn"),
+      type_check_msg = chuck(type_check, "is_function_or_string", "msg")
     )
 
   # checking pvalue_fun are functions
@@ -776,7 +795,9 @@ add_p.tbl_svysummary <- function(x, test = NULL, pvalue_fun = NULL,
       x = test.args,
       data = select(x$inputs$data, any_of(include)),
       var_info = x$table_body,
-      arg_name = "test.args"
+      arg_name = "test.args",
+      type_check = chuck(type_check, "is_named", "fn"),
+      type_check_msg = chuck(type_check, "is_named", "msg")
     )
 
   x$meta_data <-
@@ -804,3 +825,140 @@ add_p.tbl_svysummary <- function(x, test = NULL, pvalue_fun = NULL,
   x$call_list <- updated_call_list
   add_p_merge_p_values(x, meta_data = x$meta_data, pvalue_fun = pvalue_fun)
 }
+
+#' P-values for `tbl_continuous`
+#'
+#' @inheritParams add_p.tbl_summary
+#' @param test List of formulas specifying statistical tests to perform for each
+#' variable.
+#' Default is two-way ANOVA when `by=` is not `NULL`, and has the same defaults
+#' as `add_p.tbl_continuous()` when `by = NULL`.
+#' See [tests] for details, more tests, and instruction for implementing a custom test.
+#' @export
+#' @examples
+#' add_p_continuous_ex1 <-
+#'   tbl_continuous(
+#'     data = trial,
+#'     variable = age,
+#'     by = trt,
+#'     include = grade
+#'   ) %>%
+#'   add_p()
+add_p.tbl_continuous <- function(x, test = NULL, pvalue_fun = NULL,
+                                 include = everything(), test.args = NULL,
+                                 group = NULL, ...) {
+  updated_call_list <- c(x$call_list, list(add_p = match.call()))
+  # setting defaults from gtsummary theme --------------------------------------
+  pvalue_fun <-
+    pvalue_fun %||%
+    get_theme_element("pkgwide-fn:pvalue_fun", default = style_pvalue) %>%
+    gts_mapper("add_p(pvalue_fun=)")
+
+  # converting bare arguments to string ----------------------------------------
+  include <-
+    .select_to_varnames(
+      select = {{ include }},
+      data = select(x$inputs$data, any_of(x$meta_data$variable)),
+      var_info = x$table_body,
+      arg_name = "include"
+    )
+
+  group <-
+    .select_to_varnames(
+      select = {{ group }},
+      data = x$inputs$data,
+      arg_name = "group"
+    )
+
+  test <-
+    .formula_list_to_named_list(
+      x = test,
+      data = select(x$inputs$data, any_of(x$meta_data$variable)),
+      var_info = x$table_body,
+      arg_name = "test",
+      type_check = chuck(type_check, "is_function_or_string", "fn"),
+      type_check_msg = chuck(type_check, "is_function_or_string", "msg")
+    )
+
+  # checking pvalue_fun are functions
+  if (!is.function(pvalue_fun)) {
+    stop("Input 'pvalue_fun' must be a function.", call. = FALSE)
+  }
+
+  # caller_env for add_p
+  caller_env <- rlang::caller_env()
+
+  # getting the test name and pvalue
+  meta_data <-
+    x$meta_data %>%
+    select(.data$variable, .data$summary_type) %>%
+    filter(.data$variable %in% .env$include) %>%
+    mutate(
+      test =
+        map(
+          .data$variable,
+          function(variable) {
+            .assign_test_tbl_continuous(
+              data = x$inputs$data, continuous_variable = x$inputs$variable,
+              variable = variable,
+              by = x$inputs$by, group = group, test = test
+            )
+          }
+        ),
+      test_info =
+        map(
+          .data$test,
+          function(test) .get_add_p_test_fun("tbl_continuous", test = test, env = caller_env)
+        ),
+      test_name = map_chr(.data$test_info, ~ pluck(.x, "test_name"))
+    )
+
+  # adding test_name to table body so it can be used to select vars by the test
+  x$table_body <-
+    x$table_body %>%
+    select(-any_of(c("test_name", "test_result"))) %>%
+    left_join(meta_data[c("variable", "test_name")], by = "variable") %>%
+    select(.data$variable, .data$test_name, everything())
+
+  # converting to named list
+  test.args <-
+    .formula_list_to_named_list(
+      x = test.args,
+      data = select(x$inputs$data, any_of(include)),
+      var_info = x$table_body,
+      arg_name = "test.args",
+      type_check = chuck(type_check, "is_named", "fn"),
+      type_check_msg = chuck(type_check, "is_named", "msg")
+    )
+
+  x$meta_data <-
+    meta_data %>%
+    mutate(
+      test_result = pmap(
+        list(.data$test_info, .data$variable, .data$summary_type),
+        function(test_info, variable, summary_type) {
+          .run_add_p_test_fun(
+            x = test_info, data = .env$x$inputs$data,
+            by = .env$x$inputs$by, variable = variable,
+            group = group, type = summary_type,
+            test.args = test.args[[variable]], tbl = x,
+            continuous_variable = x$inputs$variable
+          )
+        }
+      ),
+      p.value = map_dbl(.data$test_result, ~ pluck(.x, "df_result", "p.value")),
+      stat_test_lbl = map_chr(.data$test_result, ~ pluck(.x, "df_result", "method"))
+    ) %>%
+    select(.data$variable, .data$test_result, .data$p.value, .data$stat_test_lbl) %>%
+    {
+      left_join(
+        x$meta_data %>% select(-any_of(c("test_result", "p.value", "stat_test_lbl"))),
+        .,
+        by = "variable")
+    }
+
+  x$call_list <- updated_call_list
+  add_p_merge_p_values(x, meta_data = x$meta_data, pvalue_fun = pvalue_fun)
+}
+
+

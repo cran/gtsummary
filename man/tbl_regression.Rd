@@ -19,8 +19,7 @@ tbl_regression(x, ...)
   pvalue_fun = NULL,
   tidy_fun = NULL,
   add_estimate_to_reference_rows = FALSE,
-  show_yesno = NULL,
-  exclude = NULL,
+  conf.int = NULL,
   ...
 )
 }
@@ -68,9 +67,8 @@ if installed.}
 
 \item{add_estimate_to_reference_rows}{add a reference value. Default is FALSE}
 
-\item{show_yesno}{DEPRECATED}
-
-\item{exclude}{DEPRECATED}
+\item{conf.int}{Logical indicating whether or not to include a confidence
+interval in the output. Defaults to \code{TRUE}.}
 }
 \value{
 A \code{tbl_regression} object
@@ -80,7 +78,7 @@ This function takes a regression model object and returns a formatted table
 that is publication-ready. The function is highly customizable
 allowing the user to obtain a bespoke summary table of the
 regression model results. Review the
-\href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html}{tbl_regression vignette}
+\href{https://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html}{tbl_regression vignette}
 for detailed examples.
 }
 \section{Methods}{
@@ -140,7 +138,9 @@ tbl_regression_ex3 <-
   tbl_regression(exponentiate = TRUE)
 }
 \seealso{
-See tbl_regression \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html}{vignette} for detailed examples
+See tbl_regression \href{https://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html}{vignette} for detailed examples
+
+Review \link[=syntax]{list, formula, and selector syntax} used throughout gtsummary
 
 Other tbl_regression tools: 
 \code{\link{add_global_p}()},

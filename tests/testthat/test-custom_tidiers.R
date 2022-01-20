@@ -29,8 +29,14 @@ test_that("no errors/warnings with pool_and_tidy_mice", {
 test_that("no errors/warnings with tbl_regression.multinom", {
   skip_if(!require("nnet"))
   expect_output(
-    nnet::multinom(grade ~ age, trial) %>%
+    tbl_nnet <-
+      nnet::multinom(grade ~ age, trial) %>%
       tbl_regression()
+  )
+  expect_error(
+    tbl_nnet %>%
+      as_tibble(),
+    NA
   )
 })
 
@@ -62,10 +68,13 @@ test_that("no errors/warnings with tbl_regression.gam", {
 })
 
 test_that("no errors/warnings with tidy_robust()", {
-  skip_if(!require("paramters") || !require("insight"))
-  expect_output(
+  skip_if(!require("parameters") || !require("insight"))
+  expect_error(
     glm(response ~ age + trt, trial, family = binomial) %>%
-      tbl_regression(tidy_fun = purrr::partial(tidy_robust, vcov_estimation = "CL"),
-                     exponentiate = TRUE)
+      tbl_regression(
+        tidy_fun = purrr::partial(tidy_robust, vcov_estimation = "CL"),
+        exponentiate = TRUE
+      ),
+    NA
   )
 })

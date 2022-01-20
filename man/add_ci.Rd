@@ -3,7 +3,7 @@
 \name{add_ci}
 \alias{add_ci}
 \alias{add_ci.tbl_summary}
-\title{Add Proportion CIs}
+\title{Add CI Column}
 \usage{
 add_ci(x, ...)
 
@@ -14,6 +14,7 @@ add_ci(x, ...)
   statistic = NULL,
   conf.level = 0.95,
   style_fun = NULL,
+  pattern = NULL,
   ...
 )
 }
@@ -39,12 +40,19 @@ Default is \code{list(all_categorical() ~ "{conf.low}\%, {conf.high}\%", all_con
 \item{style_fun}{Function to style upper and lower bound of confidence
 interval. Default is
 \code{list(all_categorical() ~ purrr::partial(style_sigfig, scale =  100), all_continuous() ~ style_sigfig)}.}
+
+\item{pattern}{string indicating the pattern to use to merge the CI with
+the statistics cell. The default is NULL, where no columns are merged.
+The two columns that will be merged are the statistics column,
+represented by \code{"{stat}"} and the CI column represented by \code{"{ci}"},
+e.g. \code{pattern = "{stat} ({ci})"} will merge the two columns with the CI
+in parentheses.}
 }
 \value{
 gtsummary table
 }
 \description{
-Add a new column with the confidence intervals for proportions.
+Add a new column with the confidence intervals for proportions, means, etc.
 }
 \section{method argument}{
 
@@ -71,7 +79,7 @@ Confidence intervals for means are calculated using \code{t.test()} and
 # Example 1 ----------------------------------
 add_ci_ex1 <-
   trial \%>\%
-  select(age, response, trt) \%>\%
+  select(marker, response, trt) \%>\%
   tbl_summary(missing = "no",
               statistic = all_continuous() ~ "{mean} ({sd})") \%>\%
   add_ci()
@@ -79,17 +87,15 @@ add_ci_ex1 <-
 # Example 2 ----------------------------------
 add_ci_ex2 <-
   trial \%>\%
-    select(response, trt) \%>\%
+    select(response, grade) \%>\%
     tbl_summary(statistic = all_categorical() ~ "{p}\%",
                 missing = "no") \%>\%
-    add_ci() \%>\%
-    modify_cols_merge(
-      rows = !is.na(ci_stat_0),
-      pattern = "{stat_0} ({ci_stat_0})"
-    ) \%>\%
+    add_ci(pattern = "{stat} ({ci})") \%>\%
     modify_footnote(everything() ~ NA)
 }
 \seealso{
+Review \link[=syntax]{list, formula, and selector syntax} used throughout gtsummary
+
 Other tbl_summary tools: 
 \code{\link{add_n.tbl_summary}()},
 \code{\link{add_overall}()},

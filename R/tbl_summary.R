@@ -2,7 +2,7 @@
 #'
 #' The `tbl_summary` function calculates descriptive statistics for
 #' continuous, categorical, and dichotomous variables.  Review the
-#' \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html}{tbl_summary vignette}
+#' \href{https://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html}{tbl_summary vignette}
 #' for detailed examples.
 #'
 #' @param data A data frame
@@ -28,7 +28,7 @@
 #' `list(all_continuous() ~ "{median} ({p25}, {p75})", all_categorical() ~ "{n} ({p}%)")`.
 #' See below for details.
 #' @param digits List of formulas specifying the number of decimal
-#' places to round continuous summary statistics. If not specified,
+#' places to round summary statistics. If not specified,
 #' `tbl_summary` guesses an appropriate number of decimals to round statistics.
 #' When multiple statistics are displayed for a single variable, supply a vector
 #' rather than an integer.  For example, if the
@@ -50,7 +50,7 @@
 #' @param include variables to include in the summary table. Default is `everything()`
 #'
 #' @section select helpers:
-#' \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html#select_helpers}{Select helpers}
+#' \href{https://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html#select_helpers}{Select helpers}
 #' from the \\{tidyselect\\} package and \\{gtsummary\\} package are available to
 #' modify default behavior for groups of variables.
 #' For example, by default continuous variables are reported with the median
@@ -106,6 +106,7 @@
 #'   \item `{var}` variance
 #'   \item `{min}` minimum
 #'   \item `{max}` maximum
+#'   \item `{sum}` sum
 #'   \item `{p##}` any integer percentile, where `##` is an integer from 0 to 100
 #'   \item `{foo}` any function of the form `foo(x)` is accepted where `x` is a numeric vector
 #' }
@@ -130,8 +131,9 @@
 #' @export
 #' @return A `tbl_summary` object
 #' @family tbl_summary tools
-#' @seealso See \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html}{tbl_summary vignette} for detailed tutorial
-#' @seealso See \href{http://www.danieldsjoberg.com/gtsummary/articles/gallery.html}{table gallery} for additional examples
+#' @seealso See \href{https://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html}{tbl_summary vignette} for detailed tutorial
+#' @seealso See \href{https://www.danieldsjoberg.com/gtsummary/articles/gallery.html}{table gallery} for additional examples
+#' @seealso Review [list, formula, and selector syntax][syntax] used throughout gtsummary
 #' @author Daniel D. Sjoberg
 #' @examples
 #' # Example 1 ----------------------------------
@@ -369,7 +371,9 @@ generate_metadata <- function(data, value, by, type, label,
     x = type,
     data = data,
     var_info = meta_data_to_var_info(meta_data),
-    arg_name = "type"
+    arg_name = "type",
+    type_check = chuck(type_check, "is_string", "fn"),
+    type_check_msg = chuck(type_check, "is_string", "msg")
   )
 
   # updating meta data object with new types
@@ -387,25 +391,33 @@ generate_metadata <- function(data, value, by, type, label,
     x = label,
     data = data,
     var_info = meta_data_to_var_info(meta_data),
-    arg_name = "label"
+    arg_name = "label",
+    type_check = chuck(type_check, "is_character", "fn"),
+    type_check_msg = chuck(type_check, "is_character", "msg")
   )
   statistic <- .formula_list_to_named_list(
     x = statistic,
     data = data,
     var_info = meta_data_to_var_info(meta_data),
-    arg_name = "statistic"
+    arg_name = "statistic",
+    type_check = chuck(type_check, "is_character", "fn"),
+    type_check_msg = chuck(type_check, "is_character", "msg")
   )
   digits <- .formula_list_to_named_list(
     x = digits,
     data = data,
     var_info = meta_data_to_var_info(meta_data),
-    arg_name = "digits"
+    arg_name = "digits",
+    type_check = chuck(type_check, "digits", "fn"),
+    type_check_msg = chuck(type_check, "digits", "msg")
   )
   sort <- .formula_list_to_named_list(
     x = sort,
     data = data,
     var_info = meta_data_to_var_info(meta_data),
-    arg_name = "sort"
+    arg_name = "sort",
+    type_check = chuck(type_check, "is_string", "fn"),
+    type_check_msg = chuck(type_check, "is_string", "msg")
   )
 
   # assigning variable characteristics -----------------------------------------

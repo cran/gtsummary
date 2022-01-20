@@ -22,7 +22,7 @@ if (!identical(Sys.getenv("IN_PKGDOWN"), "true") &&
     !tolower(as.list(Sys.info())$user) %in% c("sjobergd", "currym", "whitingk", "whiting")) {
   msg <- 
     paste("View this vignette on the",
-          "[package website](http://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html).")
+          "[package website](https://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html).")
   cat(msg)
   knitr::knit_exit()
 }
@@ -101,7 +101,7 @@ tibble::tribble(
 ## ----out.width = "80%", echo = FALSE, fig.align='center'----------------------
 # print picture of slide if in packagedown so not included in CRAN
 if (identical(Sys.getenv("IN_PKGDOWN"), "true")) {
-  knitr::include_graphics("https://github.com/ddsjoberg/gtsummary/raw/master/data-raw/crayon_images/crayon-selectors.png")
+  knitr::include_graphics("https://github.com/ddsjoberg/gtsummary/raw/main/data-raw/crayon_images/crayon-selectors.png")
 }
 
 ## ----echo = FALSE-------------------------------------------------------------

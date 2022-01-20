@@ -163,6 +163,7 @@ add_p_test_mcnemar.test <- function(data, variable, by, group = NULL,
       details =
         paste(
           "Follow the link for an example of the updated syntax",
+          "or update the test to `test = varname ~ 'mcnemar.test.wide'`.",
           "https://www.danieldsjoberg.com/gtsummary/articles/gallery.html#paired-test")
     )
   }
@@ -197,6 +198,13 @@ add_p_test_mcnemar.test <- function(data, variable, by, group = NULL,
 
   # calculate p-value
   rlang::expr(stats::mcnemar.test(data_wide[[2]], data_wide[[3]], !!!test.args)) %>%
+    eval() %>%
+    broom::tidy()
+}
+
+add_p_test_mcnemar.test_wide <- function(data, variable, by, test.args = NULL, ...) {
+  .superfluous_args(variable, ...)
+  rlang::expr(stats::mcnemar.test(data[[variable]], data[[by]], !!!test.args)) %>%
     eval() %>%
     broom::tidy()
 }
@@ -290,6 +298,84 @@ add_p_test_ancova <- function(data, variable, by, conf.level = 0.95, adj.vars = 
         TRUE ~ "ANCOVA"
       )
     )
+}
+
+add_p_test_emmeans <- function(data, variable, by, type,
+                               group = NULL,
+                               conf.level = 0.95, adj.vars = NULL, ...) {
+  .superfluous_args(variable, ...)
+
+  assert_package("emmeans")
+  if (!is.null(group)) assert_package("lme4")
+
+  # checking inputs
+  if (!type %in% c("continuous", "dichotomous")) {
+    stop("Variable must be summary type 'continuous' or 'dichotomous'", call. = FALSE)
+  }
+  if (length(data[[by]] %>% stats::na.omit() %>% unique()) != 2) {
+    stop("`by=` must have exactly 2 levels", call. = FALSE)
+  }
+  if (type %in% "dichotomous" &&
+      length(data[[variable]] %>% stats::na.omit() %>% unique()) != 2) {
+    stop("`variable=` must have exactly 2 levels", call. = FALSE)
+  }
+
+  # assembling formula
+  rhs <- c(by, adj.vars) %>%
+    chr_w_backtick() %>%
+    paste(collapse = " + ")
+  if (!is.null(group))
+    rhs <- paste0(rhs, "+ (1 | ", chr_w_backtick(group), ")")
+  f <- stringr::str_glue("{chr_w_backtick(variable)} ~ {rhs}") %>% as.formula()
+  f_by <- rlang::inject(~ !!rlang::sym(chr_w_backtick(by)))
+
+  type2 <-
+    dplyr::case_when(
+      is.null(group) ~ type,
+      type == "dichotomous" ~ "dichotomous_mixed",
+      type == "continuous" ~ "continuous_mixed",
+    )
+  model_fun <-
+    switch(
+      type2,
+      "dichotomous" =
+        purrr::partial(stats::glm, formula = f, data = data, family = stats::binomial),
+      "continuous" =
+        purrr::partial(stats::lm, formula = f, data = data),
+      "dichotomous_mixed" =
+        purrr::partial(lme4::glmer, formula = f, data = data, family = stats::binomial),
+      "continuous_mixed" =
+        purrr::partial(lme4::lmer, formula = f, data = data)
+    )
+
+  emmeans_fun <-
+    switch(
+      type,
+      "dichotomous" =
+        purrr::partial(emmeans::emmeans, specs = f_by, transform = "response"),
+      "continuous" =
+        purrr::partial(emmeans::emmeans, specs = f_by)
+    )
+
+  # building model
+  model_fun() %>%
+    emmeans_fun() %>%
+    emmeans::contrast(method = "pairwise") %>%
+    summary(infer = TRUE, level = conf.level) %>%
+    tibble::as_tibble() %>%
+    dplyr::rename(
+      conf.low = any_of("asymp.LCL"),
+      conf.high = any_of("asymp.UCL"),
+      conf.low = any_of("lower.CL"),
+      conf.high = any_of("upper.CL")
+    ) %>%
+    dplyr::select(
+      .data$estimate, std.error = .data$SE,
+      .data$conf.low, .data$conf.high,
+      .data$p.value
+    ) %>%
+    dplyr::mutate(
+      method = "Least-squares adjusted mean difference")
 }
 
 add_p_test_ancova_lme4 <- function(data, variable, by, group, conf.level = 0.95, adj.vars = NULL, ...) {
@@ -538,6 +624,48 @@ add_p_tbl_survfit_coxph <- function(data, variable, test_type, test.args, ...) {
     set_names(c("statistic", "p.value")) %>%
     mutate(method = method)
 }
+
+# add_p.tbl_continuous ---------------------------------------------------------
+add_p_test_anova_2way <- function(data, variable, by, continuous_variable, ...) {
+  rlang::inject(
+    stats::lm(!!sym(continuous_variable) ~ factor(!!sym(variable)) + factor(!!sym(by)),
+              data = data)
+  ) %>%
+    broom::glance() %>%
+    dplyr::select(.data$statistic, .data$p.value) %>%
+    mutate(method = "Two-way ANOVA")
+}
+
+add_p_test_tbl_summary_to_tbl_continuous <- function(
+  data, variable, by, continuous_variable, test.args = NULL, group = NULL,
+  test_name, ...) {
+
+  if (!is.null(by)) {
+    stop("This test cannot be used with `by=` variable specified.", call. = FALSE)
+  }
+
+  switch(
+    test_name,
+    "t.test" = add_p_test_t.test(data = data, variable = continuous_variable,
+                                 by = variable, test.args = test.args, ...),
+    "aov" = add_p_test_aov(data = data, variable = continuous_variable,
+                           by = variable, test.args = test.args, ...),
+    "kruskal.test" = add_p_test_kruskal.test(data = data, variable = continuous_variable,
+                                             by = variable, test.args = test.args, ...),
+    "wilcox.test" = add_p_test_wilcox.test(data = data, variable = continuous_variable,
+                                           by = variable, test.args = test.args, ...),
+    "lme4" = add_p_test_lme4(data = data, variable = continuous_variable,
+                             by = variable, test.args = test.args, group = group, ...),
+    "ancova" = add_p_test_ancova(data = data, variable = continuous_variable,
+                                 by = variable, test.args = test.args, ...),
+    "ancova_lme4" = add_p_test_ancova_lme4(data = data, variable = continuous_variable,
+                                           by = variable, test.args = test.args,
+                                           group = group, ...)
+  ) %||%
+    stop("No test selected", call. = FALSE) %>%
+    dplyr::select(-dplyr::any_of(c("estiamte", "conf.low", "conf.high")))
+}
+
 
 # checks if test.args was passed incorrectly
 .superfluous_args <- function(variable, ...) {

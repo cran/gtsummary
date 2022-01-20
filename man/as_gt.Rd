@@ -26,15 +26,16 @@ as a list of expressions.}
 A \code{gt_tbl} object
 }
 \description{
-Function converts a gtsummary object to a gt_tbl object.
+Function converts a gtsummary object to a \code{"gt_tbl"} object,
+that is, a table created with \code{gt::gt()}.
 Function is used in the background when the results are printed or knit.
 A user can use this function if they wish to add customized formatting
 available via the \href{https://gt.rstudio.com/index.html}{gt package}.
 
 Review the
-\href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html#advanced}{tbl_summary vignette}
+\href{https://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html#advanced}{tbl_summary vignette}
 or
-\href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html#advanced}{tbl_regression vignette}
+\href{https://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html#advanced}{tbl_regression vignette}
 for detailed examples in the 'Advanced Customization' section.
 }
 \section{Example Output}{

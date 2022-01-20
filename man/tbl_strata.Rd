@@ -2,6 +2,7 @@
 % Please edit documentation in R/tbl_strata.R
 \name{tbl_strata}
 \alias{tbl_strata}
+\alias{tbl_strata2}
 \title{Stratified gtsummary tables}
 \usage{
 tbl_strata(
@@ -11,7 +12,22 @@ tbl_strata(
   ...,
   .sep = ", ",
   .combine_with = c("tbl_merge", "tbl_stack"),
-  .stack_group_header = TRUE,
+  .combine_args = NULL,
+  .header = ifelse(.combine_with == "tbl_merge", "**{strata}**", "{strata}"),
+  .stack_group_header = NULL,
+  .quiet = NULL
+)
+
+tbl_strata2(
+  data,
+  strata,
+  .tbl_fun,
+  ...,
+  .sep = ", ",
+  .combine_with = c("tbl_merge", "tbl_stack"),
+  .combine_args = NULL,
+  .header = ifelse(.combine_with == "tbl_merge", "**{strata}**", "{strata}"),
+  .stack_group_header = NULL,
   .quiet = NULL
 )
 }
@@ -32,8 +48,21 @@ used to separate the levels in the spanning header. Default is \code{", "}}
 \item{.combine_with}{One of \code{c("tbl_merge", "tbl_stack")}. Names the function
 used to combine the stratified tables.}
 
-\item{.stack_group_header}{When \code{TRUE} and \code{.combine_with = 'tbl_stack'},
-the stratum are passed in \code{tbl_stack(group_header=)}. Default is \code{TRUE}}
+\item{.combine_args}{named list of arguments that are passed to function
+specified in \verb{.combine_with=}}
+
+\item{.header}{String indicating the headers that will be placed.
+Default is \code{"**{strata}**"} when \code{.combine_with = "tbl_merge"} and
+\code{"{strata}"} when \code{.combine_with = "tbl_stack"}. Items placed in
+curly brackets will be evaluated according to \code{glue::glue()} syntax.
+\itemize{
+\item \code{strata} stratum levels
+\item \code{n} N within stratum
+\item \code{N} Overall N
+The evaluated value of \verb{.header=} is also available within \code{tbl_strata2(.tbl_fun=)}
+}}
+
+\item{.stack_group_header}{DEPRECATED.}
 
 \item{.quiet}{Logical indicating whether to print messages in console.
 Default is \code{FALSE}}
@@ -42,6 +71,12 @@ Default is \code{FALSE}}
 \lifecycle{maturing}
 Build a stratified gtsummary table. Any gtsummary table that accepts
 a data frame as its first argument can be stratified.
+\itemize{
+\item In \code{tbl_strata()}, the stratified or subset data frame is passed to the
+function in \verb{.tbl_fun=}, e.g. \code{purrr::map(data, .tbl_fun)}.
+\item In \code{tbl_strata2()}, both the stratified data frame and the strata level
+are passed to \verb{.tbl_fun=}, e.g. \code{purrr::map2(data, strata, .tbl_fun)}
+}
 }
 \section{Tips}{
 
@@ -63,10 +98,16 @@ each stratum's summary table.
 
 \if{html}{Example 1}
 
-\if{html}{\figure{tbl_strata_ex1.png}{options: width=64\%}}
+\if{html}{\figure{tbl_strata_ex1.png}{options: width=84\%}}
+
+
+\if{html}{Example 2}
+
+\if{html}{\figure{tbl_strata_ex2.png}{options: width=30\%}}
 }
 
 \examples{
+\donttest{
 # Example 1 ----------------------------------
 tbl_strata_ex1 <-
   trial \%>\%
@@ -77,8 +118,33 @@ tbl_strata_ex1 <-
     .tbl_fun =
       ~ .x \%>\%
         tbl_summary(by = trt, missing = "no") \%>\%
-        add_n()
+        add_n(),
+    .header = "**{strata}**, N = {n}"
   )
+
+# Example 2 ----------------------------------
+tbl_strata_ex2 <-
+  trial \%>\%
+  select(grade, response) \%>\%
+  mutate(grade = paste("Grade", grade)) \%>\%
+  tbl_strata2(
+    strata = grade,
+    .tbl_fun =
+      ~.x \%>\%
+      tbl_summary(
+        label = list(response = .y),
+        missing = "no",
+        statistic = response ~ "{p}\%"
+      ) \%>\%
+      add_ci(pattern = "{stat} ({ci})") \%>\%
+     modify_header(stat_0 = "**Rate (95\% CI)**") \%>\%
+     modify_footnote(stat_0 = NA),
+    .combine_with = "tbl_stack",
+    .combine_args = list(group_header = NULL),
+    .quiet = TRUE
+  ) \%>\%
+  modify_caption("**Response Rate by Grade**")
+}
 }
 \seealso{
 Other tbl_regression tools: 

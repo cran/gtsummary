@@ -21,8 +21,8 @@ tbl_uvregression(
   pvalue_fun = NULL,
   formula = "{y} ~ {x}",
   add_estimate_to_reference_rows = NULL,
-  show_yesno = NULL,
-  exclude = NULL
+  conf.int = NULL,
+  ...
 )
 }
 \arguments{
@@ -89,9 +89,10 @@ random intercept model, the formula may be \code{formula = "{y} ~ {x} + (1 | gea
 
 \item{add_estimate_to_reference_rows}{add a reference value. Default is FALSE}
 
-\item{show_yesno}{DEPRECATED}
+\item{conf.int}{Logical indicating whether or not to include a confidence
+interval in the output. Defaults to \code{TRUE}.}
 
-\item{exclude}{DEPRECATED}
+\item{...}{Not used}
 }
 \value{
 A \code{tbl_uvregression} object
@@ -105,7 +106,7 @@ For models holding outcome constant, the function takes as arguments a data fram
 the type of regression model, and the outcome variable \verb{y=}. Each column in the
 data frame is regressed on the specified outcome. The \code{tbl_uvregression}
 function arguments are similar to the \link{tbl_regression} arguments. Review the
-\href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html#tbl_uvregression}{tbl_uvregression vignette}
+\href{https://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html#tbl_uvregression}{tbl_uvregression vignette}
 for detailed examples.
 
 You may alternatively hold a single covariate constant. For this, pass a data
@@ -151,6 +152,7 @@ This list is not exhaustive, and care should be taken for each number reported.
 }
 
 \examples{
+\donttest{
 # Example 1 ----------------------------------
 tbl_uv_ex1 <-
   tbl_uvregression(
@@ -173,8 +175,11 @@ tbl_uv_ex2 <-
     pvalue_fun = function(x) style_pvalue(x, digits = 2)
   )
 }
+}
 \seealso{
-See tbl_regression \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html#tbl_uvregression}{vignette}  for detailed examples
+See tbl_regression \href{https://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html#tbl_uvregression}{vignette}  for detailed examples
+
+Review \link[=syntax]{list, formula, and selector syntax} used throughout gtsummary
 
 Other tbl_uvregression tools: 
 \code{\link{add_global_p}()},

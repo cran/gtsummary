@@ -1,3 +1,115 @@
+# gtsummary 1.5.1
+
+### New Functions
+
+* Added new function `modify_column_alignment()` to updated column alignment. Function is a wrapper for the more complex `modify_table_styling()` function.
+
+* New function `tbl_strata2()` that passes both the the stratified data frame as well as the stratum level to the user function. (#1091)
+
+* Added a `add_p.tbl_continuous()` method for adding p-values to `tbl_continuous()` tables. (#1023)
+
+* Added `add_overall.tbl_continuous()` method. (#1037)
+
+### New Functionality
+
+* New test option "emmeans" in `add_difference()` and `add_p()` uses the {emmeans} package to estimate marginal means/least-squares means for continuous variables, binary variables and random intercept models. (#1112)
+
+* Column alignment is now recognized in `as_kable()` and `as_kable_extra()`. Previously, the alignment utilized the `kable()` defaults and ignored any alignment instructions included in the gtsummary table styling.
+
+* The `as_kable_extra()` was updated to utilize `kableExtra::column_spec()` and `kableExtra::cell_spec()` to apply bold and italic styling. The choice of the function depends on the use of `escape=` in `knitr::kable()` (#1107)
+
+* Default arguments to `knitr::kable()` may now be overwritten by passing `...` to either `as_kable()` or `as_kable_extra()`. Previously, passing a user-defined argument previously in use would result in error.
+
+* Added `tbl_strata(.header=)` argument providing greater control over the stratum headers that are added to the tables, e.g. you can now add Ns to the headers using this argument.
+
+* Added `add_p.tbl_cross(test.args=)` argument. (#1095)
+
+* The `tbl_strata(.combine_args=)` has been added that lets you control all arguments in the `tbl_merge()` or `tbl_stack()` that occurs in `tbl_strata()`. (#1090)
+
+* Added the `add_ci(pattern=)` argument, which makes it easier to merge the CI column with the primary statistics column. (#1029)
+
+* Suppress `tbl_merge()` spanning headers by passing `tbl_merge(tab_spanner = FALSE)` (#1067)
+
+* Functions `as_tibble()`, `as_kable()`, and `as_kable_extra()` gain the `fmt_missing=` argument that applies missing symbols to missing values. The `as_tibble()` argument defaults to `FALSE`, while the others' default is `TRUE`. (#1073)
+
+* Adding `tbl_regression(conf.int=)` and `tbl_uvregression(conf.int=)` argument. For some models, the confidence interval adds to the computation time significantly and may not be needed. This argument will omit the CI calculation. (#1052)
+
+* The `add_stat()` function was updated to accept `tbl_continuous()` tables.
+
+* Multinomial models computed using MICE are now supported. (#1065)
+
+* Added theme element to control the `tbl_regression(conf.int=)` default argument.
+
+* It is now possible to pass a single tbl to `tbl_merge()`. This is useful when using `tbl_merge()` as a helper in other functions. (#1068)
+
+* Added `statistics=` and `digits=` arguments to the `add_overall()` family of functions. (#1047)
+
+* Added `digits=` argument to `tbl_cross()`. (#1046)
+
+### Other Updates
+
+* Allowed modification to font_size for compact theme. (#1106)
+
+* Automatically reduced vertical white space between columns for compact flextable theme. 
+
+* Improved user interface for `modify_*()` functions (#1064)
+
+* Improved error messaging throughout the package. (#1050)
+
+* Added link to the `syntax` help file to functions throughout the package. The `syntax` help file illustrates how to use the gtsummary selectors and details the formula-list notation. (#981)
+
+* Updated Spanish translation for Wilcoxon Rank-sum Test.
+
+* Updates and additions to Portuguese language translations. (#1098)
+
+* Updates to the French translations.
+
+* Updating the `add_overall()` S3 method to have a more common structure, e.g. `add_overall(x, ....)`, where previously, the `...` were not present. (#1066)
+
+* Updated the `theme_gtsummary_journal("qjecon")` to set  `tbl_regression(conf.int =  FALSE)` by default.
+
+* Improved error messaging in `tbl_custom_summary()`
+
+* Updated the default formatting functions in `tbl_custom_summary()`. Previously, summaries with character results erred because the default summary function was `style_number()`. This has been updated to `style_sigfig()` for numeric columns, and `as.character()` for everything else. (#983)
+
+* All `style_*()` functions will retain attribute, such as the names. (#1035, #1031, #981)
+
+* The `add_n.tbl_regression()` (which is also utilized in `tbl_uvregression()`) was adding the N column without applying a formatting function. The `style_number()` function has now been added as the default styler. (#1022)
+
+* Added class `"tbl_continuous"` to the output of `tbl_continuous()`.
+
+* Adding `add_p()` test `"mcnemar.test.wide"` to calculate the p-value when the data are stored in a wide format, e.g. one column for a before value and a second column for after. The other McNemar test variant available in {gtsummary} expects data in a long format.
+
+* Converted `tbl_split()` to S3 function.
+
+* Update how calls to `gt::fmt_missing()` are constructed to be more memory efficient.
+
+### Bug Fixes
+
+* Fix in `add_significance_stars()` that led to an error when the summarized model did not have a confidence interval column.
+
+* Fix in `as_flex_table()` and `as_hux_table()` where reference row was not properly placed after a `tbl_merge()` when the merged tables share common categorical variables but different reference rows. (#1063)
+
+* Fix in `inline_text.gtsummary()` where the first level of a categorical variable could not be selected if the table had also been processed with `remove_row_type()`. (#1078)
+
+* Fix in `modify_table_styling(cols_merge_pattern)` when it is used with `tbl_stack()` followed by `tbl_merge()`. (#1057)
+
+* Bug fix in `separate_p_footnotes()` where test names were not being translated when `theme_gtsummary_language()` was set. (#1055)
+
+* Fix in `tbl_merge()` when rows in a merging table are not present in the first table. (#1033)
+
+* Fix in `as_tibble()` for `nnet::multinom()` regression models.
+
+* Fix in `tbl_continuous()` when `include=` is not specified.
+
+* Fix in `tbl_regression()` when a tidier returns CI columns that are all missing. (#1012)
+
+* Fix in `add_p()`/`add_difference()` when check whether the passed test is an internal method or a custom method. The previous code required Suggested packages, such as, {lme4}, {effectsize}, and {survey}, to be installed. (#1018) 
+
+### Breaking Changes
+
+* No longer exporting `assert_package()`. It has been migrated to {broom.helpers} and we now use `broom.helpers::.assert_package()`. (#1051)
+
 # gtsummary 1.5.0
 
 ### New Functions

@@ -21,7 +21,7 @@ if (!identical(Sys.getenv("IN_PKGDOWN"), "true") &&
     !tolower(as.list(Sys.info())$user) %in% c("sjobergd", "currym", "whitingk", "whiting")) {
   msg <- 
     paste("View this vignette on the",
-          "[package website](http://www.danieldsjoberg.com/gtsummary/articles/inline_text.html).")
+          "[package website](https://www.danieldsjoberg.com/gtsummary/articles/inline_text.html).")
   cat(msg)
   knitr::knit_exit()
 }

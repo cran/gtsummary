@@ -14,6 +14,7 @@
 #' @inheritParams tbl_summary
 #'
 #' @return a gtsummary table
+#' @seealso Review [list, formula, and selector syntax][syntax] used throughout gtsummary
 #' @export
 #'
 #' @examples
@@ -52,10 +53,13 @@ tbl_continuous <- function(data,
   # evaluate inputs ------------------------------------------------------------
   variable <- .select_to_varnames(data = data, select = {{ variable }},
                                   select_single = TRUE, arg_name = "variable")
-  include <- .select_to_varnames(data = data, select = {{ include }},
-                                 select_single = FALSE, arg_name = "include")
   by <- .select_to_varnames(data = data, select = {{ by }},
                             select_single = TRUE, arg_name = "by")
+  include <-
+    .select_to_varnames(data = data, select = {{ include }},
+                        select_single = FALSE, arg_name = "include") %>%
+    setdiff(c(variable, by))
+
   digits <-
     rep_len(
       list(continuous_digits_guess(data, variable, "continuous")),
@@ -63,17 +67,29 @@ tbl_continuous <- function(data,
     ) %>%
     rlang::set_names(include) %>%
     purrr::list_modify(
-      !!!.formula_list_to_named_list(digits, data = data, arg_name = "digits")
+      !!!.formula_list_to_named_list(
+        digits, data = data, arg_name = "digits",
+        type_check = chuck(type_check, "digits", "fn"),
+        type_check_msg = chuck(type_check, "digits", "msg"))
     )
   statistic <-
     rep_len(list("{median} ({p25}, {p75})"), length.out = length(include)) %>%
     rlang::set_names(include) %>%
     purrr::list_modify(
-      !!!.formula_list_to_named_list(statistic, data = data, arg_name = "statistic")
+      !!!.formula_list_to_named_list(statistic, data = data,
+                                     arg_name = "statistic",
+                                     type_check = chuck(type_check, "is_string", "fn"),
+                                     type_check_msg = chuck(type_check, "is_string", "msg"))
     )
 
   label <-
-    .formula_list_to_named_list(label, data = data, arg_name = "label")
+    .formula_list_to_named_list(
+      label,
+      data = data,
+      arg_name = "label",
+      type_check = chuck(type_check, "is_string", "fn"),
+      type_check_msg = chuck(type_check, "is_string", "msg")
+    )
 
   # saving function inputs
   tbl_continuous_inputs <- as.list(environment())
@@ -94,6 +110,6 @@ tbl_continuous <- function(data,
   result[["call_list"]] <- list(tbl_continuous = match.call())
 
   # return result --------------------------------------------------------------
+  class(result) <- c("tbl_continuous", "gtsummary")
   result
 }
-

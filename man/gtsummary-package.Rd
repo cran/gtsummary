@@ -14,7 +14,7 @@ Creates presentation-ready tables summarizing data sets, regression models, and 
 Useful links:
 \itemize{
   \item \url{https://github.com/ddsjoberg/gtsummary}
-  \item \url{http://www.danieldsjoberg.com/gtsummary/}
+  \item \url{https://www.danieldsjoberg.com/gtsummary/}
   \item Report bugs at \url{https://github.com/ddsjoberg/gtsummary/issues}
 }
 
@@ -38,6 +38,8 @@ Other contributors:
   \item Jessica Flynn (\href{https://orcid.org/0000-0001-8310-6684}{ORCID}) [contributor]
   \item Margie Hannum (\href{https://orcid.org/0000-0002-2953-0449}{ORCID}) [contributor]
   \item Stephanie Lobaugh [contributor]
+  \item Shannon Pileggi (\href{https://orcid.org/0000-0002-7732-4164}{ORCID}) [contributor]
+  \item Amy Tin (\href{https://orcid.org/0000-0002-8005-0694}{ORCID}) [contributor]
   \item Gustavo Zapata Wainberg (\href{https://orcid.org/0000-0002-2524-3637}{ORCID}) [contributor]
 }
 

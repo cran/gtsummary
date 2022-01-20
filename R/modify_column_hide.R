@@ -1,7 +1,7 @@
 #' Modify Hidden Columns
 #'
 #' \lifecycle{maturing}
-#' Use these functions to hide or unhide columns in a gtsummary tables.
+#' Use these functions to hide or unhide columns in a gtsummary table.
 #'
 #' @inheritParams modify_table_styling
 #'
@@ -22,6 +22,7 @@
 NULL
 
 #' @rdname modify_column_hide
+#' @seealso Review [list, formula, and selector syntax][syntax] used throughout gtsummary
 #' @export
 modify_column_hide <- function(x, columns) {
   updated_call_list <- c(x$call_list, list(modify_column_hide = match.call()))

@@ -49,7 +49,7 @@ functions. Default is \code{everything()}.}
 tests that accept arguments. For example, add an argument for all t-tests,
 use \code{test.args = all_tests("t.test") ~ list(var.equal = TRUE)}}
 
-\item{exclude}{DEPRECATED}
+\item{exclude}{DEPRECATED.}
 
 \item{...}{Not used}
 }
@@ -90,7 +90,9 @@ add_p_ex2 <-
   )
 }
 \seealso{
-See tbl_summary \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html}{vignette} for detailed examples
+See tbl_summary \href{https://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html}{vignette} for detailed examples
+
+Review \link[=syntax]{list, formula, and selector syntax} used throughout gtsummary
 
 Other tbl_summary tools: 
 \code{\link{add_ci}()},

@@ -3,11 +3,13 @@
 #' \lifecycle{maturing}
 #' The following themes are available to use within the gtsummary package.
 #' Print theme elements with `theme_gtsummary_journal(set_theme = FALSE) %>% print()`.
-#' Review the [themes vignette](http://www.danieldsjoberg.com/gtsummary/articles/themes.html)
+#' Review the [themes vignette](https://www.danieldsjoberg.com/gtsummary/articles/themes.html)
 #' for details.
 #'
 #' @param set_theme Logical indicating whether to set the theme. Default is `TRUE`.
 #' When `FALSE` the named list of theme elements is returned invisibly
+#' @param font_size Numeric font size for compact theme.
+#' Default is 13 for gt tables, and 8 for all other output types
 #' @section Themes:
 #' - `theme_gtsummary_journal(journal=)`
 #'   - `"jama"` _The Journal of the American Medical Association_
@@ -38,7 +40,7 @@
 #'
 #' Use `reset_gtsummary_theme()` to restore the default settings
 #'
-#' Review the [themes vignette](http://www.danieldsjoberg.com/gtsummary/articles/themes.html)
+#' Review the [themes vignette](https://www.danieldsjoberg.com/gtsummary/articles/themes.html)
 #' to create your own themes.
 #' @examples
 #' # Setting JAMA theme for gtsummary
@@ -59,7 +61,7 @@
 #'
 #' \if{html}{\figure{set_gtsummary_theme_ex1.png}{options: width=60\%}}
 #' @name theme_gtsummary
-#' @seealso [Themes vignette](http://www.danieldsjoberg.com/gtsummary/articles/themes.html)
+#' @seealso [Themes vignette](https://www.danieldsjoberg.com/gtsummary/articles/themes.html)
 #' @seealso [set_gtsummary_theme()], [reset_gtsummary_theme()]
 NULL
 
@@ -192,6 +194,7 @@ theme_gtsummary_journal <- function(journal = c("jama", "lancet", "nejm", "qjeco
     lst_theme <-
       list(
         "pkgwide-str:theme_name" = "The Quareterly Journal of Economics",
+        "tbl_regression-arg:conf.int" = FALSE,
         "tbl_summary-fn:percent_fun" = function(x) style_number(x, digits = 1, scale = 100),
         "tbl_regression-fn:addnl-fn-to-run" = function(x) {
           new_header_text <-
@@ -229,7 +232,7 @@ theme_gtsummary_journal <- function(journal = c("jama", "lancet", "nejm", "qjeco
 # ------------------------------------------------------------------------------
 #' @rdname theme_gtsummary
 #' @export
-theme_gtsummary_compact <- function(set_theme = TRUE) {
+theme_gtsummary_compact <- function(set_theme = TRUE, font_size = NULL) {
   lst_theme <-
     list(
       "pkgwide-str:theme_name" = "Compact",
@@ -237,7 +240,7 @@ theme_gtsummary_compact <- function(set_theme = TRUE) {
       "as_gt-lst:addl_cmds" = list(
         tab_spanner = rlang::expr(
           gt::tab_options(
-            table.font.size = "small",
+            table.font.size = !!(font_size %||% 13),
             data_row.padding = gt::px(1),
             summary_row.padding = gt::px(1),
             grand_summary_row.padding = gt::px(1),
@@ -250,15 +253,16 @@ theme_gtsummary_compact <- function(set_theme = TRUE) {
       # compact flextables
       "as_flex_table-lst:addl_cmds" = list(
         valign = list(
-          rlang::expr(flextable::fontsize(size = 8, part = "all")),
+          rlang::expr(flextable::fontsize(size = !!(font_size %||% 8), part = "all")),
           rlang::expr(flextable::padding(padding.top = 0, part = "all")),
-          rlang::expr(flextable::padding(padding.bottom = 0, part = "all"))
+          rlang::expr(flextable::padding(padding.bottom = 0, part = "all")),
+          rlang::expr(flextable::set_table_properties(layout = "autofit"))
         )
       ),
       # compact huxtable
       "as_hux_table.gtsummary-lst:addl_cmds" = list(
         insert_row = list(
-          rlang::expr(huxtable::set_font_size(value = 8)),
+          rlang::expr(huxtable::set_font_size(value = !!(font_size %||% 8))),
           rlang::expr(huxtable::set_bottom_padding(value = 0)),
           rlang::expr(huxtable::set_top_padding(value = 0))
         )
@@ -266,7 +270,7 @@ theme_gtsummary_compact <- function(set_theme = TRUE) {
       # compact kableExtra
       "as_kable_extra-lst:addl_cmds" = list(
         kable = list(
-          rlang::expr(kableExtra::kable_styling(font_size = 8))
+          rlang::expr(kableExtra::kable_styling(font_size = !!(font_size %||% 8)))
         )
       )
     )

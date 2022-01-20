@@ -12,7 +12,7 @@ if (!identical(Sys.getenv("IN_PKGDOWN"), "true") &&
     !tolower(as.list(Sys.info())$user) %in% c("sjobergd", "currym", "whitingk", "whiting")) {
   msg <- 
     paste("View this vignette on the",
-          "[package website](http://www.danieldsjoberg.com/gtsummary/articles/gallery.html).")
+          "[package website](https://www.danieldsjoberg.com/gtsummary/articles/gallery.html).")
   cat(msg)
   knitr::knit_exit()
 }
@@ -166,23 +166,8 @@ tbl_merge(list(t1, t2)) %>%
 
 ## -----------------------------------------------------------------------------
 trial %>%
-  # nest data within tumor grade
   select(trt, grade, marker) %>%
-  arrange(grade) %>%
-  nest(data = -grade) %>%
-  # build tbl_summary within each grade
-  rowwise() %>%
-  mutate(
-    tbl = 
-      data %>%
-      # build summary table, and use the grade level as the label
-      tbl_summary(by = trt, label = list(marker = as.character(grade)), missing = "no") %>%
-      modify_header(list(label ~ "**Tumor Grade**", all_stat_cols() ~ "{level}")) %>%
-      list()
-  ) %>%
-  # stack tbl_summary tables to create final tbl
-  pull(tbl) %>%
-  tbl_stack() %>%
+  tbl_continuous(variable = marker, by = trt) %>%
   modify_spanning_header(all_stat_cols() ~ "**Treatment Assignment**")
 
 ## -----------------------------------------------------------------------------

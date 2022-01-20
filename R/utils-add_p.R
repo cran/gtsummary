@@ -28,16 +28,18 @@
     filter(.data$class %in% .env$class)
 
   # if test is character, then subset based on test name
-  if (rlang::is_string(test)) { # character test name ------------------------------
+  if (rlang::is_string(test)) { # character test name --------------------------
     df <-
       df %>%
       filter(.data$test_name %in% .env$test)
   }
-  else if (rlang::is_function(test)) { # test function passed -------------------------
+  else if (rlang::is_function(test)) { # test function passed ------------------
     df <-
       df %>%
       # now select test object equivalent to the passed function
-      filter(map_lgl(.data$test_fun, ~ identical(eval(.x), test)))
+      filter(map_lgl(.data$test_fun,
+                     ~tryCatch(identical(eval(.x), test),
+                               error = function(e) FALSE)))
   }
 
   # return info from df if internal test selected
@@ -98,7 +100,8 @@
 #' @noRd
 .run_add_p_test_fun <- function(x, data, variable, by = NULL, group = NULL,
                                 type = NULL, test.args = NULL, conf.level = 0.95,
-                                adj.vars = NULL, tbl = NULL) {
+                                adj.vars = NULL, tbl = NULL,
+                                continuous_variable = NULL) {
   # if x is NULL, return NULL
   if (is.null(x)) {
     return(NULL)
@@ -114,7 +117,8 @@
             data = data, variable = variable, by = by,
             group = group, type = type, test.args = test.args,
             conf.level = conf.level, tbl = tbl,
-            adj.vars = adj.vars
+            adj.vars = adj.vars,
+            continuous_variable = continuous_variable
           ))
         },
         # printing warning and errors as message
@@ -322,4 +326,31 @@
   ) %>%
     stringr::str_wrap() %>%
     stop(call. = FALSE)
+}
+
+
+.assign_test_tbl_continuous <- function(data, continuous_variable,
+                                        variable, by, group, test) {
+  # if user supplied a test, use that test -------------------------------------
+  if (!is.null(test[[variable]])) {
+    return(test[[variable]])
+  }
+
+  # if not by variable, can calculate the test the same way as in `add_p.tbl_summary`
+  if (is.null(by)) {
+    return(
+      .assign_test_tbl_summary(
+        data = data, variable = continuous_variable, summary_type = "continuous",
+        by = variable, group = group, test = test
+      )
+    )
+  }
+
+  # no default test for correlated data
+  if (!is.null(group)) {
+    stop("There is no default test for correlated data when `by=` is specified.", call. = FALSE)
+  }
+
+  # otherwise, use 2-way ANOVA
+  return("anova_2way")
 }

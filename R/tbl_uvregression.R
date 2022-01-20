@@ -9,7 +9,7 @@
 #' the type of regression model, and the outcome variable `y=`. Each column in the
 #' data frame is regressed on the specified outcome. The `tbl_uvregression`
 #' function arguments are similar to the [tbl_regression] arguments. Review the
-#' \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html#tbl_uvregression}{tbl_uvregression vignette}
+#' \href{https://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html#tbl_uvregression}{tbl_uvregression vignette}
 #' for detailed examples.
 #'
 #' You may alternatively hold a single covariate constant. For this, pass a data
@@ -44,11 +44,13 @@
 #' @param hide_n Hide N column. Default is `FALSE`
 #' @inheritParams tbl_regression
 #' @author Daniel D. Sjoberg
-#' @seealso See tbl_regression \href{http://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html#tbl_uvregression}{vignette}  for detailed examples
+#' @seealso See tbl_regression \href{https://www.danieldsjoberg.com/gtsummary/articles/tbl_regression.html#tbl_uvregression}{vignette}  for detailed examples
+#' @seealso Review [list, formula, and selector syntax][syntax] used throughout gtsummary
 #' @family tbl_uvregression tools
 #' @export
 #' @return A `tbl_uvregression` object
 #' @examples
+#' \donttest{
 #' # Example 1 ----------------------------------
 #' tbl_uv_ex1 <-
 #'   tbl_uvregression(
@@ -70,6 +72,7 @@
 #'     exponentiate = TRUE,
 #'     pvalue_fun = function(x) style_pvalue(x, digits = 2)
 #'   )
+#' }
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
@@ -84,28 +87,9 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
                              include = everything(), tidy_fun = NULL,
                              hide_n = FALSE, show_single_row = NULL, conf.level = NULL,
                              estimate_fun = NULL, pvalue_fun = NULL, formula = "{y} ~ {x}",
-                             add_estimate_to_reference_rows = NULL,
-                             show_yesno = NULL, exclude = NULL) {
+                             add_estimate_to_reference_rows = NULL, conf.int = NULL, ...) {
   # deprecated arguments -------------------------------------------------------
-  if (!is.null(show_yesno)) {
-    lifecycle::deprecate_stop(
-      "1.2.2", "tbl_uvregression(show_yesno = )",
-      "tbl_uvregression(show_single_row = )"
-    )
-  }
-
-  if (!rlang::quo_is_null(rlang::enquo(exclude))) {
-    lifecycle::deprecate_stop(
-      "1.2.5",
-      "gtsummary::tbl_uvregression(exclude = )",
-      "tbl_uvregression(include = )",
-      details = paste0(
-        "The `include` argument accepts quoted and unquoted expressions similar\n",
-        "to `dplyr::select()`. To exclude variable, use the minus sign.\n",
-        "For example, `include = -c(age, stage)`"
-      )
-    )
-  }
+  .tbl_regression_deprecated_arguments(...)
 
   # checking input -------------------------------------------------------------
   # data is a data frame
@@ -128,6 +112,9 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
       default = ifelse(exponentiate == TRUE, style_ratio, style_sigfig)
     ) %>%
     gts_mapper("tbl_uvregression(estimate_fun=)")
+  conf.int <-
+    conf.int %||%
+    get_theme_element("tbl_regression-arg:conf.int", default = TRUE)
   conf.level <-
     conf.level %||%
     getOption("gtsummary.conf.level", default = 0.95)
@@ -190,14 +177,6 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
       ) %||% .remove_survey_cols(data),
       arg_name = "include"
     )
-  exclude <-
-    .select_to_varnames(
-      select = {{ exclude }},
-      data = switch(is.data.frame(data),
-        data
-      ) %||% .remove_survey_cols(data),
-      arg_name = "exclude"
-    )
   show_single_row <-
     .select_to_varnames(
       select = {{ show_single_row }},
@@ -238,7 +217,9 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
       data = switch(is.data.frame(data),
         data
       ) %||% .remove_survey_cols(data),
-      arg_name = "label"
+      arg_name = "label",
+      type_check = chuck(type_check, "is_string", "fn"),
+      type_check_msg = chuck(type_check, "is_string", "msg")
     )
 
   # all specified labels must be a string of length 1
@@ -266,7 +247,6 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
     setdiff(c("x", "y"))
 
   if (!is.null(include)) all_vars <- intersect(all_vars, include)
-  all_vars <- all_vars %>% setdiff(exclude)
   if (length(all_vars) == 0) {
     stop("There were no covariates selected.", call. = FALSE)
   }
@@ -275,7 +255,8 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
   tbl_reg_args <-
     c(
       "exponentiate", "conf.level", "label", "include", "show_single_row",
-      "tidy_fun", "estimate_fun", "pvalue_fun", "add_estimate_to_reference_rows"
+      "tidy_fun", "estimate_fun", "pvalue_fun",
+      "add_estimate_to_reference_rows", "conf.int"
     )
 
   df_model <-

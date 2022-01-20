@@ -12,9 +12,32 @@ test_that("tbl_continuous() works", {
     NA
   )
 
+  expect_error(
+    tbl_continuous(
+      data = trial,
+      variable = age,
+      by = trt,
+      include = c(grade, stage)
+    ) %>% add_overall(),
+    NA
+  )
+
   expect_equal(
     names(tbl1),
     c("**Characteristic**", "Drug A, N = 200", "Drug B, N = 200")
+  )
+
+  expect_equal(
+    tbl_continuous(
+      data = trial[c("age", "grade")],
+      variable = age,
+      include = grade
+    ) %>%
+      `[`(c("table_body", "table_styling")),
+    trial %>%
+      select(age, grade) %>%
+      tbl_continuous(variable = age) %>%
+      `[`(c("table_body", "table_styling"))
   )
 
   expect_error(
