@@ -264,7 +264,7 @@ add_p_merge_p_values <- function(x, lgl_add_p = TRUE,
       meta_data %>%
         select(.data$variable, .data$test_result) %>%
         mutate(
-          df_result = map(.data$test_result, pluck, "df_result"),
+          df_result = map(.data$test_result, ~pluck(.x, "df_result")),
           row_type = "label"
         ) %>%
         unnest(.data$df_result) %>%
@@ -835,6 +835,7 @@ add_p.tbl_svysummary <- function(x, test = NULL, pvalue_fun = NULL,
 #' as `add_p.tbl_continuous()` when `by = NULL`.
 #' See [tests] for details, more tests, and instruction for implementing a custom test.
 #' @export
+#' @family tbl_continuous tools
 #' @examples
 #' add_p_continuous_ex1 <-
 #'   tbl_continuous(

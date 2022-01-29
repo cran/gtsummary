@@ -18,15 +18,20 @@
 #' @param ... Not used
 #' @family tbl_summary tools
 #' @family tbl_svysummary tools
+#' @family tbl_continuous tools
 #' @family tbl_custom_summary tools
 #' @author Daniel D. Sjoberg
 #' @export
 #' @return A `tbl_*` of same class as `x`
 #' @examples
+#' \donttest{
+#' # Example 1 ----------------------------------
 #' tbl_overall_ex1 <-
 #'   trial %>%
 #'   tbl_summary(include = c(age, grade), by = trt) %>%
 #'   add_overall()
+#'
+#' # Example 2 ----------------------------------
 #' tbl_overall_ex2 <-
 #'   trial %>%
 #'   tbl_summary(
@@ -41,14 +46,17 @@
 #'     statistic = ~ "{p}% (n={n})",
 #'     digits = ~ c(1, 0)
 #'   )
+#'
+#' # Example 3 ----------------------------------
 #' tbl_overall_ex3 <-
-#'  trial %>%
-#'  tbl_continuous(
-#'    variable = age,
-#'    by = trt,
-#'    include = grade
-#'  ) %>%
-#'  add_overall(last = TRUE)
+#'   trial %>%
+#'   tbl_continuous(
+#'     variable = age,
+#'     by = trt,
+#'     include = grade
+#'   ) %>%
+#'   add_overall(last = TRUE)
+#' }
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'

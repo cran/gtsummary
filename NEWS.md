@@ -1,3 +1,18 @@
+# gtsummary 1.5.2
+
+* Removed foreign reference to external functions in the top level of the package and replaced with indirect calls (the reason for the short time between releases). (#1129)
+
+* Updates to the way footnotes are printed in `tbl_summary()` when there is  summary type `"continuous2"` present. Previously, all footnotes were removed, and now only the `"continuous2"` footnotes are removed. (#1127)
+
+* Added the continuous variable name/label to the footnote for greater clarity in `tbl_continuous()` (#1123)
+
+* Now exporting the `.create_gtsummary_object()` function as a utility for other packages to build gtsummary tables. (#1130)
+
+* Fix when `add_overall()` was run before `add_n()`. The overall row was not being omitted from the sum and the Ns were doubled. (#1126)
+
+* Added method "emmeans" to `add_difference()` for `tbl_svysummary()` objects.
+
+* Updated default `add_difference()` for `tbl_svysummary()` objects to be "emmeans" for continuous and dichotomous variables, and "smd" for categorical variables.
 # gtsummary 1.5.1
 
 ### New Functions

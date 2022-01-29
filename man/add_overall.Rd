@@ -89,10 +89,14 @@ created by \code{tbl_summary}, \code{tbl_svysummary}, \code{tbl_continuous} or
 }
 
 \examples{
+\donttest{
+# Example 1 ----------------------------------
 tbl_overall_ex1 <-
   trial \%>\%
   tbl_summary(include = c(age, grade), by = trt) \%>\%
   add_overall()
+
+# Example 2 ----------------------------------
 tbl_overall_ex2 <-
   trial \%>\%
   tbl_summary(
@@ -107,14 +111,17 @@ tbl_overall_ex2 <-
     statistic = ~ "{p}\% (n={n})",
     digits = ~ c(1, 0)
   )
+
+# Example 3 ----------------------------------
 tbl_overall_ex3 <-
- trial \%>\%
- tbl_continuous(
-   variable = age,
-   by = trt,
-   include = grade
- ) \%>\%
- add_overall(last = TRUE)
+  trial \%>\%
+  tbl_continuous(
+    variable = age,
+    by = trt,
+    include = grade
+  ) \%>\%
+  add_overall(last = TRUE)
+}
 }
 \seealso{
 Other tbl_summary tools: 
@@ -148,6 +155,10 @@ Other tbl_svysummary tools:
 \code{\link{tbl_strata}()},
 \code{\link{tbl_svysummary}()}
 
+Other tbl_continuous tools: 
+\code{\link{add_p.tbl_continuous}()},
+\code{\link{tbl_continuous}()}
+
 Other tbl_custom_summary tools: 
 \code{\link{continuous_summary}()},
 \code{\link{proportion_summary}()},
@@ -157,6 +168,7 @@ Other tbl_custom_summary tools:
 \author{
 Daniel D. Sjoberg
 }
+\concept{tbl_continuous tools}
 \concept{tbl_custom_summary tools}
 \concept{tbl_summary tools}
 \concept{tbl_svysummary tools}

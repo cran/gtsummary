@@ -136,6 +136,7 @@
 #' @seealso Review [list, formula, and selector syntax][syntax] used throughout gtsummary
 #' @author Daniel D. Sjoberg
 #' @examples
+#' \donttest{
 #' # Example 1 ----------------------------------
 #' tbl_summary_ex1 <-
 #'   trial %>%
@@ -174,6 +175,7 @@
 #'     statistic = all_continuous() ~ c("{median} ({p25}, {p75})", "{min}, {max}"),
 #'     missing = "no"
 #'   )
+#' }
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
@@ -303,15 +305,13 @@ tbl_summary <- function(data, by = NULL, label = NULL, statistic = NULL,
       df_by = df_by(data, by)
     )
 
-  # adding stat footnote (unless there are continuous2 vars)
-  if (!"continuous2" %in% meta_data$summary_type) {
-    x <-
-      modify_table_styling(
-        x,
-        columns = starts_with("stat_"),
-        footnote = footnote_stat_label(meta_data)
-      )
-  }
+  # adding stat footnote
+  x <-
+    modify_table_styling(
+      x,
+      columns = starts_with("stat_"),
+      footnote = footnote_stat_label(meta_data)
+    )
 
   # returning all results in a list --------------------------------------------
   # assigning a class of tbl_summary (for special printing in Rmarkdown)

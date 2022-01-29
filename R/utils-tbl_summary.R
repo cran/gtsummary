@@ -527,7 +527,7 @@ tbl_summary_input_checks <- function(data, by, label, type, value, statistic,
     # checking input type: must be a list of formulas, or one formula
     if (!inherits(type, c("list", "formula"))) {
       stop(glue(
-        "'type' argument must be a list of formulas. ",
+        "'type' argument must be a list of formulas or named list (see `?syntax`). ",
         "LHS of the formula is the variable specification, ",
         "and the RHS is the type specification: ",
         "list(c(age, marker) ~ \"continuous\")"
@@ -536,7 +536,7 @@ tbl_summary_input_checks <- function(data, by, label, type, value, statistic,
     if (inherits(type, "list")) {
       if (some(type, negate(rlang::is_bare_formula))) {
         stop(glue(
-          "'type' argument must be a list of formulas. ",
+          "'type' argument must be a list of formulas or named list (see `?syntax`). ",
           "LHS of the formula is the variable specification, ",
           "and the RHS is the type specification: ",
           "list(c(age, marker) ~ \"continuous\")"
@@ -564,7 +564,7 @@ tbl_summary_input_checks <- function(data, by, label, type, value, statistic,
     # checking input type: must be a list of formulas, or one formula
     if (!inherits(value, c("list", "formula"))) {
       stop(glue(
-        "'value' argument must be a list of formulas. ",
+        "'value' argument must be a list of formulas or named list (see `?syntax`). ",
         "LHS of the formula is the variable specification, ",
         "and the RHS is the value specification: ",
         "list(stage ~ \"T1\")"
@@ -573,7 +573,7 @@ tbl_summary_input_checks <- function(data, by, label, type, value, statistic,
     if (inherits(value, "list")) {
       if (some(value, negate(rlang::is_bare_formula))) {
         stop(glue(
-          "'value' argument must be a list of formulas. ",
+          "'value' argument must be a list of formulas or named list (see `?syntax`). ",
           "LHS of the formula is the variable specification, ",
           "and the RHS is the value specification: ",
           "list(stage ~ \"T1\")"
@@ -613,7 +613,7 @@ tbl_summary_input_checks <- function(data, by, label, type, value, statistic,
     # checking input type: must be a list of formulas, or one formula
     if (!inherits(statistic, c("list", "formula"))) {
       stop(glue(
-        "'statistic' argument must be a list of formulas. ",
+        "'statistic' argument must be a list of formulas or named list (see `?syntax`). ",
         "LHS of the formula is the variable specification, ",
         "and the RHS is the statistic specification: ",
         "list(all_categorical() ~ \"{n} / {N}\")"
@@ -622,7 +622,7 @@ tbl_summary_input_checks <- function(data, by, label, type, value, statistic,
     if (inherits(statistic, "list")) {
       if (some(statistic, negate(rlang::is_bare_formula))) {
         stop(glue(
-          "'statistic' argument must be a list of formulas. ",
+          "'statistic' argument must be a list of formulas or named list (see `?syntax`). ",
           "LHS of the formula is the variable specification, ",
           "and the RHS is the statistic specification: ",
           "list(all_categorical() ~ \"{n} / {N}\")"
@@ -645,7 +645,7 @@ tbl_summary_input_checks <- function(data, by, label, type, value, statistic,
     # checking input type: must be a list of formulas, or one formula
     if (!inherits(digits, c("list", "formula"))) {
       stop(glue(
-        "'digits' argument must be a list of formulas. ",
+        "'digits' argument must be a list of formulas or named list (see `?syntax`). ",
         "LHS of the formula is the variable specification, ",
         "and the RHS is the digits specification: ",
         "list(c(age, marker) ~ 1)"
@@ -654,7 +654,7 @@ tbl_summary_input_checks <- function(data, by, label, type, value, statistic,
     if (inherits(digits, "list")) {
       if (some(digits, negate(rlang::is_bare_formula))) {
         stop(glue(
-          "'digits' argument must be a list of formulas. ",
+          "'digits' argument must be a list of formulas or named list (see `?syntax`). ",
           "LHS of the formula is the variable specification, ",
           "and the RHS is the digits specification: ",
           "list(c(age, marker) ~ 1)"
@@ -675,16 +675,16 @@ tbl_summary_input_checks <- function(data, by, label, type, value, statistic,
     # checking input type: must be a list of formulas, or one formula
     if (!inherits(sort, c("list", "formula"))) {
       stop(glue(
-        "'sort' argument must be a list of formulas. ",
+        "'sort' argument must be a list of formulas or named list (see `?syntax`). ",
         "LHS of the formula is the variable specification, ",
         "and the RHS is the sort specification: ",
-        "c(vars(age, marker) ~ 1)"
+        "list(c(stage, marker) ~ \"frequency\")"
       ), call. = FALSE)
     }
     if (inherits(sort, "list")) {
       if (some(sort, negate(rlang::is_bare_formula))) {
         stop(glue(
-          "'sort' argument must be a list of formulas. ",
+          "'sort' argument must be a list of formulas or named list (see `?syntax`). ",
           "LHS of the formula is the variable specification, ",
           "and the RHS is the sort specification: ",
           "list(c(stage, marker) ~ \"frequency\")"
@@ -852,6 +852,7 @@ stat_label_match <- function(stat_display, iqr = TRUE, range = TRUE) {
 footnote_stat_label <- function(meta_data) {
   meta_data %>%
     select(c("summary_type", "stat_label")) %>%
+    filter(!.data$summary_type %in% "continuous2") %>% # removing multiline stats
     mutate(
       summary_type = case_when(
         summary_type == "dichotomous" ~ "categorical",
@@ -861,7 +862,11 @@ footnote_stat_label <- function(meta_data) {
     ) %>%
     distinct() %>%
     pull("message") %>%
-    paste(collapse = "; ")
+    stats::na.omit() %>%
+    purrr::when(
+      rlang::is_empty(.) ~ NA_character_,
+      TRUE ~ paste(., collapse = "; ")
+    )
 }
 
 # summarize_categorical --------------------------------------------------------
@@ -1083,8 +1088,8 @@ extracting_function_calls_from_stat_display <- function(stat_display, variable) 
     stat_display %>%
     paste(collapse = " ") %>%
     str_extract_all("\\{.*?\\}") %>%
-    map(str_remove_all, pattern = fixed("}")) %>%
-    map(str_remove_all, pattern = fixed("{")) %>%
+    map(~str_remove_all(.x, pattern = fixed("}"))) %>%
+    map(~str_remove_all(.x, pattern = fixed("{"))) %>%
     unlist()
 
   if (length(fns_names_chr) == 0) {
@@ -1119,8 +1124,8 @@ adding_formatting_as_attr <- function(df_stats, data, variable, summary_type,
   # extracting statistics requested
   fns_names_chr <-
     str_extract_all(stat_display, "\\{.*?\\}") %>%
-    map(str_remove_all, pattern = fixed("}")) %>%
-    map(str_remove_all, pattern = fixed("{")) %>%
+    map(~str_remove_all(.x, pattern = fixed("}"))) %>%
+    map(~str_remove_all(.x, pattern = fixed("{"))) %>%
     unlist()
   base_stats <- c(
     "p_miss", "p_nonmiss", "N_miss", "N_nonmiss", "N_obs",
@@ -1495,7 +1500,7 @@ meta_data_to_var_info <- function(meta_data) {
   if ("class" %in% names(var_info)) {
     var_info <-
       var_info %>%
-      mutate(var_class = map_chr(.data$class, pluck, 1)) %>%
+      mutate(var_class = map_chr(.data$class, ~pluck(.x, 1))) %>%
       select(-.data$class)
   }
   if ("summary_type" %in% names(var_info)) {
