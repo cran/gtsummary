@@ -9,11 +9,12 @@
 #' @importFrom tibble tibble tribble as_tibble enframe deframe
 #' @importFrom rlang .data .env %||% set_names sym syms parse_expr expr exprs
 #' call2 := inform abort is_function is_string enexpr inject is_empty
-#' is_function is_list is_named is_character
+#' is_function is_list is_named is_character check_dots_empty
 #' quo_is_null enquo eval_tidy quo_text
 #' @importFrom glue glue as_glue glue_collapse
 #' @importFrom stringr fixed word str_extract_all str_remove_all str_starts
 #' str_split str_detect str_remove str_replace_all str_wrap str_sub str_locate
+#' str_sub
 #' @importFrom broom.helpers .formula_list_to_named_list .select_to_varnames
 #' .generic_selector
 #' @importFrom cli cli_alert_info cli_alert_danger cli_code cli_ul

@@ -1,7 +1,16 @@
 #' Set a gtsummary theme
 #'
+#' @description
 #' \lifecycle{maturing}
-#' Use this function to set preferences for the display of gtsummary tables.
+#' Functions to **set**, **reset**, **get**, and evaluate **with** gtsummary themes.
+#'
+#' - `set_gtsummary_theme()` set a theme
+#' - `reset_gtsummary_theme()` reset themes
+#' - `get_gtsummary_theme()` get a named list with all active theme elements
+#' - `with_gtsummary_theme()` evaluate an expression with a theme temporarily set
+#' - `check_gtsummary_theme()` checks if passed theme is valid
+#'
+#' @section Details:
 #' The default formatting and styling throughout the gtsummary package are
 #' taken from the published reporting guidelines of the top four urology
 #' journals: European Urology, The Journal of Urology, Urology and
@@ -9,8 +18,10 @@
 #' the default reporting style to match another journal, or your own
 #' personal style.
 #'
-#' @param x A gtsummary theme function, e.g. `theme_gtsummary_journal()`, or a
-#' named list defining a gtsummary theme. See details below.
+#' @param x A named list defining a gtsummary theme.
+#' @param expr Expression to be evaluated with the theme specified in `x=` loaded
+#' @param env The environment in which to evaluate `expr=`
+#' @inheritParams add_global_p
 #' @name set_gtsummary_theme
 #' @export
 #' @seealso [Themes vignette](https://www.danieldsjoberg.com/gtsummary/articles/themes.html)
@@ -34,9 +45,17 @@
 #' \if{html}{Example}
 #'
 #' \if{html}{\figure{set_gtsummary_theme_ex1.png}{options: width=70\%}}
+NULL
 
-set_gtsummary_theme <- function(x) {
+# ------------------------------------------------------------------------------
+#' @rdname set_gtsummary_theme
+#' @export
+set_gtsummary_theme <- function(x, quiet = NULL) {
+  # setting defaults -----------------------------------------------------------
+  quiet <- quiet %||% get_theme_element("pkgwide-lgl:quiet") %||% FALSE
+
   # checking the input is a named list -----------------------------------------
+  if (rlang::is_empty(x)) return(invisible())
   if (!inherits(x, "list") || is.null(names(x)) || "" %in% names(x)) {
     stop("Argument `x=` must be  named list.", call. = FALSE)
   }
@@ -50,7 +69,7 @@ set_gtsummary_theme <- function(x) {
   }
 
   # print name of theme if present ---------------------------------------------
-  if (!is.null(x$`pkgwide-str:theme_name`)) {
+  if (!is.null(x$`pkgwide-str:theme_name`) && !isTRUE(quiet)) {
     rlang::inform(glue("Setting theme `{x$`pkgwide-str:theme_name`}`"))
   }
 
@@ -58,31 +77,8 @@ set_gtsummary_theme <- function(x) {
   rlang::env_bind(.env = env_gtsummary_theme, !!!x)
 }
 
-# initializing new env where all gtsummary theme elements are saved
-env_gtsummary_theme <- rlang::new_environment()
-
 # ------------------------------------------------------------------------------
-# this function grabs a gtsummary theme element if it exists
-# otherwise returns the default value
-get_theme_element <- function(x, default = NULL, eval = TRUE) {
-  # checking input
-  if (!x %in% df_theme_elements$name) {
-    stop(glue("`x = '{x}'` is not a proper gtsummary theme element."), call. = FALSE)
-  }
-
-  # returning theme element
-  # if eval is FALSE, then returning the unevaluated theme element
-  if (eval == FALSE) {
-    return(env_gtsummary_theme[[x]] %||% default)
-  }
-
-  # the theme element is evaluated in the caller env so it may conditionally
-  # set a default depending on other objects only known at the time it is called
-  rlang::eval_tidy(env_gtsummary_theme[[x]], env = rlang::caller_env()) %||% default
-}
-
-# ------------------------------------------------------------------------------
-#' @name set_gtsummary_theme
+#' @rdname set_gtsummary_theme
 #' @export
 reset_gtsummary_theme <- function() {
   # deleting theme environment if it exists
@@ -92,4 +88,71 @@ reset_gtsummary_theme <- function() {
   )
 
   invisible()
+}
+
+# ------------------------------------------------------------------------------
+#' @rdname set_gtsummary_theme
+#' @export
+get_gtsummary_theme <- function() {
+  as.list(env_gtsummary_theme)
+}
+
+# ------------------------------------------------------------------------------
+#' @rdname set_gtsummary_theme
+#' @export
+with_gtsummary_theme <- function(x, expr, env = rlang::caller_env()) {
+  # save current theme ---------------------------------------------------------
+  current_theme <- get_gtsummary_theme()
+  # on exit, restore theme
+  on.exit(set_gtsummary_theme(current_theme, quiet = TRUE))
+
+  # add specified theme --------------------------------------------------------
+  set_gtsummary_theme(suppressMessages(x), quiet = TRUE)
+
+  # evaluate expression
+  rlang::eval_tidy({{ expr }}, env = env)
+}
+
+# ------------------------------------------------------------------------------
+#' @rdname set_gtsummary_theme
+#' @export
+check_gtsummary_theme <- function(x) {
+  # themes must be named lists
+  if (!inherits(x, "list") || !rlang::is_named(x)) {
+    cli::cli_alert_danger("{.code x=} must be a named list.")
+    return(invisible())
+  }
+
+  # check all names are true theme elements
+  if (any(!names(x) %in% df_theme_elements$name)) {
+    paste("Theme element(s) {.val {setdiff(names(x), df_theme_elements$name)}}",
+          "are not valid.") %>%
+    cli::cli_alert_danger()
+    return(invisible())
+  }
+
+  cli::cli_alert_success("Looks good!")
+  invisible()
+}
+# initializing new env where all gtsummary theme elements are saved
+env_gtsummary_theme <- rlang::new_environment()
+
+# ------------------------------------------------------------------------------
+# this function grabs a gtsummary theme element if it exists
+# otherwise returns the default value
+get_theme_element <- function(x, default = NULL, eval = TRUE) {
+  # checking input REMOVED THIS CHECK IN v1.6.0 AND ADDED check_gtsummary_theme() instead
+  # if (!x %in% df_theme_elements$name) {
+  #   stop(glue("`x = '{x}'` is not a proper gtsummary theme element."), call. = FALSE)
+  # }
+
+  # returning theme element
+  # if eval is FALSE, then returning the un-evaluated theme element
+  if (eval == FALSE) {
+    return(env_gtsummary_theme[[x]] %||% default)
+  }
+
+  # the theme element is evaluated in the caller env so it may conditionally
+  # set a default depending on other objects only known at the time it is called
+  rlang::eval_tidy(env_gtsummary_theme[[x]], env = rlang::caller_env()) %||% default
 }

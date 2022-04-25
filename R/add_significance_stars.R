@@ -76,9 +76,8 @@ add_significance_stars <- function(x, pattern = "{estimate}{stars}",
                                    thresholds = c(0.001, 0.01, 0.05),
                                    hide_ci = TRUE, hide_p = TRUE, hide_se = FALSE) {
   # checking inputs ------------------------------------------------------------
-  if (!inherits(x, "tbl_regression") && !inherits(x, "tbl_uvregression")) {
-    abort("x=` must be a 'tbl_regression' or 'tbl_uvregression' object.")
-  }
+  .assert_class(x, c("tbl_regression", "tbl_uvregression"))
+
   thresholds <- sort(thresholds, decreasing = TRUE) %>% unique()
   if (any(!dplyr::between(thresholds, 0L, 1L))) {
     abort("All thresholds must be between 0 and 1.")
@@ -154,6 +153,8 @@ add_significance_stars <- function(x, pattern = "{estimate}{stars}",
     )
 
   # return x -------------------------------------------------------------------
+  # fill in the Ns in the header table modify_stat_* columns
+  x <- .fill_table_header_modify_stats(x)
   x$call_list <- updated_call_list
   x
 }

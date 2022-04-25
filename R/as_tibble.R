@@ -24,6 +24,7 @@
 as_tibble.gtsummary <- function(x, include = everything(), col_labels = TRUE,
                                 return_calls = FALSE, exclude = NULL,
                                 fmt_missing = FALSE, ...) {
+  check_dots_empty(error = function(e) inform(c(e$message, e$body)))
   # DEPRECATION notes ----------------------------------------------------------
   if (!rlang::quo_is_null(rlang::enquo(exclude))) {
     lifecycle::deprecate_stop(
@@ -42,7 +43,7 @@ as_tibble.gtsummary <- function(x, include = everything(), col_labels = TRUE,
   x <- do.call(get_theme_element("pkgwide-fun:pre_conversion", default = identity), list(x))
 
   # converting row specifications to row numbers, and removing old cmds --------
-  x <- .clean_table_styling(x)
+  x <- .table_styling_expr_to_row_number(x)
 
   # creating list of calls to get formatted tibble -----------------------------
   tibble_calls <-
@@ -70,14 +71,7 @@ as_tibble.gtsummary <- function(x, include = everything(), col_labels = TRUE,
   }
 
   # taking each gt function call, concatenating them with %>% separating them
-  tibble_calls[include] %>%
-    # removing NULL elements
-    unlist() %>%
-    compact() %>%
-    # concatenating expressions with %>% between each of them
-    reduce(function(x, y) expr(!!x %>% !!y)) %>%
-    # evaluating expressions
-    eval()
+  .eval_list_of_exprs(tibble_calls[include])
 }
 
 

@@ -67,18 +67,18 @@
 #' @family tbl_svysummary tools
 #' @seealso Review [list, formula, and selector syntax][syntax] used throughout gtsummary
 #' @author Joseph Larmarange
-#' @examplesIf broom.helpers::.assert_package("survey", boolean = TRUE)
+#' @examplesIf broom.helpers::.assert_package("survey", pkg_search = "gtsummary", boolean = TRUE)
 #' # A simple weighted dataset
 #' tbl_svysummary_ex1 <-
 #'   survey::svydesign(~1, data = as.data.frame(Titanic), weights = ~Freq) %>%
-#'   tbl_svysummary(by = Survived, percent = "row")
+#'   tbl_svysummary(by = Survived, percent = "row", include = c(Class, Age))
 #'
 #' # Example 2 ----------------------------------
 #' # A dataset with a complex design
 #' data(api, package = "survey")
 #' tbl_svysummary_ex2 <-
 #'   survey::svydesign(id = ~dnum, weights = ~pw, data = apiclus1, fpc = ~fpc) %>%
-#'   tbl_svysummary(by = "both", include = c(cname, api00, api99, both))
+#'   tbl_svysummary(by = "both", include = c(api00, stype))
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
@@ -102,7 +102,7 @@ tbl_svysummary <- function(data, by = NULL, label = NULL, statistic = NULL,
   by <-
     .select_to_varnames(
       select = {{ by }},
-      data = .remove_survey_cols(data),
+      data = data$variables,
       arg_name = "by",
       select_single = TRUE
     )
@@ -110,10 +110,15 @@ tbl_svysummary <- function(data, by = NULL, label = NULL, statistic = NULL,
   include <-
     .select_to_varnames(
       select = {{ include }},
-      data = .remove_survey_cols(data),
+      data = data$variables,
       arg_name = "include"
     ) %>%
     union(by)
+  if ("n" %in% include) {
+    paste("Cannot summarize a column called 'n'. Rename it or remove",
+          "is from the summary with `include = -n`") %>%
+      abort()
+  }
 
   # setting defaults from gtsummary theme --------------------------------------
   label <- label %||%
@@ -228,42 +233,58 @@ tbl_svysummary <- function(data, by = NULL, label = NULL, statistic = NULL,
       df_by = df_by(data, by)
     )
 
-  # adding stat footnote (unless there are continuous2 vars)
-  if (!"continuous2" %in% meta_data$summary_type) {
-    x <-
-      modify_table_styling(
-        x,
-        columns = starts_with("stat_"),
-        footnote = footnote_stat_label(meta_data)
-      )
+  # adding "modify_stat_" information ------------------------------------------
+  if (is.null(by)) {
+    x$table_styling$header$modify_stat_N <-
+      pluck(x, "meta_data", "df_stats", 1, "N_obs", 1)
+    x$table_styling$header$modify_stat_N_unweighted <-
+      pluck(x, "meta_data", "df_stats", 1, "N_unweighted", 1)
+  }
+  else {
+    x$table_styling$header <-
+      x$table_styling$header %>%
+      dplyr::left_join(
+        x$df_by %>%
+          select(column = .data$by_col,
+                 modify_stat_n = .data$n,
+                 modify_stat_N = .data$N,
+                 modify_stat_p = .data$p,
+                 modify_stat_n_unweighted = .data$n_unweighted,
+                 modify_stat_N_unweighted = .data$N_unweighted,
+                 modify_stat_p_unweighted = .data$p_unweighted,
+                 modify_stat_level = .data$by_chr),
+        by = "column"
+      ) %>%
+      tidyr::fill(c(.data$modify_stat_N, .data$modify_stat_N_unweighted), .direction = "updown")
   }
 
-  # assigning a class of tbl_summary (for special printing in Rmarkdown)
+  # adding headers and footnote ------------------------------------------------
+  x <-
+    modify_table_styling(
+      x,
+      columns = all_stat_cols(),
+      footnote = footnote_stat_label(meta_data)
+    ) %>%
+    modify_header(
+      label = paste0("**", translate_text("Characteristic"), "**"),
+      all_stat_cols() ~
+        ifelse(is.null(by),
+               "**N = {style_number(N)}**",
+               "**{level}**, N = {style_number(n)}")
+    )
+
+
+
+
+  # assign class and return final tbl ------------------------------------------
   class(x) <- c("tbl_svysummary", class(x))
 
-  # adding headers
-  if (is.null(by)) {
-    x <- modify_header(
-      x,
-      stat_0 = "**N = {style_number(N)}**",
-      label = paste0("**", translate_text("Characteristic"), "**")
-    )
-  } else {
-    x <- modify_header(
-      x,
-      update = list(
-        all_stat_cols(FALSE) ~ "**{level}**, N = {style_number(n)}",
-        label ~ paste0("**", translate_text("Characteristic"), "**")
-      )
-    )
-  }
-
-  # running any additional mods ------------------------------------------------
+  # running any additional mods
   x <-
     get_theme_element("tbl_svysummary-fn:addnl-fn-to-run", default = identity) %>%
     do.call(list(x))
 
-  # returning tbl_svysummary table ---------------------------------------------
+  # returning tbl_svysummary table
   x
 }
 
@@ -291,11 +312,13 @@ summarize_categorical_survey <- function(data, variable, by,
   }
 
   if (is.null(by)) {
-    svy_table <- survey::svytable(c_form(right = variable), data) %>%
+    svy_table <-
+      survey::svytable(c_form(right = variable), data) %>%
       as_tibble() %>%
       set_names("variable_levels", "n")
   } else {
-    svy_table <- survey::svytable(c_form(right = c(by, variable)), data) %>%
+    svy_table <-
+      survey::svytable(c_form(right = c(by, variable)), data) %>%
       as_tibble() %>%
       set_names("by", "variable_levels", "n")
   }
@@ -600,33 +623,9 @@ c_form <- function(left = NULL, right = 1) {
   stats::as.formula(paste(left, "~", right))
 }
 
-
-# this function removes the weight/survey columns from x$variables
-# used when columns must be selected from the survey object, and we dont want users
-# to select the weighting columns
-.remove_survey_cols <- function(x) {
-  if (is.data.frame(x)) {
-    return(x)
-  }
-  if (is.call(x$call)) {
-    x$variables %>%
-      select(-any_of(c(
-        all.vars(x$call$id),
-        all.vars(x$call$probs),
-        all.vars(x$call$strata),
-        all.vars(x$call$fpc),
-        all.vars(x$call$weights)
-      )))
-  } else if (!is.null(attr(x, "survey_vars"))) {
-    # "survey_vars" attribute is used by srvyr
-    x$variables %>%
-      select(-any_of(
-        attr(x, "survey_vars") %>% as.character() %>% unlist()
-      ))
-  } else {
-    x$variables
-  }
-
+.extract_data_frame <- function(x) {
+  if (is.data.frame(x)) return(x)
+  x$variables # return survey object data frame
 }
 
 # Min and Max Values for survey design

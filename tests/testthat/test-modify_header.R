@@ -1,5 +1,5 @@
 skip_on_cran()
-skip_if_not(requireNamespace("survey"))
+skip_if_not(broom.helpers::.assert_package("survey", pkg_search = "gtsummary", boolean = TRUE))
 library(dplyr)
 
 tbl_summary_noby <- trial %>% tbl_summary()
@@ -23,6 +23,9 @@ test_that("input checks", {
     tbl_summary_noby %>% modify_header(),
     NA
   )
+
+  expect_error(tbl_summary_noby %>% modify_header(stat_0 = "N = {n}"))
+  expect_message(tbl_summary_noby %>% modify_header(stat_1 = "N = {n}"))
 
   # this is erring on R 3.6 only WTF??!
   # expect_error(

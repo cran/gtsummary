@@ -26,6 +26,16 @@
 #' implementation will be updated to use it, which will keep
 #' numeric columns numeric. For the _vast majority_ of users,
 #' _the planned change will be go unnoticed_.
+#'
+#' If this functionality is used in conjunction with `tbl_stack()` (which
+#' includes `tbl_uvregression()`), there is potential issue with printing.
+#' When columns are stack AND when the column-merging is
+#' defined with a quosure, you may run into issues due to the loss of the
+#' environment when 2 or more quosures are combined. If the expression
+#' version of the quosure is the same as the quosure (i.e. no evaluated
+#' objects), there should be no issues. Regardless, this argument is used
+#' internally with care, and it is _not_ recommended for users.
+#'
 #' @return gtsummary table
 #' @export
 #'
@@ -60,7 +70,7 @@
 #' \if{html}{\figure{modify_cols_merge_ex2.png}{options: width=41\%}}
 modify_cols_merge <- function(x, pattern, rows = NULL) {
   # check inputs ---------------------------------------------------------------
-  if (!inherits(x, "gtsummary")) abort("`x=` must be class 'gtsummary'")
+  .assert_class(x, "gtsummary")
   if (!rlang::is_string(pattern)) abort("`pattern=` must be a string.")
   updated_call_list <- c(x$call_list, list(modify_column_hide = match.call()))
 

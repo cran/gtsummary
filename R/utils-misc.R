@@ -19,6 +19,29 @@ add_expr_after <- function(calls, add_after, expr, new_name = NULL) {
   append(calls, new_list, after = index)
 }
 
+
+# this function is used to fill in missing values in the
+# x$table_styling$header$modify_stat_* columns
+.fill_table_header_modify_stats <-
+  function(x, modify_stats = c("modify_stat_N", "modify_stat_N_event",
+                               "modify_stat_N_unweighted")) {
+    modify_stats <-
+      x$table_styling$header %>%
+      select(any_of(modify_stats) & where(.single_value)) %>%
+      names()
+
+    x$table_styling$header <-
+      x$table_styling$header %>%
+      tidyr::fill(any_of(modify_stats), .direction = "downup")
+
+    return(x)
+  }
+
+.single_value <- function(x) {
+  if (length(unique(stats::na.omit(x))) == 1L) return(TRUE)
+  FALSE
+}
+
 #' gtsummary wrapper for purrr::as_mapper
 #'
 #' This wrapper only accepts a function or formula notation function,
@@ -44,11 +67,40 @@ gts_mapper <- function(x, context) {
   purrr::as_mapper(x)
 }
 
+# All documentation of the global options was removed in v1.3.1.
+# This messaging was added in v1.6.0
+.get_deprecated_option <- function(x, default = NULL) {
+  if (!is.null(getOption(x, default = NULL))) {
+    paste("Global option {.val {x}} is soft deprecated and will",
+          "{.emph soon} be removed from {.pkg gtsummary}.\nThe functionality",
+          "has been migrated to a function argument or a gtsummary theme.",
+          "\n{.url https://www.danieldsjoberg.com/gtsummary/articles/themes.html}") %>%
+      cli::cli_alert_danger()
+  }
+  getOption(x, default = default)
+}
+
+.assert_class <- function(x, class, arg_name = "x") {
+  if (!inherits(x, class)) {
+    cls_clps <-
+      glue::glue_collapse(shQuote(class, type = "csh"), sep = ", ", last = ", or ")
+    glue("Error in argument '{arg_name}='. Expecting object of class {cls_clps}") %>%
+      stop(call. = FALSE)
+  }
+}
+
+
 type_check <-
   list(
     is_string =
       list(msg = "Expecting a string as the passed value.",
            fn = function(x) is_string(x)),
+    is_string_summary_type =
+      list(msg = "Expecting one of `c('categorical', 'dichotomous', 'continuous', 'continuous2')` as the passed value.",
+           fn = function(x) is_string(x) && x %in% c("categorical", "dichotomous", "continuous", "continuous2")),
+    is_string_summary_sort =
+      list(msg = "Expecting one of `c('frequency', 'alphanumeric')` as the passed value.",
+           fn = function(x) is_string(x) && x %in% c("frequency", "alphanumeric")),
     is_character =
       list(msg = "Expecting a character as the passed value.",
            fn = function(x) is.character(x)),

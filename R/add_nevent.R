@@ -53,6 +53,7 @@ NULL
 #' @rdname add_nevent_regression
 #' @export
 add_nevent.tbl_regression <- function(x, location = NULL, ...) {
+  check_dots_empty(error = function(e) inform(c(e$message, e$body)))
   updated_call_list <- c(x$call_list, list(add_nevent = match.call()))
   location <- match.arg(location, choices = c("label", "level"), several.ok = TRUE)
 
@@ -95,6 +96,8 @@ add_nevent.tbl_regression <- function(x, location = NULL, ...) {
     ) %>%
     modify_header(stat_nevent ~ "**Event N**")
 
+  # fill in the Ns in the header table modify_stat_* columns
+  x <- .fill_table_header_modify_stats(x)
   # add call list and return x
   x$call_list <- updated_call_list
   x
@@ -114,7 +117,7 @@ add_nevent.tbl_uvregression <- add_nevent.tbl_regression
 #' @param ... Not used
 #' @export
 #' @family tbl_survfit tools
-#' @examples
+#' @examplesIf broom.helpers::.assert_package("survival", pkg_search = "gtsummary", boolean = TRUE)
 #' library(survival)
 #' fit1 <- survfit(Surv(ttdeath, death) ~ 1, trial)
 #' fit2 <- survfit(Surv(ttdeath, death) ~ trt, trial)
@@ -131,6 +134,7 @@ add_nevent.tbl_uvregression <- add_nevent.tbl_regression
 #' \if{html}{\figure{add_nevent.tbl_survfit_ex1.png}{options: width=64\%}}
 
 add_nevent.tbl_survfit <- function(x, ...) {
+  check_dots_empty(error = function(e) inform(c(e$message, e$body)))
   updated_call_list <- c(x$call_list, list(add_nevent = match.call()))
 
   # checking survfit is a standard (not multi-state)
@@ -171,6 +175,8 @@ add_nevent.tbl_survfit <- function(x, ...) {
       hide = FALSE
     )
 
+  # fill in the Ns in the header table modify_stat_* columns
+  x <- .fill_table_header_modify_stats(x)
   # adding indicator to output that add_n was run on this data
   x$call_list <- updated_call_list
   x

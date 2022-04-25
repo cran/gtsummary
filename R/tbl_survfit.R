@@ -36,7 +36,7 @@
 #' @family tbl_survfit tools
 #' @seealso Review [list, formula, and selector syntax][syntax] used throughout gtsummary
 #' @author Daniel D. Sjoberg
-#' @examplesIf broom.helpers::.assert_package("survival", boolean = TRUE)
+#' @examplesIf broom.helpers::.assert_package("survival", pkg_search = "gtsummary", boolean = TRUE)
 #' library(survival)
 #'
 #' # Example 1 ----------------------------------
@@ -108,6 +108,7 @@ tbl_survfit.list <- function(x, times = NULL, probs = NULL,
                              statistic = NULL, label = NULL, label_header = NULL,
                              estimate_fun = NULL, missing = NULL,
                              conf.level = 0.95, reverse = FALSE, quiet = NULL, ...) {
+  check_dots_empty(error = function(e) inform(c(e$message, e$body)))
   # setting defaults -----------------------------------------------------------
   ci.sep <- get_theme_element("pkgwide-str:ci.sep", default = ", ")
   statistic <-
@@ -150,9 +151,9 @@ tbl_survfit.list <- function(x, times = NULL, probs = NULL,
   estimate_fun <-
     estimate_fun %||%
     switch(estimate_type,
-      probs = getOption("gtsummary.tbl_survfit.probs.estimate_fun") %||%
+      probs = .get_deprecated_option("gtsummary.tbl_survfit.probs.estimate_fun") %||%
         partial(style_sigfig, digits = 2),
-      times = getOption("gtsummary.tbl_survfit.times.estimate_fun") %||%
+      times = .get_deprecated_option("gtsummary.tbl_survfit.times.estimate_fun") %||%
         partial(style_percent, symbol = TRUE)
     ) %>%
     gts_mapper("tbl_survfit(estimate_fun=)")

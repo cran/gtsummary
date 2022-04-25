@@ -23,8 +23,9 @@
 skip_on_cran()
 # vetted models checks take a long time--only perform on CI checks
 skip_if(!isTRUE(as.logical(Sys.getenv("CI"))))
-skip_if_not(requireNamespace("car"))
-skip_if_not(requireNamespace("geepack"))
+skip_if_not(broom.helpers::.assert_package("car", pkg_search = "gtsummary", boolean = TRUE))
+skip_if_not(broom.helpers::.assert_package("geepack", pkg_search = "gtsummary", boolean = TRUE))
+skip_if_not(broom.helpers::.assert_package("survival", pkg_search = "gtsummary", boolean = TRUE))
 library(dplyr)
 
 # geeglm() --------------------------------------------------------------------
@@ -135,25 +136,24 @@ test_that("vetted_models geeglm()", {
   )
   # 4.  Other gtsummary functions work with model: add_global_p(), combine_terms(), add_nevent()
   #       - without errors, warnings, messages
-  # geeglm() does not work with car::Anova()!  update this after #409 issue complete?
   expect_error(
-    tbl_geeglm_lin2 <- tbl_geeglm_lin %>% add_global_p(include = everything()), NULL
+    tbl_geeglm_lin2 <- tbl_geeglm_lin %>% add_global_p(include = everything()), NA
   )
-  # expect_error(
-  #   tbl_geeglm_int2 <- tbl_geeglm_int %>% add_global_p(include = everything()), NA
-  # )
-  # expect_error(
-  #   tbl_geeglm_log2 <- tbl_geeglm_log %>% add_global_p(include = everything()), NA
-  # )
-  # expect_warning(
-  #   tbl_geeglm_lin2, NA
-  # )
-  # expect_warning(
-  #   tbl_geeglm_int2, NA
-  # )
-  # expect_warning(
-  #   tbl_geeglm_log2, NA
-  # )
+  expect_error(
+    tbl_geeglm_int2 <- tbl_geeglm_int %>% add_global_p(include = everything()), NA
+  )
+  expect_error(
+    tbl_geeglm_log2 <- tbl_geeglm_log %>% add_global_p(include = everything()), NA
+  )
+  expect_warning(
+    tbl_geeglm_lin2, NA
+  )
+  expect_warning(
+    tbl_geeglm_int2, NA
+  )
+  expect_warning(
+    tbl_geeglm_log2, NA
+  )
   expect_error(
     tbl_geeglm_log3 <- tbl_geeglm_log %>% combine_terms(. ~ . - trt), NA
   )
@@ -164,24 +164,24 @@ test_that("vetted_models geeglm()", {
     tbl_geeglm_log4 <- tbl_geeglm_lin %>% add_nevent(), NULL
   )
   #       - numbers in table are correct
-  # expect_equal(
-  #   tbl_geeglm_lin2$table_body %>%
-  #     pull(p.value) %>%
-  #     na.omit() %>%
-  #     as.vector(),
-  #   car::Anova(mod_geeglm_lin, type = "III") %>%
-  #     as.data.frame() %>%
-  #     pull(`Pr(>Chisq)`)
-  # )
-  # expect_equal(
-  #   tbl_geeglm_int2$table_body %>%
-  #     pull(p.value) %>%
-  #     na.omit() %>%
-  #     as.vector(),
-  #   car::Anova(mod_geeglm_int, type = "III") %>%
-  #     as.data.frame() %>%
-  #     pull(`Pr(>Chisq)`)
-  # )
+  expect_equal(
+    tbl_geeglm_lin2$table_body %>%
+      pull(p.value) %>%
+      na.omit() %>%
+      as.vector(),
+    tidy_wald_test(mod_geeglm_lin) %>%
+      dplyr::filter(dplyr::row_number() != 1L) %>%
+      pull(p.value)
+  )
+  expect_equal(
+    tbl_geeglm_int2$table_body %>%
+      pull(p.value) %>%
+      na.omit() %>%
+      as.vector(),
+    tidy_wald_test(mod_geeglm_int) %>%
+      dplyr::filter(dplyr::row_number() != 1L) %>%
+      pull(p.value)
+  )
   expect_equal(
     tbl_geeglm_log3$table_body %>% filter(variable == "trt") %>% pull(p.value),
     update(mod_geeglm_log, formula. = . ~ . - trt) %>%

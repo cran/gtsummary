@@ -137,3 +137,13 @@ trial %>%
   bold_p(t = 0.10, q = TRUE) %>% # now bold q-values under the threshold of 0.10
   bold_labels()
 
+## ----supported_models, echo = FALSE-------------------------------------------
+broom.helpers::supported_models %>%
+  gt::gt() %>%
+  gt::cols_label(model = gt::md("Model"), notes = gt::md("Details")) %>%
+  gt::fmt_markdown(columns = everything()) %>%
+  gt::tab_options(table.font.size = 11, data_row.padding = gt::px(1), 
+    summary_row.padding = gt::px(1), grand_summary_row.padding = gt::px(1), 
+    footnotes.padding = gt::px(1), source_notes.padding = gt::px(1), 
+    row_group.padding = gt::px(1))
+

@@ -19,7 +19,7 @@
 #' @return `tbl_regression` object
 #' @export
 #'
-#' @examples
+#' @examplesIf broom.helpers::.assert_package("survival", pkg_search = "gtsummary", boolean = TRUE)
 #' \donttest{
 #' # Example 1 ----------------------------------
 #' # Logistic Regression Example, LRT p-value
@@ -45,6 +45,8 @@
 combine_terms <- function(x, formula_update, label = NULL, quiet = NULL, ...) {
   assert_package("survival", "combine_terms()") # required for survreg() models
   updated_call_list <- c(x$call_list, list(combine_terms = match.call()))
+  .assert_class(x, "tbl_regression")
+
   # setting defaults -----------------------------------------------------------
   quiet <- quiet %||% get_theme_element("pkgwide-lgl:quiet") %||% FALSE
 
@@ -149,7 +151,7 @@ combine_terms <- function(x, formula_update, label = NULL, quiet = NULL, ...) {
         columns = "p.value",
         label = "**p-value**",
         hide = FALSE,
-        fmt_fun = x$inputs$pvalue_fun %||% getOption("gtsummary.pvalue_fun", default = style_pvalue)
+        fmt_fun = x$inputs$pvalue_fun %||% .get_deprecated_option("gtsummary.pvalue_fun", default = style_pvalue)
       )
   }
   # replacing the combined rows with a single row

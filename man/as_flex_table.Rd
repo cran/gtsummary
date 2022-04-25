@@ -8,7 +8,7 @@ as_flex_table(
   x,
   include = everything(),
   return_calls = FALSE,
-  strip_md_bold = TRUE
+  strip_md_bold = NULL
 )
 }
 \arguments{
@@ -23,8 +23,7 @@ Default is \code{everything()}.}
 \item{return_calls}{Logical. Default is \code{FALSE}. If \code{TRUE}, the calls are returned
 as a list of expressions.}
 
-\item{strip_md_bold}{When TRUE, all double asterisk (markdown language for
-bold weight) in column labels and spanning headers are removed.}
+\item{strip_md_bold}{DEPRECATED}
 }
 \value{
 A {flextable} object
@@ -36,30 +35,21 @@ available via the flextable functions. The flextable output is particularly
 useful when combined with R markdown with Word output, since the gt package
 does not support Word.
 }
-\section{Details}{
+\section{Experimental}{
 
-The \code{as_flex_table()} functions converts the gtsummary object to a flextable,
-and prints it with the following styling functions.
-\enumerate{
-\item \code{flextable::flextable()}
-\item \code{flextable::set_header_labels()} to set column labels
-\item \code{flextable::add_header_row()}, if applicable, to set spanning column header
-\item \code{flextable::align()} to set column alignment
-\item \code{flextable::padding()} to indent variable levels
-\item \code{flextable::fontsize()} to set font size
-\item \code{flextable::autofit()} to estimate the column widths
-\item \code{flextable::footnote()} to add table footnotes and source notes
-\item \code{flextable::bold()} to bold cells in data frame
-\item \code{flextable::italic()} to italicize cells in data frame
-\item \code{flextable::border()} to set all border widths to 1
-\item \code{flextable::padding()} to set consistent header padding
-\item \code{flextable::valign()} to ensure label column is top-left justified
+
+The \strong{ftExtra} package provides a function to recognize and print markdown syntax
+in \strong{flextable} headers.
+To use this feature
+\itemize{
+\item Install \strong{ftExtra v0.4.0} or greater
+\item Set \code{options(gtsummary.use_ftExtra = TRUE)} or the corresponding theme element
 }
 
-Any one of these commands may be omitted using the \verb{include=} argument.
+To "turn off" this feature, run \code{as_flex_table(include = -ftExtra)}.
 
-Pro tip: Use the \code{flextable::width()} function for exacting control over
-column width after calling \code{as_flex_table()}.
+If you experience any issues using this feature, please file an issue at
+\url{https://github.com/ddsjoberg/gtsummary/issues/new/choose}.
 }
 
 \section{Example Output}{
@@ -70,7 +60,7 @@ column width after calling \code{as_flex_table()}.
 }
 
 \examples{
-\dontshow{if (broom.helpers::.assert_package("flextable", boolean = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (broom.helpers::.assert_package("flextable", pkg_search = "gtsummary", boolean = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 as_flex_table_ex1 <-
   trial \%>\%
   select(trt, age, grade) \%>\%

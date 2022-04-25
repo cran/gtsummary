@@ -23,20 +23,21 @@ add_n <- function(x, ...) {
 #' @param statistic String indicating the statistic to report. Default is the
 #' number of non-missing observation for each variable, `statistic = "{n}"`.
 #' Other statistics available to report include:
-#' * `"{N}"` total number of observations,
-#' * `"{n}"` number of non-missing observations,
-#' * `"{n_miss}"` number of missing observations,
-#' * `"{p}"` percent non-missing data,
+#' * `"{N_obs}"` total number of observations,
+#' * `"{N_nonmiss}"` number of non-missing observations,
+#' * `"{N_miss}"` number of missing observations,
+#' * `"{p_nonmiss}"` percent non-missing data,
 #' * `"{p_miss}"` percent missing data
+#' * survey summaries also have the following unweighted statistics available:
+#' `"N_obs_unweighted"`, `"N_miss_unweighted"`, `"N_nonmiss_unweighted"`, `"p_miss_unweighted"`, `"p_nonmiss_unweighted"`
+#'
 #' The argument uses [glue::glue] syntax and multiple statistics may be reported,
-#' e.g. `statistic = "{n} / {N} ({p}%)"`
+#' e.g. `statistic = "{N_nonmiss} / {N_obs} ({p_nonmiss}%)"`
 #' @param col_label String indicating the column label.  Default is `"**N**"`
 #' @param footnote Logical argument indicating whether to print a footnote
 #' clarifying the statistics presented. Default is `FALSE`
 #' @param last Logical indicator to include N column last in table.
 #' Default is `FALSE`, which will display N column first.
-#' @param missing DEPRECATED. Logical argument indicating whether to print N
-#' (`missing = FALSE`), or N missing (`missing = TRUE`).  Default is `FALSE`
 #' @param ... Not used
 #' @family tbl_summary tools
 #' @family tbl_svysummary tools
@@ -58,7 +59,8 @@ add_n <- function(x, ...) {
 #' \if{html}{\figure{tbl_n_ex.png}{options: width=50\%}}
 
 add_n.tbl_summary <- function(x, statistic = "{n}", col_label = "**N**", footnote = FALSE,
-                              last = FALSE, missing = NULL, ...) {
+                              last = FALSE, ...) {
+  check_dots_empty(error = function(e) inform(c(e$message, e$body)))
   updated_call_list <- c(x$call_list, list(add_n = match.call()))
   # checking that input is class tbl_summary
   if (!(inherits(x, "tbl_summary") | inherits(x, "tbl_svysummary"))) {
@@ -66,11 +68,11 @@ add_n.tbl_summary <- function(x, statistic = "{n}", col_label = "**N**", footnot
   }
 
   # DEPRECATED specifying statistic via missing argument -----------------------
-  if (!is.null(missing)) {
+  if (!is.null(rlang::dots_list(...)[["missing"]])) {
     lifecycle::deprecate_stop(
       "1.2.2",
-      "gtsummary::add_n(missing = )",
-      "gtsummary::add_n(statistic = )"
+      "gtsummary::add_n(missing=)",
+      "gtsummary::add_n(statistic=)"
     )
   }
 
@@ -120,7 +122,7 @@ add_n.tbl_summary <- function(x, statistic = "{n}", col_label = "**N**", footnot
 
         # returning formatted df -----------------------------------------------
         df_stats %>%
-          # adding these cols for backwards compatibility
+          # adding these cols for backwards compatibility (documentation of these names was dropped on 2022-04-03)
           mutate(
             N = .data$N_obs,
             n = .data$N_nonmiss,
@@ -154,6 +156,8 @@ add_n.tbl_summary <- function(x, statistic = "{n}", col_label = "**N**", footnot
     x <- modify_footnote(x, n ~ stat_to_label(statistic))
   }
 
+  # fill in the Ns in the header table modify_stat_* columns
+  x <- .fill_table_header_modify_stats(x)
   # adding indicator to output that add_n was run on this data
   x$call_list <- updated_call_list
   # returning tbl_summary object
@@ -210,7 +214,7 @@ add_n.tbl_svysummary <- add_n.tbl_summary
 #' @export
 #' @seealso Review [list, formula, and selector syntax][syntax] used throughout gtsummary
 #' @family tbl_survfit tools
-#' @examples
+#' @examplesIf broom.helpers::.assert_package("survival", pkg_search = "gtsummary", boolean = TRUE)
 #' library(survival)
 #' fit1 <- survfit(Surv(ttdeath, death) ~ 1, trial)
 #' fit2 <- survfit(Surv(ttdeath, death) ~ trt, trial)
@@ -226,6 +230,7 @@ add_n.tbl_svysummary <- add_n.tbl_summary
 #' \if{html}{\figure{add_n.tbl_survfit_ex1.png}{options: width=64\%}}
 
 add_n.tbl_survfit <- function(x, ...) {
+  check_dots_empty(error = function(e) inform(c(e$message, e$body)))
   updated_call_list <- c(x$call_list, list(add_n = match.call()))
 
   # adding N to the table_body -------------------------------------------------
@@ -268,6 +273,8 @@ add_n.tbl_survfit <- function(x, ...) {
       hide = FALSE
     )
 
+  # fill in the Ns in the header table modify_stat_* columns
+  x <- .fill_table_header_modify_stats(x)
   # adding indicator to output that add_n was run on this data
   x$call_list <- updated_call_list
   x
@@ -316,6 +323,7 @@ NULL
 #' @rdname add_n_regression
 #' @export
 add_n.tbl_regression <- function(x, location = NULL, ...) {
+  check_dots_empty(error = function(e) inform(c(e$message, e$body)))
   updated_call_list <- c(x$call_list, list(add_n = match.call()))
   location <- match.arg(location, choices = c("label", "level"), several.ok = TRUE)
 
@@ -363,6 +371,8 @@ add_n.tbl_regression <- function(x, location = NULL, ...) {
       fmt_fun = style_number
     )
 
+  # fill in the Ns in the header table modify_stat_* columns
+  x <- .fill_table_header_modify_stats(x)
   x$call_list <- updated_call_list
   x
 }

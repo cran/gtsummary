@@ -72,6 +72,7 @@ add_p <- function(x, ...) {
 add_p.tbl_summary <- function(x, test = NULL, pvalue_fun = NULL,
                               group = NULL, include = everything(), test.args = NULL,
                               exclude = NULL, ...) {
+  check_dots_empty(error = function(e) inform(c(e$message, e$body)))
   updated_call_list <- c(x$call_list, list(add_p = match.call()))
 
   # DEPRECATION notes ----------------------------------------------------------
@@ -94,7 +95,7 @@ add_p.tbl_summary <- function(x, test = NULL, pvalue_fun = NULL,
     pvalue_fun %||%
     get_theme_element("add_p.tbl_summary-arg:pvalue_fun") %||%
     get_theme_element("pkgwide-fn:pvalue_fun") %||%
-    getOption("gtsummary.pvalue_fun", default = style_pvalue) %>%
+    .get_deprecated_option("gtsummary.pvalue_fun", default = style_pvalue) %>%
     gts_mapper("add_p(pvalue_fun=)")
 
   # converting bare arguments to string ----------------------------------------
@@ -132,9 +133,9 @@ add_p.tbl_summary <- function(x, test = NULL, pvalue_fun = NULL,
     ) %>%
       stop(call. = FALSE)
   }
-  if ("add_difference" %in% names(x$call_list) &&
+  if (any(c("add_difference", "add_p") %in% names(x$call_list)) &&
       "p.value" %in% names(x$table_body)) {
-    paste("`add_p()` cannot be run after `add_difference()` when a",
+    paste("`add_p()` cannot be run after `add_difference()` or `add_p()` when a",
           "'p.value' column is already present.") %>%
       stop(call. = FALSE)
   }
@@ -355,7 +356,8 @@ add_p_merge_p_values <- function(x, lgl_add_p = TRUE,
     }
   }
 
-
+  # fill in the Ns in the header table modify_stat_* columns
+  x <- .fill_table_header_modify_stats(x)
   x
 }
 
@@ -405,7 +407,9 @@ add_p_merge_p_values <- function(x, lgl_add_p = TRUE,
 add_p.tbl_cross <- function(x, test = NULL, pvalue_fun = NULL,
                             source_note = NULL,
                             test.args = NULL, ...) {
+  check_dots_empty(error = function(e) inform(c(e$message, e$body)))
   updated_call_list <- c(x$call_list, list(add_p = match.call()))
+
   # setting defaults -----------------------------------------------------------
   test <- test %||% get_theme_element("add_p.tbl_cross-arg:test")
   source_note <- source_note %||%
@@ -415,7 +419,7 @@ add_p.tbl_cross <- function(x, test = NULL, pvalue_fun = NULL,
       pvalue_fun %||%
       get_theme_element("add_p.tbl_cross-arg:pvalue_fun") %||%
       get_theme_element("pkgwide-fn:pvalue_fun") %||%
-      getOption("gtsummary.pvalue_fun", default = style_pvalue) %>%
+      .get_deprecated_option("gtsummary.pvalue_fun", default = style_pvalue) %>%
       gts_mapper("add_p(pvalue_fun=)")
   } else {
     pvalue_fun <-
@@ -430,7 +434,7 @@ add_p.tbl_cross <- function(x, test = NULL, pvalue_fun = NULL,
                        rlang::expr(everything() ~ !!test)
   )
   input_test.args <- switch(!is.null(test.args),
-    rlang::expr(everything() ~ !!test.args)
+                            rlang::expr(everything() ~ !!test.args)
   )
 
   # running add_p to add the p-value to the output
@@ -469,7 +473,22 @@ add_p.tbl_cross <- function(x, test = NULL, pvalue_fun = NULL,
     attr(x$table_styling$source_note, "text_interpret") <- "md"
   }
 
-  # return tbl_cross
+  # strip markdown bold around column label ------------------------------------
+  x$table_styling$header <-
+    x$table_styling$header %>%
+    mutate(
+      label =
+        ifelse(
+          .data$column %in% "p.value",
+          stringr::str_replace_all(.data$label,
+                                   pattern = "\\*\\*(.*?)\\*\\*",
+                                   replacement = "\\1"),
+          .data$label
+        )
+
+    )
+
+  # return tbl_cross -----------------------------------------------------------
   x$call_list <- updated_call_list
   x
 }
@@ -500,7 +519,7 @@ add_p.tbl_cross <- function(x, test = NULL, pvalue_fun = NULL,
 #' ```
 #'
 #' @export
-#' @examples
+#' @examplesIf broom.helpers::.assert_package("survival", pkg_search = "gtsummary", boolean = TRUE)
 #' library(survival)
 #'
 #' gts_survfit <-
@@ -532,6 +551,7 @@ add_p.tbl_cross <- function(x, test = NULL, pvalue_fun = NULL,
 add_p.tbl_survfit <- function(x, test = "logrank", test.args = NULL,
                               pvalue_fun = style_pvalue,
                               include = everything(), quiet = NULL, ...) {
+  check_dots_empty(error = function(e) inform(c(e$message, e$body)))
   updated_call_list <- c(x$call_list, list(add_p = match.call()))
   # setting defaults -----------------------------------------------------------
   quiet <- quiet %||% get_theme_element("pkgwide-lgl:quiet") %||% FALSE
@@ -540,7 +560,7 @@ add_p.tbl_survfit <- function(x, test = "logrank", test.args = NULL,
   pvalue_fun <-
     pvalue_fun %||%
     get_theme_element("pkgwide-fn:pvalue_fun") %||%
-    getOption("gtsummary.pvalue_fun", default = style_pvalue) %>%
+    .get_deprecated_option("gtsummary.pvalue_fun", default = style_pvalue) %>%
     gts_mapper("add_p(pvalue_fun=)")
 
   include <- .select_to_varnames(select = {{ include }}, var_info = x$meta_data)
@@ -665,7 +685,7 @@ add_p.tbl_survfit <- function(x, test = "logrank", test.args = NULL,
 #' @export
 #' @return A `tbl_svysummary` object
 #' @author Joseph Larmarange
-#' @examplesIf broom.helpers::.assert_package("survey", boolean = TRUE)
+#' @examplesIf broom.helpers::.assert_package("survey", pkg_search = "gtsummary", boolean = TRUE)
 #' \donttest{
 #' # Example 1 ----------------------------------
 #' # A simple weighted dataset
@@ -709,7 +729,9 @@ add_p.tbl_survfit <- function(x, test = "logrank", test.args = NULL,
 
 add_p.tbl_svysummary <- function(x, test = NULL, pvalue_fun = NULL,
                                  include = everything(), test.args = NULL, ...) {
+  check_dots_empty(error = function(e) inform(c(e$message, e$body)))
   updated_call_list <- c(x$call_list, list(add_p = match.call()))
+
   # checking for survey package ------------------------------------------------
   assert_package("survey", "add_p.tbl_svysummary()")
 
@@ -722,7 +744,7 @@ add_p.tbl_svysummary <- function(x, test = NULL, pvalue_fun = NULL,
     get_theme_element("add_p.tbl_svysummary-arg:pvalue_fun") %||%
     get_theme_element("add_p.tbl_summary-arg:pvalue_fun") %||%
     get_theme_element("pkgwide-fn:pvalue_fun") %||%
-    getOption("gtsummary.pvalue_fun", default = style_pvalue) %>%
+    .get_deprecated_option("gtsummary.pvalue_fun", default = style_pvalue) %>%
     gts_mapper("add_p(pvalue_fun=)")
 
 
@@ -848,6 +870,7 @@ add_p.tbl_svysummary <- function(x, test = NULL, pvalue_fun = NULL,
 add_p.tbl_continuous <- function(x, test = NULL, pvalue_fun = NULL,
                                  include = everything(), test.args = NULL,
                                  group = NULL, ...) {
+  check_dots_empty(error = function(e) inform(c(e$message, e$body)))
   updated_call_list <- c(x$call_list, list(add_p = match.call()))
   # setting defaults from gtsummary theme --------------------------------------
   pvalue_fun <-

@@ -107,6 +107,7 @@ NULL
 modify_header <- function(x, update = NULL, ..., text_interpret = c("md", "html"),
                           quiet = NULL, stat_by = NULL) {
   updated_call_list <- c(x$call_list, list(modify_header = match.call()))
+  .assert_class(x, "gtsummary")
   # setting defaults -----------------------------------------------------------
   quiet <- quiet %||% get_theme_element("pkgwide-lgl:quiet") %||% FALSE
   text_interpret <- match.arg(text_interpret)
@@ -138,18 +139,7 @@ modify_header <- function(x, update = NULL, ..., text_interpret = c("md", "html"
   }
 
   # evaluating update with glue ------------------------------------------------
-  df_info_tibble <- .info_tibble(x)
-  update <-
-    update %>%
-    imap(
-      ~ expr(ifelse(!is.na(!!.x), glue(!!.x), NA_character_)) %>%
-        eval_tidy(
-          data = df_info_tibble %>%
-            filter(column %in% .y) %>%
-            as.list() %>%
-            discard(is.na)
-        )
-    )
+  update <- .eval_with_glue(x, update)
 
   # updating column headers ----------------------------------------------------
   x <-
@@ -172,9 +162,7 @@ modify_footnote <- function(x, update = NULL, ..., abbreviation = FALSE,
                             text_interpret = c("md", "html"), quiet = NULL) {
   updated_call_list <- c(x$call_list, list(modify_footnote = match.call()))
   # checking inputs ------------------------------------------------------------
-  if (!inherits(x, "gtsummary")) {
-    stop("Argument `x=` must be an object with 'gtsummary' class", call. = FALSE)
-  }
+  .assert_class(x, "gtsummary")
 
   # setting defaults -----------------------------------------------------------
   quiet <- quiet %||% get_theme_element("pkgwide-lgl:quiet") %||% FALSE
@@ -191,42 +179,22 @@ modify_footnote <- function(x, update = NULL, ..., abbreviation = FALSE,
     return(x)
   }
 
-  # updating footnote ----------------------------------------------------------
-  footnote_column_name <- ifelse(abbreviation == TRUE, "footnote_abbrev", "footnote")
-
-  # updating footnote ----------------------------------------------------------
-  df_info_tibble <- .info_tibble(x)
-  update <-
-    update %>%
-    imap(
-      ~ expr(ifelse(!is.na(!!.x), glue(!!.x), NA_character_)) %>%
-        eval_tidy(
-          data = df_info_tibble %>%
-            filter(column %in% .y) %>%
-            as.list() %>%
-            discard(is.na)
-        )
-    )
+  # evaluating update with glue ------------------------------------------------
+  update <- .eval_with_glue(x, update)
 
   # updating footnotes ---------------------------------------------------------
-  if (abbreviation == FALSE) {
-    x <-
-      modify_table_styling(
-        x,
-        columns = names(update),
-        footnote = unlist(update),
-        text_interpret = text_interpret
+  modify_table_styling_args <- list(x = x,
+                                    columns = names(update),
+                                    footnote = unlist(update),
+                                    text_interpret = text_interpret)
+  if (isTRUE(abbreviation)) { # for abbreviations, update list names
+    modify_table_styling_args <-
+      stats::setNames(
+        modify_table_styling_args,
+        c("x", "columns", "footnote_abbrev", "text_interpret")
       )
   }
-  else if (abbreviation == TRUE) {
-    x <-
-      modify_table_styling(
-        x,
-        columns = names(update),
-        footnote_abbrev = unlist(update),
-        text_interpret = text_interpret
-      )
-  }
+  x <- do.call(modify_table_styling, modify_table_styling_args)
 
   # returning gtsummary object -------------------------------------------------
   x$call_list <- updated_call_list
@@ -239,9 +207,8 @@ modify_spanning_header <- function(x, update = NULL, ...,
                                    text_interpret = c("md", "html"), quiet = NULL) {
   updated_call_list <- c(x$call_list, list(modify_spanning_header = match.call()))
   # checking inputs ------------------------------------------------------------
-  if (!inherits(x, "gtsummary")) {
-    stop("Argument `x=` must be an object with 'gtsummary' class", call. = FALSE)
-  }
+  .assert_class(x, "gtsummary")
+
   # setting defaults -----------------------------------------------------------
   quiet <- quiet %||% get_theme_element("pkgwide-lgl:quiet") %||% FALSE
 
@@ -257,20 +224,10 @@ modify_spanning_header <- function(x, update = NULL, ...,
     return(x)
   }
 
-  # updating spanning header ---------------------------------------------------
-  df_info_tibble <- .info_tibble(x)
-  update <-
-    update %>%
-    imap(
-      ~ expr(ifelse(!is.na(!!.x), glue(!!.x), NA_character_)) %>%
-        eval_tidy(
-          data = df_info_tibble %>%
-            filter(column %in% .y) %>%
-            as.list() %>%
-            discard(is.na)
-        )
-    )
+  # evaluating update with glue ------------------------------------------------
+  update <- .eval_with_glue(x, update)
 
+  # updating spanning header ---------------------------------------------------
   x <-
     modify_table_styling(
       x,
@@ -288,17 +245,16 @@ modify_spanning_header <- function(x, update = NULL, ...,
 #' @export
 modify_caption <- function(x, caption, text_interpret = c("md", "html")) {
   # checking inputs ------------------------------------------------------------
-  if (!inherits(x, "gtsummary")) abort("`x=` must be class 'gtsummary'.")
+  .assert_class(x, "gtsummary")
   if (!rlang::is_string(caption)) abort("`caption=` must be a string.")
   text_interpret <- match.arg(text_interpret)
   updated_call_list <- c(x$call_list, list(modify_caption = match.call()))
 
-  # first interpreting caption in case user passed glue args -----------------
-  caption <-
-    .info_tibble(x) %>%
-    filter(.data$column == "label") %>%
-    with(glue(caption)) %>%
-    as.character()
+  # evaluating update with glue ------------------------------------------------
+  caption <- # eval on the label column stats
+    .eval_with_glue(x, list(label = caption)) %>%
+    unlist() %>%
+    unname()
 
   # adding caption to gtsummary object ----------------------------------------
   x$table_styling$caption <- caption
@@ -316,9 +272,7 @@ show_header_names <- function(x = NULL, include_example = TRUE, quiet = NULL) {
   quiet <- quiet %||% get_theme_element("pkgwide-lgl:quiet") %||% FALSE
 
   # checking input -------------------------------------------------------------
-  if (!inherits(x, "gtsummary")) {
-    stop("Pass a 'gtsummary' object in `x=` to print current column names and headers.")
-  }
+  .assert_class(x, "gtsummary")
 
   df_cols <-
     x$table_styling$header %>%
@@ -357,66 +311,6 @@ show_header_names <- function(x = NULL, include_example = TRUE, quiet = NULL) {
   show_header_names(x)
 }
 
-.info_tibble <- function(x) {
-  # tbl_summary with no by variable
-  if (inherits(x, c("tbl_summary", "tbl_svysummary")) && is.null(x$df_by)) {
-    return(
-      x$meta_data %>%
-        dplyr::slice(1) %>%
-        pluck("df_stats", 1) %>%
-        select(any_of(c("N_obs", "N_unweighted"))) %>%
-        dplyr::slice(1) %>%
-        dplyr::rename(N = .data$N_obs) %>%
-        full_join(
-          select(x$table_styling$header, .data$column),
-          by = character()
-        )
-    )
-  }
-
-  # tbl_summary with by variable
-  if (inherits(x, c("tbl_summary", "tbl_svysummary", "tbl_continuous")) &&
-      !is.null(x$df_by)) {
-    return(
-      x$table_styling$header %>%
-        select(.data$column) %>%
-        full_join(
-          x$df_by %>%
-            select(any_of(c("N", "N_unweighted"))) %>%
-            distinct(),
-          by = character()
-        ) %>%
-        left_join(
-          x$df_by %>%
-            select(
-              column = .data$by_col, level = .data$by_chr,
-              any_of(c("n", "p", "n_unweighted", "p_unweighted"))
-            ),
-          by = "column"
-        )
-    )
-  }
-
-  # adding a few stats from the returned gtsummary list
-  df_new_cols <- x[names(x) %in% c("N", "N_event", "n")] %>% tibble::as_tibble()
-
-  # if no new cols, return without adding anything
-  if (ncol(df_new_cols) == 0) {
-    return(x$table_styling$header %>% select(.data$column))
-  }
-
-  # adding n as a synonym of N if not already present
-  # in V1.3.6, all documentation about {n} being supported was removed. This can be removed eventually
-  if (!"n" %in% names(df_new_cols) && "N" %in% names(df_new_cols)) {
-    df_new_cols <- mutate(df_new_cols, n = .data$N)
-  }
-
-  # returning tibble with new vars added
-  x$table_styling$header %>%
-    select(.data$column) %>%
-    bind_cols(df_new_cols)
-}
-
 .combine_update_and_dots <- function(x, update, ...) {
   dots <- rlang::dots_list(...)
 
@@ -426,9 +320,63 @@ show_header_names <- function(x = NULL, include_example = TRUE, quiet = NULL) {
 
   .formula_list_to_named_list(
     x = c(update, dots),
-    var_info = x$table_styling$header$column,
+    data = x$table_body,
+    var_info =
+      x$table_styling$header %>%
+      select(.data$column, .data$hide, starts_with("modify_selector_")) %>%
+      dplyr::rename_with(
+        .fn = ~stringr::str_remove(., pattern = fixed("modify_selector_")),
+        starts_with("modify_selector_")
+      ),
     arg_name = "... or update",
     type_check = chuck(type_check, "is_string_or_na", "fn"),
     type_check_msg = chuck(type_check, "is_string_or_na", "msg")
   )
 }
+
+.eval_with_glue <- function(x, update) {
+  df_header <-
+    x$table_styling$header %>%
+    select(.data$column, starts_with("modify_stat_")) %>%
+    dplyr::rename_with(~stringr::str_replace(., fixed("modify_stat_"), fixed("")))
+
+  imap(
+    update,
+    function(x, y) {
+      if (!y %in% df_header$column) {
+        cli::cli_alert_warning("Column {.val {y}} not found and was ignored.")
+        return(NULL)
+      }
+      lst_env_for_eval <-
+        df_header %>%
+        filter(.data$column %in% .env$y) %>%
+        as.list() %>%
+        discard(is.na)
+
+      tryCatch(
+        expr(ifelse(!is.na(!!x), glue(!!x), NA_character_)) %>%
+          eval_tidy(data = lst_env_for_eval),
+        error = function(e) {
+          # if string has open and close {}, then print detailed message
+          if (!is_empty(lst_env_for_eval) && stringr::str_detect(x, pattern = "\\{*\\}")) {
+            tryCatch(
+              {
+                cls <-
+                  imap(lst_env_for_eval, ~glue("{{.field {.y}}} ({{.cls {class(.x)[1]}}})")) %>%
+                  paste(collapse = ", ")
+                cli::cli_alert_danger(
+                  "There was an error processing column {.val {y}}--likely a glue syntax error.")
+                paste("The following fields are available to insert via glue syntax:\n", cls) %>%
+                  cli::cli_alert_info()
+              },
+              error = function(e) invisible()
+            )
+          }
+          glue("Error processing `modify_*()` for column '{y}'.") %>% stop(call. = FALSE)
+        }
+      )
+    }
+  ) %>%
+    purrr::compact()
+}
+

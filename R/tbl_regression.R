@@ -21,11 +21,11 @@
 #' - `"survreg"`: The scale parameter is removed, `broom::tidy(x) %>% dplyr::filter(term != "Log(scale)")`
 #' - `"multinom"`: This multinomial outcome is complex, with one line per covariate per outcome (less the reference group)
 #' - `"gam"`: Uses the internal tidier `tidy_gam()` to print both parametric and smooth terms.
+#' - `"tidycrr"`: Uses the tidier `tidycmprsk::tidy()` to print the model terms.
 #' - `"lmerMod"`, `"glmerMod"`, `"glmmTMB"`, `"glmmadmb"`, `"stanreg"`, `"brmsfit"`: These mixed effects
 #' models use `broom.mixed::tidy(x, effects = "fixed")`. Specify `tidy_fun = broom.mixed::tidy`
 #' to print the random components.
 #'
-#' This list is not exhaustive, and care should be taken for each number reported.
 #' @param x Regression model object
 #' @param exponentiate Logical indicating whether to exponentiate the
 #' coefficient estimates. Default is `FALSE`.
@@ -111,6 +111,7 @@ tbl_regression.default <- function(x, label = NULL, exponentiate = FALSE,
                                    tidy_fun = NULL,
                                    add_estimate_to_reference_rows = FALSE,
                                    conf.int = NULL, ...) {
+  check_dots_empty(error = function(e) inform(c(e$message, e$body)))
   # deprecated arguments -------------------------------------------------------
   .tbl_regression_deprecated_arguments(...)
 
@@ -120,12 +121,12 @@ tbl_regression.default <- function(x, label = NULL, exponentiate = FALSE,
     pvalue_fun %||%
     get_theme_element("tbl_regression-arg:pvalue_fun") %||%
     get_theme_element("pkgwide-fn:pvalue_fun") %||%
-    getOption("gtsummary.pvalue_fun", default = style_pvalue) %>%
+    .get_deprecated_option("gtsummary.pvalue_fun", default = style_pvalue) %>%
     gts_mapper("tbl_regression(pvalue_fun=)")
   estimate_fun <-
     estimate_fun %||%
     get_theme_element("tbl_regression-arg:estimate_fun") %||%
-    getOption(
+    .get_deprecated_option(
       "gtsummary.tbl_regression.estimate_fun",
       default = ifelse(exponentiate == TRUE, style_ratio, style_sigfig)
     ) %>%
@@ -133,7 +134,7 @@ tbl_regression.default <- function(x, label = NULL, exponentiate = FALSE,
   conf.level <-
     conf.level %||%
     get_theme_element("tbl_regression-arg:conf.level") %||%
-    getOption("gtsummary.conf.level", default = 0.95)
+    .get_deprecated_option("gtsummary.conf.level", default = 0.95)
   conf.int <-
     conf.int %||%
     get_theme_element("tbl_regression-arg:conf.int", default = TRUE)
@@ -238,6 +239,18 @@ tbl_regression.default <- function(x, label = NULL, exponentiate = FALSE,
       pvalue_fun = pvalue_fun,
       conf.level = conf.level
     )
+
+  # adding the Ns to the `x$table_styling$header`
+  x$table_styling$header <-
+    x[c("N", "n", "N_event")] %>%
+    purrr::compact() %>%
+    as_tibble() %>%
+    dplyr::rename_with(.fn = ~paste0("modify_stat_", .), .cols = everything()) %>%
+    full_join(
+      x$table_styling$header,
+      by = character()
+    ) %>%
+    dplyr::relocate(starts_with("modify_stat_"), .after = last_col())
 
   # running any additional mods ------------------------------------------------
   x <-

@@ -14,7 +14,7 @@
 #' @return a ggplot
 #' @name plot
 #'
-#' @examplesIf broom.helpers::.assert_package("GGally", boolean = TRUE)
+#' @examplesIf broom.helpers::.assert_package("GGally", pkg_search = "gtsummary", boolean = TRUE)
 #' glm(response ~ marker + grade, trial, family = binomial) %>%
 #'   tbl_regression(
 #'     add_estimate_to_reference_rows = TRUE,
@@ -28,6 +28,7 @@ NULL
 plot.tbl_regression <- function(x,
                                 remove_header_rows = TRUE,
                                 remove_reference_rows = FALSE, ...) {
+  check_dots_empty(error = function(e) inform(c(e$message, e$body)))
   assert_package("GGally", fn = "plot.tbl_regression()")
 
   df_coefs <- x$table_body

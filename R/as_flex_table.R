@@ -1,41 +1,32 @@
 #' Convert gtsummary object to a flextable object
 #'
-#' Function converts a gtsummary object to a flextable object.
+#' @description Function converts a gtsummary object to a flextable object.
 #' A user can use this function if they wish to add customized formatting
 #' available via the flextable functions. The flextable output is particularly
 #' useful when combined with R markdown with Word output, since the gt package
 #' does not support Word.
 #'
-#' @section Details:
-#' The `as_flex_table()` functions converts the gtsummary object to a flextable,
-#' and prints it with the following styling functions.
-#' 1. `flextable::flextable()`
-#' 1. `flextable::set_header_labels()` to set column labels
-#' 1. `flextable::add_header_row()`, if applicable, to set spanning column header
-#' 1. `flextable::align()` to set column alignment
-#' 1. `flextable::padding()` to indent variable levels
-#' 1. `flextable::fontsize()` to set font size
-#' 1. `flextable::autofit()` to estimate the column widths
-#' 1. `flextable::footnote()` to add table footnotes and source notes
-#' 1. `flextable::bold()` to bold cells in data frame
-#' 1. `flextable::italic()` to italicize cells in data frame
-#' 1. `flextable::border()` to set all border widths to 1
-#' 1. `flextable::padding()` to set consistent header padding
-#' 1. `flextable::valign()` to ensure label column is top-left justified
+#' @section Experimental:
 #'
-#' Any one of these commands may be omitted using the `include=` argument.
+#' The **ftExtra** package provides a function to recognize and print markdown syntax
+#' in **flextable** headers.
+#' To use this feature
+#' - Install **ftExtra v0.4.0** or greater
+#' - Set `options(gtsummary.use_ftExtra = TRUE)` or the corresponding theme element
 #'
-#' Pro tip: Use the `flextable::width()` function for exacting control over
-#' column width after calling `as_flex_table()`.
+#' To "turn off" this feature, run `as_flex_table(include = -ftExtra)`.
+#'
+#' If you experience any issues using this feature, please file an issue at
+#' [https://github.com/ddsjoberg/gtsummary/issues/new/choose](https://github.com/ddsjoberg/gtsummary/issues/new/choose).
+#'
 #' @inheritParams as_gt
 #' @inheritParams as_tibble.gtsummary
-#' @param strip_md_bold When TRUE, all double asterisk (markdown language for
-#' bold weight) in column labels and spanning headers are removed.
+#' @param strip_md_bold DEPRECATED
 #' @export
 #' @return A {flextable} object
 #' @family gtsummary output types
 #' @author Daniel D. Sjoberg
-#' @examplesIf broom.helpers::.assert_package("flextable", boolean = TRUE)
+#' @examplesIf broom.helpers::.assert_package("flextable", pkg_search = "gtsummary", boolean = TRUE)
 #' as_flex_table_ex1 <-
 #'   trial %>%
 #'   select(trt, age, grade) %>%
@@ -47,18 +38,29 @@
 #'
 #' \if{html}{\figure{as_flex_table_ex1.png}{options: width=60\%}}
 as_flex_table <- function(x, include = everything(), return_calls = FALSE,
-                          strip_md_bold = TRUE) {
+                          strip_md_bold = NULL) {
+  # deprecated arguments -------------------------------------------------------
+  if (!is.null(strip_md_bold)) {
+    lifecycle::deprecate_warn(
+      "1.6.0", "gtsummary::as_flex_table(strip_md_bold=)",
+      details = "Install {ftExtra} package to obtain styled header rows. See `?as_flex_table()` for details.")
+  }
+
+  .assert_class(x, "gtsummary")
   # checking flextable installation --------------------------------------------
   assert_package("flextable", "as_flex_table()")
+  use_ft_extra <-
+    (isTRUE(getOption("gtsummary.use_ftExtra")) || isTRUE(get_theme_element("as_flex_table-lgl:use_ftExtra"))) &&    # either is TRUE
+    assert_package("ftExtra", boolean = TRUE)                                                                        # ftExtra is installed
 
   # running pre-conversion function, if present --------------------------------
   x <- do.call(get_theme_element("pkgwide-fun:pre_conversion", default = identity), list(x))
 
   # converting row specifications to row numbers, and removing old cmds --------
-  x <- .clean_table_styling(x)
+  x <- .table_styling_expr_to_row_number(x)
 
   # stripping markdown asterisk ------------------------------------------------
-  if (strip_md_bold == TRUE) {
+  if (isFALSE(use_ft_extra)) {
     x$table_styling$header <-
       x$table_styling$header %>%
       mutate_at(
@@ -68,7 +70,7 @@ as_flex_table <- function(x, include = everything(), return_calls = FALSE,
   }
 
   # creating list of flextable calls -------------------------------------------
-  flextable_calls <- table_styling_to_flextable_calls(x = x)
+  flextable_calls <- table_styling_to_flextable_calls(x = x, use_ft_extra = use_ft_extra)
 
   # adding user-specified calls ------------------------------------------------
   insert_expr_after <- get_theme_element("as_flex_table-lst:addl_cmds")
@@ -100,18 +102,11 @@ as_flex_table <- function(x, include = everything(), return_calls = FALSE,
   }
 
   # taking each kable function call, concatenating them with %>% separating them
-  flextable_calls[include] %>%
-    # removing NULL elements
-    unlist() %>%
-    compact() %>%
-    # concatenating expressions with %>% between each of them
-    reduce(function(x, y) expr(!!x %>% !!y)) %>%
-    # evaluating expressions
-    eval()
+  .eval_list_of_exprs(flextable_calls[include])
 }
 
 # creating flextable calls from table_styling ----------------------------------
-table_styling_to_flextable_calls <- function(x, ...) {
+table_styling_to_flextable_calls <- function(x, use_ft_extra, ...) {
 
   # adding id number for columns not hidden
   x$table_styling$header <-
@@ -246,6 +241,23 @@ table_styling_to_flextable_calls <- function(x, ...) {
   flextable_calls[["fontsize"]] <- list(
     expr(flextable::fontsize(part = "header", size = 11))
   )
+
+  # ft_extra -------------------------------------------------------------------
+  flextable_calls[["ftExtra"]] <- list()
+  if (isTRUE(use_ft_extra)) {
+    flextable_calls[["ftExtra"]] <-
+      list(
+        expr(
+          ftExtra::colformat_md(
+            part = "header",
+            md_extensions =
+              get_theme_element(
+                "as_flex_table-lgl:ftExtra.colformat_md.md_extensions",
+                default = "+hard_line_breaks")
+          )
+        )
+      )
+  }
 
   # autofit --------------------------------------------------------------------
   flextable_calls[["autofit"]] <- expr(flextable::autofit())
@@ -414,7 +426,7 @@ table_styling_to_flextable_calls <- function(x, ...) {
   flextable_calls[["valign"]] <-
     list(
       expr(
-        flextable::valign(j = ~label, valign = "top", part = "body")
+        flextable::valign(valign = "top", part = "body")
       )
     )
 

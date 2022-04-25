@@ -37,6 +37,7 @@
 
 as_gt <- function(x, include = everything(), return_calls = FALSE, ...,
                   exclude = NULL) {
+  .assert_class(x, "gtsummary")
   # making list of commands to include -----------------------------------------
   if (!rlang::quo_is_null(rlang::enquo(exclude))) {
     lifecycle::deprecate_stop(
@@ -59,7 +60,7 @@ as_gt <- function(x, include = everything(), return_calls = FALSE, ...,
   x <- .table_styling_cols_merge(x)
 
   # converting row specifications to row numbers, and removing old cmds --------
-  x <- .clean_table_styling(x)
+  x <- .table_styling_expr_to_row_number(x)
 
   # creating list of gt calls --------------------------------------------------
   gt_calls <- table_styling_to_gt_calls(x = x, ...)
@@ -99,15 +100,8 @@ as_gt <- function(x, include = everything(), return_calls = FALSE, ...,
 
   # taking each gt function call, concatenating them with %>% separating them
   gt_calls[include] %>%
-    # adding default gt formatting options
-    c(parse_expr(getOption("gtsummary.as_gt.addl_cmds", default = "NULL"))) %>%
-    # removing NULL elements
-    unlist() %>%
-    compact() %>%
-    # concatenating expressions with %>% between each of them
-    reduce(function(x, y) expr(!!x %>% !!y)) %>%
-    # evaluating expressions
-    eval()
+  c(parse_expr(.get_deprecated_option("gtsummary.as_gt.addl_cmds", default = "NULL"))) %>%
+  .eval_list_of_exprs()
 }
 
 # creating gt calls from table_styling -----------------------------------------
@@ -341,9 +335,10 @@ table_styling_to_gt_calls <- function(x, ...) {
   gt_calls[["cols_hide"]] <-
     names(x$table_body) %>%
     setdiff(.cols_to_show(x)) %>%
-    {
-      expr(gt::cols_hide(columns = !!.))
-    }
+    purrr::when(
+      rlang::is_empty(.) ~ NULL,
+      TRUE ~ expr(gt::cols_hide(columns = !!.))
+    )
 
   # return list of gt expressions
   gt_calls

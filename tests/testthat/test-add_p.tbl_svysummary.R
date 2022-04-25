@@ -1,5 +1,5 @@
 skip_on_cran()
-skip_if_not(requireNamespace("survey"))
+skip_if_not(broom.helpers::.assert_package("survey", pkg_search = "gtsummary", boolean = TRUE))
 
 strial <- trial %>%
   survey::svydesign(data = ., ids = ~1, weights = ~1)
@@ -160,6 +160,8 @@ test_that("add_p works well", {
       )),
     NA
   )
+
+  expect_error(as_flex_table(tbl2), NA)
 
   expect_equal(
     dplyr::filter(tbl2$meta_data, variable == "age")$p.value,

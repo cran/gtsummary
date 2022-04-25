@@ -15,7 +15,7 @@
 #' @family tbl_regression tools
 #' @family tbl_uvregression tools
 #' @export
-#' @examplesIf broom.helpers::.assert_package("car", boolean = TRUE)
+#' @examplesIf broom.helpers::.assert_package("car", pkg_search = "gtsummary", boolean = TRUE)
 #' \donttest{
 #' # Example 1 ----------------------------------
 #' add_q_ex1 <-
@@ -52,9 +52,7 @@ add_q <- function(x, method = "fdr", pvalue_fun = NULL, quiet = NULL) {
 
   # checking inputs ------------------------------------------------------------
   # checking class of x
-  if (!inherits(x, "gtsummary")) {
-    stop("`x=` must be a gtsummary obejct.", call. = FALSE)
-  }
+  .assert_class(x, "gtsummary")
 
   # checking input table has a p.value column
   if (!"p.value" %in% names(x$table_body)) {
@@ -105,6 +103,8 @@ add_q <- function(x, method = "fdr", pvalue_fun = NULL, quiet = NULL) {
   x <- modify_header(x, q.value = paste0("**", translate_text("q-value"), "**"))
 
   # return final object --------------------------------------------------------
+  # fill in the Ns in the header table modify_stat_* columns
+  x <- .fill_table_header_modify_stats(x)
   # adding call
   x$call_list <- updated_call_list
 

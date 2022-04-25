@@ -32,9 +32,9 @@
 skip_on_cran()
 # vetted models checks take a long time--only perform on CI checks
 skip_if(!isTRUE(as.logical(Sys.getenv("CI"))))
-skip_if_not(requireNamespace("car"))
-skip_if_not(requireNamespace("lme4"))
-skip_if_not(requireNamespace("survival"))
+skip_if_not(broom.helpers::.assert_package("car", pkg_search = "gtsummary", boolean = TRUE))
+skip_if_not(broom.helpers::.assert_package("lme4", pkg_search = "gtsummary", boolean = TRUE))
+skip_if_not(broom.helpers::.assert_package("survival", pkg_search = "gtsummary", boolean = TRUE))
 library(dplyr)
 library(survival)
 
@@ -158,16 +158,6 @@ test_that("vetted_models survreg()", {
   #       - without errors, warnings, messages
   #       - works with add_global_p(), add_nevent()
   expect_error(
-    trial %>%
-      tbl_uvregression(
-        y = Surv(ttdeath, death),
-        method = survreg
-      ) %>%
-      add_global_p() %>%
-      add_q(),
-    NA
-  )
-  expect_warning(
     trial %>%
       tbl_uvregression(
         y = Surv(ttdeath, death),

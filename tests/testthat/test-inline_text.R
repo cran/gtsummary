@@ -1,4 +1,5 @@
 skip_on_cran()
+skip_if_not(broom.helpers::.assert_package("survival", pkg_search = "gtsummary", boolean = TRUE))
 
 # inline_text.tbl_summary tests --------------
 
@@ -9,6 +10,10 @@ test_inline2b <- trial %>%
   add_overall() %>%
   add_p()
 
+test_inline3 <-
+  trial %>%
+  tbl_summary(by = trt, include = age, missing = "no") %>%
+  add_difference()
 
 test_that("inline_text.tbl_summary: no by", {
   expect_error(
@@ -46,6 +51,11 @@ test_that("inline_text.tbl_summary: with by", {
   expect_warning(
     inline_text(test_inline2, variable = "age", column = "Drug B"),
     NA
+  )
+
+  expect_equal(
+    inline_text(test_inline3, pattern = "{estimate} (95% CI {ci})", variable = "age"),
+    "-0.44 (95% CI -4.6, 3.7)"
   )
 
   expect_error(
@@ -166,14 +176,12 @@ library(survival)
 test_inline_surv_strata <-
   survfit(Surv(ttdeath, death) ~ trt, trial) %>%
   tbl_survival(
-    times = c(12, 24),
-    time_label = "{time} Months"
+    times = c(12, 24)
   )
 test_inline_surv_nostrata <-
   survfit(Surv(ttdeath, death) ~ 1, trial) %>%
   tbl_survival(
-    times = c(12, 24),
-    time_label = "{time} Months"
+    times = c(12, 24)
   )
 
 test_inline_surv_strata2 <-
@@ -293,7 +301,7 @@ test_that("inline_text.tbl_survfit", {
 test_that("inline_text.tbl_cross", {
   tbl_cross <-
     tbl_cross(trial, row = trt, col = response) %>%
-    add_p(percent = "cell")
+    add_p()
 
   expect_equal(
     inline_text(tbl_cross, row_level = "Drug A", col_level = "1"),
@@ -314,7 +322,7 @@ test_that("inline_text.tbl_cross", {
 test_that("inline_text.tbl_cross- expect error args aren't present", {
   tbl_cross <-
     tbl_cross(trial, row = trt, col = response) %>%
-    add_p(percent = "cell")
+    add_p()
 
   expect_error(
     inline_text(tbl_cross, row_level = "Drug A"),
@@ -331,7 +339,7 @@ test_that("inline_text.tbl_cross- expect error args aren't present", {
   )
 })
 
-skip_if_not(requireNamespace("survey"))
+skip_if_not(broom.helpers::.assert_package("survey", pkg_search = "gtsummary", boolean = TRUE))
 
 # inline_text.tbl_svysummary tests --------------
 test_inline1 <- trial %>%
@@ -418,7 +426,7 @@ test_that("inline_text.tbl_svysummary: with by -  expect errors", {
 })
 
 test_that("inline_text.tbl_svysummary: no errors with empty string selection", {
-  skip_if_not(requireNamespace("survey"))
+  skip_if_not(broom.helpers::.assert_package("survey", pkg_search = "gtsummary", boolean = TRUE))
   expect_error(
     trial %>%
       select(grade) %>%

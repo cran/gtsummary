@@ -103,11 +103,11 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
     pvalue_fun %||%
     get_theme_element("tbl_regression-arg:pvalue_fun") %||%
     get_theme_element("pkgwide-fn:pvalue_fun") %||%
-    getOption("gtsummary.pvalue_fun", default = style_pvalue) %>%
+    .get_deprecated_option("gtsummary.pvalue_fun", default = style_pvalue) %>%
     gts_mapper("tbl_uvregression(pvalue_fun=)")
   estimate_fun <-
     estimate_fun %||%
-    getOption(
+    .get_deprecated_option(
       "gtsummary.tbl_regression.estimate_fun",
       default = ifelse(exponentiate == TRUE, style_ratio, style_sigfig)
     ) %>%
@@ -117,7 +117,7 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
     get_theme_element("tbl_regression-arg:conf.int", default = TRUE)
   conf.level <-
     conf.level %||%
-    getOption("gtsummary.conf.level", default = 0.95)
+    .get_deprecated_option("gtsummary.conf.level", default = 0.95)
 
   # bare to string/enexpr ------------------------------------------------------
   # updated method and y inputs to be bare, and converting them to strings
@@ -136,8 +136,7 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
            tryCatch({
              .select_to_varnames(
                select = !!x,
-               data = switch(is.data.frame(data), data) %||%
-                 .remove_survey_cols(data),
+               data = .extract_data_frame(data),
                arg_name = "x"
              ) %>%
                rlang::sym()},
@@ -150,8 +149,7 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
            tryCatch({
              .select_to_varnames(
                select = !!y,
-               data = switch(is.data.frame(data), data) %||%
-                 .remove_survey_cols(data),
+               data = .extract_data_frame(data),
                arg_name = "y"
              ) %>%
                rlang::sym()},
@@ -172,17 +170,13 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
   include <-
     .select_to_varnames(
       select = {{ include }},
-      data = switch(is.data.frame(data),
-        data
-      ) %||% .remove_survey_cols(data),
+      data = .extract_data_frame(data),
       arg_name = "include"
     )
   show_single_row <-
     .select_to_varnames(
       select = {{ show_single_row }},
-      data = switch(is.data.frame(data),
-        data
-      ) %||% .remove_survey_cols(data),
+      data = .extract_data_frame(data),
       arg_name = "show_single_row"
     )
 
@@ -214,9 +208,7 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
   label <-
     .formula_list_to_named_list(
       x = label,
-      data = switch(is.data.frame(data),
-        data
-      ) %||% .remove_survey_cols(data),
+      data = .extract_data_frame(data),
       arg_name = "label",
       type_check = chuck(type_check, "is_string", "fn"),
       type_check_msg = chuck(type_check, "is_string", "msg")
@@ -236,9 +228,7 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
 
   # get all vars not specified -------------------------------------------------
   all_vars <-
-    names(switch(is.data.frame(data),
-      data
-    ) %||% .remove_survey_cols(data)) %>%
+    names(.extract_data_frame(data)) %>%
     # removing x or y variable
     setdiff(paste(c(y, x), "~ 1") %>% stats::as.formula() %>% all.vars()) %>%
     # removing any other variables listed in the formula
@@ -348,6 +338,11 @@ tbl_uvregression <- function(data, method, y = NULL, x = NULL, method.args = NUL
     results$table_body %>%
     filter(.data$row_type == "label") %>%
     select(any_of(c("variable", "var_type", "label", "N_obs", "N_event")))
+
+  # removing modify_stat_* columns ---------------------------------------------
+  results$table_styling$header <-
+    results$table_styling$header %>%
+    select(-starts_with("modify_stat_"))
 
   # adding column of N ---------------------------------------------------------
   if (hide_n == FALSE) results <- add_n(results, location = "label")

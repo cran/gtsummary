@@ -1,6 +1,6 @@
 skip_on_cran()
-skip_if_not(requireNamespace("Hmisc"))
-skip_if_not(requireNamespace("lme4"))
+skip_if_not(broom.helpers::.assert_package("Hmisc", pkg_search = "gtsummary", boolean = TRUE))
+skip_if_not(broom.helpers::.assert_package("lme4", pkg_search = "gtsummary", boolean = TRUE))
 
 library(survival)
 library(lme4)
@@ -235,4 +235,18 @@ test_that("tidymodels/parsnip/workflows", {
       select(estimate, ci) %>%
       dplyr::filter(!is.na(estimate))
   )
+})
+
+test_that("tidycrr models work", {
+  mod <- tidycmprsk::crr(tidycmprsk::Surv(ttdeath, death_cr) ~  age + grade, tidycmprsk::trial)
+
+  expect_error(
+    tbl <- tbl_regression(mod, exponentiate = TRUE),
+    NA
+  )
+  expect_equal(
+    as_tibble(tbl, col_labels = FALSE)$estimate,
+    c("1.01", NA, NA, "1.06", "1.54")
+  )
+  expect_error(add_global_p(tbl), NA)
 })

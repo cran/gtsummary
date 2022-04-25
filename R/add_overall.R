@@ -77,6 +77,7 @@ add_overall <- function(x, ...) {
 #' @export
 add_overall.tbl_summary <- function(x, last = FALSE, col_label = NULL,
                                     statistic = NULL, digits = NULL, ...) {
+  check_dots_empty(error = function(e) inform(c(e$message, e$body)))
   add_overall_generic(
     x = x, last = last, col_label = col_label,
     statistic = statistic, digits = digits,
@@ -112,7 +113,7 @@ add_overall_generic <- function(x, last, col_label, statistic, digits, call) {
   # removing 'by' variable from data
   # (so it won't show up in the overall tbl_summary)
   # x_copy$inputs[["data"]] <-
-  #   select(use_data_frame(x$inputs[["data"]]), -x[["by"]])
+  #   select(.extract_data_frame(x$inputs[["data"]]), -x[["by"]])
   x_copy$inputs$include <- x_copy$inputs$include %>% setdiff(x$inputs$by)
 
   # if overall row, already included in data -----------------------------------
@@ -124,7 +125,7 @@ add_overall_generic <- function(x, last, col_label, statistic, digits, call) {
   statistic <-
     .formula_list_to_named_list(
       x = statistic,
-      data = use_data_frame(x_copy$inputs$data),
+      data = .extract_data_frame(x_copy$inputs$data),
       var_info = x_copy$table_body,
       arg_name = "statistic",
       type_check = chuck(type_check, "is_character", "fn"),
@@ -133,14 +134,14 @@ add_overall_generic <- function(x, last, col_label, statistic, digits, call) {
   x_copy$inputs$statistic <-
     .formula_list_to_named_list(
       x = x_copy$inputs$statistic,
-      data = use_data_frame(x_copy$inputs$data),
+      data = .extract_data_frame(x_copy$inputs$data),
       var_info = x_copy$table_body,
       arg_name = "statistic"
     )
   digits <-
     .formula_list_to_named_list(
       x = digits,
-      data = use_data_frame(x_copy$inputs$data),
+      data = .extract_data_frame(x_copy$inputs$data),
       var_info = x_copy$table_body,
       arg_name = "digits",
       type_check = chuck(type_check, "digits", "fn"),
@@ -149,7 +150,7 @@ add_overall_generic <- function(x, last, col_label, statistic, digits, call) {
   x_copy$inputs$digits <-
     .formula_list_to_named_list(
       x = x_copy$inputs$digits,
-      data = use_data_frame(x_copy$inputs$data),
+      data = .extract_data_frame(x_copy$inputs$data),
       var_info = x_copy$table_body,
       arg_name = "digits"
     )
@@ -225,11 +226,12 @@ add_overall_merge <- function(x, tbl_overall, last, col_label) {
     )
 
   # adding overall stat to the table_body data frame
-  x$table_body <-
-    bind_cols(
-      x$table_body,
-      overall %>% select(c("stat_0"))
-    )
+  x <-
+    x %>%
+    modify_table_body(~bind_cols(.x, overall %>% select(c("stat_0"))))
+
+  # fill in the Ns in the header table modify_stat_* columns
+  x <- .fill_table_header_modify_stats(x)
 
   if (last == FALSE) {
     x <- x %>%

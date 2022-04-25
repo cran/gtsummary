@@ -29,7 +29,7 @@ trial %>%
     missing = "no",
     statistic = all_continuous() ~ "{median} ({p25}, {p75})"
   ) %>%
-  modify_header(all_stat_cols() ~ "**{level}**<br>N =  {n} ({style_percent(p)}%)") %>%
+  modify_header(all_stat_cols() ~ "**{level}**<br>N = {n} ({style_percent(p)}%)") %>%
   add_n() %>%
   bold_labels() %>%
   modify_spanning_header(all_stat_cols() ~ "**Chemotherapy Treatment**")
@@ -70,7 +70,7 @@ trial %>%
   tbl_summary(
     by = response, 
     label = list(age ~ "Patient Age", grade ~ "Tumor Grade")
-  )  
+  ) 
 
 ## -----------------------------------------------------------------------------
 trial %>%
@@ -144,25 +144,13 @@ tbl_merge(list(t0, t1, t2)) %>%
   )
 
 ## -----------------------------------------------------------------------------
-# define function for lower and upper bounds of the mean CI
-ll <- function(x) t.test(x)$conf.int[1]
-ul <- function(x) t.test(x)$conf.int[2]
 
-t1 <-
-  trial %>%
+trial %>%
   select(age, marker) %>%
   tbl_summary(statistic = all_continuous() ~ "{mean} ({sd})", missing = "no") %>%
-  modify_header(stat_0 ~ "**Mean (SD)**")
+  modify_header(stat_0 ~ "**Mean (SD)**") %>%
+  add_ci()
 
-t2 <-
-  trial %>%
-  select(age, marker) %>%
-  tbl_summary(statistic = all_continuous() ~ "{ll}, {ul}", missing = "no") %>%
-  modify_header(stat_0 ~ "**95% CI for Mean**")
-
-tbl_merge(list(t1, t2)) %>%
-  modify_footnote(everything() ~ NA_character_) %>%
-  modify_spanning_header(everything() ~ NA_character_)
 
 ## -----------------------------------------------------------------------------
 trial %>%

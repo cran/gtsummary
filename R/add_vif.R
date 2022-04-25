@@ -12,7 +12,7 @@
 #' @seealso Review [list, formula, and selector syntax][syntax] used throughout gtsummary
 #' @export
 #'
-#' @examplesIf broom.helpers::.assert_package("car", boolean = TRUE)
+#' @examplesIf broom.helpers::.assert_package("car", pkg_search = "gtsummary", boolean = TRUE)
 #' \donttest{
 #' # Example 1 ----------------------------------
 #' add_vif_ex1 <-
@@ -37,9 +37,8 @@
 add_vif <- function(x, statistic = NULL, estimate_fun = NULL) {
   updated_call_list <- c(x$call_list, list(add_vif = match.call()))
   # checking inputs ------------------------------------------------------------
-  if (!inherits(x, "tbl_regression")) {
-    stop("`x=` must be class 'tbl_regression'")
-  }
+  .assert_class(x, "tbl_regression")
+
   assert_package("car", "add_vif()")
   estimate_fun <- estimate_fun %||% style_sigfig %>% gts_mapper("add_vif(estimate_fun=)")
 
@@ -101,6 +100,8 @@ add_vif <- function(x, statistic = NULL, estimate_fun = NULL) {
       )
   }
 
+  # fill in the Ns in the header table modify_stat_* columns
+  x <- .fill_table_header_modify_stats(x)
   # add call list and return x
   x$call_list <- updated_call_list
   x

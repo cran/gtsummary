@@ -131,11 +131,7 @@
 add_stat <- function(x, fns, location = NULL, ...) {
   updated_call_list <- c(x$call_list, list(add_stat = match.call()))
   # checking inputs ------------------------------------------------------------
-  if (!inherits(x, c("tbl_summary", "tbl_svysummary", "tbl_continuous"))) {
-    paste("Argument `x=` must be of class 'tbl_summary', 'tbl_svysummary',",
-          "or 'tbl_continuous'") %>%
-      abort()
-  }
+  .assert_class(x, c("tbl_summary", "tbl_svysummary", "tbl_continuous"))
 
   # deprecated arguments -------------------------------------------------------
   dots <- rlang::dots_list(...)
@@ -276,6 +272,8 @@ add_stat <- function(x, fns, location = NULL, ...) {
     )
 
   # return tbl_summary object --------------------------------------------------
+  # fill in the Ns in the header table modify_stat_* columns
+  x <- .fill_table_header_modify_stats(x)
   x$call_list <- updated_call_list
   x
 }

@@ -9,9 +9,30 @@
 NULL
 
 # tentative deprecation schedule
-# "warn" for at least 12 months
-# "stop" after 18 months
-# "delete" after 36 months?
+# "warn" for 18 months
+#   1.5.2 2022-01-29
+#   1.5.1 2022-01-20
+#   1.5.0 2021-10-16
+#   1.4.2 2021-07-13
+#   1.4.1 2021-05-19
+#   1.4.0 2021-04-13
+#   1.3.7 2021-02-26
+#   1.3.6 2021-01-08
+#
+# "stop" for 18 months, then delete from pkg
+#   1.3.5 2020-09-29
+#   1.3.4 2020-08-27
+#   1.3.3 2020-08-11
+#   1.3.2 2020-06-14
+#   1.3.1 2020-06-02
+#   1.3.0 2020-04-17
+#   1.2.6 2020-02-13
+#   1.2.5 2020-02-11
+#   1.2.4 2019-12-16
+#   1.2.3 2019-11-12
+#   1.2.2 2019-11-10
+#   1.2.1 2019-08-20
+#   1.2.0 2019-08-19
 
 # v1.2.5 (2020-02-11) ----------------------------------------------------------
 #' @rdname deprecated
@@ -30,7 +51,7 @@ add_p_ <- function(...) {
 #' @rdname deprecated
 #' @export
 as_flextable <- function(...) {
-  lifecycle::deprecate_warn(
+  lifecycle::deprecate_stop(
     "1.3.3", "gtsummary::as_flextable()", "as_flex_table()",
     details = paste(
       "The `as_flextable()` function graduated",
@@ -43,9 +64,6 @@ as_flextable <- function(...) {
     ) %>%
       stringr::str_wrap()
   )
-
-  # passing args to `as_flex_table()` ------------------------------------------
-  as_flex_table(...)
 }
 
 # v1.3.6 -----------------------------------------------------------------------

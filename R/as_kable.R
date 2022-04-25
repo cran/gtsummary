@@ -1,8 +1,5 @@
 #' Convert gtsummary object to a kable object
 #'
-#' @description Function converts a gtsummary object to a knitr_kable object.
-#' This function may be used in the background when the tables are printed or knitted.
-#'
 #' @description Output from [knitr::kable] is less full featured compared to
 #' summary tables produced with [gt](https://gt.rstudio.com/index.html).
 #' For example, kable summary tables do not include indentation, footnotes,
@@ -27,8 +24,9 @@
 #'   tbl_summary(by = trt) %>%
 #'   bold_labels() %>%
 #'   as_kable()
-as_kable <- function(x, include = everything(), return_calls = FALSE,
-                     exclude = NULL, fmt_missing = TRUE, ...) {
+as_kable <- function(x, ..., include = everything(), return_calls = FALSE,
+                     exclude = NULL) {
+  .assert_class(x, "gtsummary")
   # DEPRECATION notes ----------------------------------------------------------
   if (!rlang::quo_is_null(rlang::enquo(exclude))) {
     lifecycle::deprecate_stop(
@@ -47,11 +45,11 @@ as_kable <- function(x, include = everything(), return_calls = FALSE,
   x <- do.call(get_theme_element("pkgwide-fun:pre_conversion", default = identity), list(x))
 
   # converting row specifications to row numbers, and removing old cmds --------
-  x <- .clean_table_styling(x)
+  x <- .table_styling_expr_to_row_number(x)
 
   # creating list of kable calls -----------------------------------------------
   kable_calls <-
-    table_styling_to_kable_calls(x = x, fmt_missing = fmt_missing, ...)
+    table_styling_to_kable_calls(x = x, ...)
   if (return_calls == TRUE) {
     return(kable_calls)
   }
@@ -71,21 +69,20 @@ as_kable <- function(x, include = everything(), return_calls = FALSE,
   include <- "tibble" %>% union(include)
 
   # taking each kable function call, concatenating them with %>% separating them
-  kable_calls[include] %>%
-    # removing NULL elements
-    unlist() %>%
-    compact() %>%
-    # concatenating expressions with %>% between each of them
-    reduce(function(x, y) expr(!!x %>% !!y)) %>%
-    # evaluating expressions
-    eval()
+  .eval_list_of_exprs(kable_calls[include])
 }
 
-table_styling_to_kable_calls <- function(x, fmt_missing = TRUE, ...) {
+table_styling_to_kable_calls <- function(x, ...) {
   dots <- rlang::enexprs(...)
 
+  if (!is.null(dots[["fmt_missing"]])) {
+    lifecycle::deprecate_warn(when = "1.6.0",
+                              what = "gtsummary::as_kable_extra(fmt_missing=)")
+    dots <- purrr::list_modify(fmt_missing = NULL) %>% purrr::compact()
+  }
+
   kable_calls <-
-    table_styling_to_tibble_calls(x, col_labels = FALSE, fmt_missing = fmt_missing)
+    table_styling_to_tibble_calls(x, col_labels = FALSE, fmt_missing = TRUE)
 
   # fmt_missing ----------------------------------------------------------------
   kable_calls[["fmt_missing"]] <-
@@ -101,6 +98,7 @@ table_styling_to_kable_calls <- function(x, fmt_missing = TRUE, ...) {
 # constructs call to kable, and allows users to overwrite default arg values.
 .construct_call_to_kable <- function(x, ...) {
   dots <- rlang::dots_list(...)
+
   kable_args <-
     # default args
     list(
@@ -111,6 +109,8 @@ table_styling_to_kable_calls <- function(x, fmt_missing = TRUE, ...) {
         dplyr::pull(.data$align) %>%
         stringr::str_sub(1, 1)
     ) %>%
+    # update with any args from theme element
+    purrr::list_modify(!!!get_theme_element("as_kable-arg:dots")) %>%
     # update with any args user passed values
     purrr::list_modify(!!!dots) %>%
     purrr::compact()

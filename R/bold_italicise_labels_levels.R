@@ -21,20 +21,46 @@
 NULL
 
 
-#' @describeIn bold_italicize_labels_levels Bold labels in gtsummary tables
 #' @export
+#' @rdname bold_italicize_labels_levels
 bold_labels <- function(x) {
+  UseMethod("bold_labels")
+}
+
+#' @export
+#' @rdname bold_italicize_labels_levels
+italicize_labels <- function(x) {
+  UseMethod("italicize_labels")
+}
+
+#' @export
+#' @rdname bold_italicize_labels_levels
+bold_levels <- function(x) {
+  UseMethod("bold_levels")
+}
+
+
+#' @export
+#' @rdname bold_italicize_labels_levels
+italicize_levels <- function(x) {
+  UseMethod("italicize_levels")
+}
+
+#' @export
+#' @rdname bold_italicize_labels_levels
+bold_labels.gtsummary <- function(x) {
   updated_call_list <- c(x$call_list, list(bold_labels = match.call()))
   # input checks ---------------------------------------------------------------
-  if (!inherits(x, "gtsummary")) {
-    stop("Class of 'x' must be 'gtsummary'", call. = FALSE)
+  if (!"row_type" %in% x$table_styling$header$column) {
+    cli::cli_alert_warning("{.code bold_labels()} cannot be used in this context.")
+    return(x)
   }
 
   # bold labels ----------------------------------------------------------------
   x <-
     modify_table_styling(
       x,
-      columns = "label",
+      columns = .first_unhidden_column(x),
       rows = .data$row_type == "label",
       text_format = "bold"
     )
@@ -44,20 +70,21 @@ bold_labels <- function(x) {
   x
 }
 
-#' @describeIn bold_italicize_labels_levels Bold levels in gtsummary tables
 #' @export
-bold_levels <- function(x) {
+#' @rdname bold_italicize_labels_levels
+bold_levels.gtsummary <- function(x) {
   updated_call_list <- c(x$call_list, list(bold_levels = match.call()))
   # input checks ---------------------------------------------------------------
-  if (!inherits(x, "gtsummary")) {
-    stop("Class of 'x' must be 'gtsummary'", call. = FALSE)
+  if (!"row_type" %in% x$table_styling$header$column) {
+    cli::cli_alert_warning("{.code bold_levels()} cannot be used in this context.")
+    return(x)
   }
 
   # bold levels ----------------------------------------------------------------
   x <-
     modify_table_styling(
       x,
-      columns = "label",
+      columns = .first_unhidden_column(x),
       rows = .data$row_type != "label",
       text_format = "bold"
     )
@@ -68,20 +95,21 @@ bold_levels <- function(x) {
 }
 
 
-#' @describeIn bold_italicize_labels_levels Italicize labels in gtsummary tables
 #' @export
-italicize_labels <- function(x) {
+#' @rdname bold_italicize_labels_levels
+italicize_labels.gtsummary <- function(x) {
   updated_call_list <- c(x$call_list, list(italicize_labels = match.call()))
   # input checks ---------------------------------------------------------------
-  if (!inherits(x, "gtsummary")) {
-    stop("Class of 'x' must be 'gtsummary'", call. = FALSE)
+  if (!"row_type" %in% x$table_styling$header$column) {
+    cli::cli_alert_warning("{.code italicize_labels()} cannot be used in this context.")
+    return(x)
   }
 
   # italicize labels -----------------------------------------------------------
   x <-
     modify_table_styling(
       x,
-      columns = "label",
+      columns = .first_unhidden_column(x),
       rows = .data$row_type == "label",
       text_format = "italic"
     )
@@ -91,21 +119,21 @@ italicize_labels <- function(x) {
   x
 }
 
-
-#' @describeIn bold_italicize_labels_levels Italicize levels in gtsummary tables
 #' @export
-italicize_levels <- function(x) {
+#' @rdname bold_italicize_labels_levels
+italicize_levels.gtsummary <- function(x) {
   updated_call_list <- c(x$call_list, list(italicize_levels = match.call()))
   # input checks ---------------------------------------------------------------
-  if (!inherits(x, "gtsummary")) {
-    stop("Class of 'x' must be 'gtsummary'", call. = FALSE)
+  if (!"row_type" %in% x$table_styling$header$column) {
+    cli::cli_alert_warning("{.code italicize_levels()} cannot be used in this context.")
+    return(x)
   }
 
   # italicize levels -----------------------------------------------------------
   x <-
     modify_table_styling(
       x,
-      columns = "label",
+      columns = .first_unhidden_column(x),
       rows = .data$row_type != "label",
       text_format = "italic"
     )
@@ -113,4 +141,117 @@ italicize_levels <- function(x) {
   x$call_list <- updated_call_list
 
   x
+}
+
+#' @export
+#' @rdname bold_italicize_labels_levels
+bold_labels.tbl_cross <- function(x) {
+
+  # bold labels ----------------------------------------------------------------
+  x <-  bold_labels.gtsummary(x)
+
+  cols_to_style <-
+    select(x$table_body, all_stat_cols(FALSE)) %>%
+    names()
+
+  x$table_styling$header <-
+    mutate(x$table_styling$header,
+           spanning_header =
+             case_when(
+               .data$hide == FALSE & (.data$column %in% cols_to_style) ~
+                 paste0("**", spanning_header,  "**"),
+               TRUE ~ spanning_header
+             )) %>%
+    mutate(label = case_when(
+      .data$hide == FALSE & (.data$column %in% c("stat_0", "p.value")) ~
+        paste0("**", label,  "**"),
+      TRUE ~ label
+    ))
+
+  x
+}
+
+#' @export
+#' @rdname bold_italicize_labels_levels
+bold_levels.tbl_cross <- function(x) {
+
+  # bold levels ----------------------------------------------------------------
+  x <- bold_levels.gtsummary(x)
+
+  cols_to_style <- x$table_body %>%
+    select(all_stat_cols(FALSE)) %>%
+    names()
+
+  x$table_styling$header <-
+    mutate(x$table_styling$header,
+           label =
+             case_when(
+               .data$hide == FALSE & (.data$column %in% cols_to_style) ~
+                 paste0("**", label,  "**"),
+               TRUE ~ label
+             ))
+
+
+
+  x
+
+}
+
+#' @export
+#' @rdname bold_italicize_labels_levels
+italicize_labels.tbl_cross <- function(x) {
+
+  # italicize labels -----------------------------------------------------------
+  x <- italicize_labels.gtsummary(x)
+
+  cols_to_style <-
+    select(x$table_body, all_stat_cols(FALSE)) %>%
+    names()
+
+  x$table_styling$header <-
+    mutate(x$table_styling$header,
+           spanning_header =
+             case_when(
+               .data$hide == FALSE & (.data$column %in% cols_to_style) ~
+                 paste0("*", spanning_header,  "*"),
+               TRUE ~ spanning_header
+             )) %>%
+    mutate(label = case_when(
+      .data$hide == FALSE & (.data$column %in% c("stat_0", "p.value")) ~
+        paste0("*", label,  "*"),
+      TRUE ~ label
+    ))
+
+  x
+}
+
+
+
+#' @export
+#' @rdname bold_italicize_labels_levels
+italicize_levels.tbl_cross <- function(x) {
+
+  x <- italicize_levels.gtsummary(x)
+
+  # italicize levels ----------------------------------------------------------------
+  cols_to_style <- x$table_body %>%
+    select(all_stat_cols(FALSE)) %>%
+    names()
+
+  x$table_styling$header <-
+    mutate(x$table_styling$header,
+           label =
+             case_when(
+               .data$hide == FALSE & (.data$column %in% cols_to_style) ~
+                 paste0("*", label,  "*"),
+               TRUE ~ label
+             ))
+  x
+
+}
+
+.first_unhidden_column <- function(x) {
+  x$table_styling$header %>%
+    dplyr::filter(!.data$hide) %>%
+    purrr::pluck("column", 1)
 }

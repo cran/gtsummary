@@ -8,6 +8,7 @@ Gehan
 Hmisc
 JAMA
 Kaplan
+MacOS
 McNemar
 McNemar's
 NEJM
@@ -27,6 +28,7 @@ bstfun
 ci
 cli
 codebase
+coef
 conf
 coxph
 crosstab
@@ -39,6 +41,7 @@ effectsize
 emmeans
 exponentiate
 flextable
+ftExtra
 ggplot
 glm
 huxtable
@@ -51,9 +54,11 @@ lm
 lme
 logLik
 mL
+mira
 nevent
 ng
 nnet
+obejcts
 pre
 pvalue
 quosure
@@ -74,6 +79,7 @@ tidyr
 tidyselect
 tidyselect's
 tidyverse
+un
 unhide
 unstratified
 usethis

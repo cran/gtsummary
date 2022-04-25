@@ -45,12 +45,18 @@ test_that("add_p creates output without error/warning", {
 })
 
 test_that("add_p & lme4", {
-  skip_if_not(require("lme4"))
-  skip_if_not(require("broom.mixed"))
+  skip_if_not(broom.helpers::.assert_package("lme4", pkg_search = "gtsummary", boolean = TRUE))
+  skip_if_not(broom.helpers::.assert_package("broom.mixed", pkg_search = "gtsummary", boolean = TRUE))
+
   expect_message(
     tbl_summary(trial, by = trt) %>%
       add_p(test = everything() ~ "lme4", group = response),
     NULL
+  )
+
+  expect_message(
+    tbl_summary(trial, by = trt) %>%
+      add_p(test = everything() ~ "lme4")
   )
 })
 
@@ -185,7 +191,8 @@ test_that("Wilcoxon and Kruskal-Wallis p-values match ", {
 })
 
 
-trial_group <- trial %>%
+trial_group <-
+  trial %>%
   group_by(trt) %>%
   mutate(id = row_number()) %>%
   ungroup()
@@ -304,6 +311,21 @@ test_that("p-values are replicated within tbl_summary()", {
     mcnemar.test(trial[["response"]], as.factor(trial[["trt"]]), correct = FALSE)$p.value
   )
 
+  expect_message(
+    trial_group %>%
+      tbl_summary(include = age, by = trt) %>%
+      add_p(test = age ~ "paired.t.test", include = age)
+  )
+
+  expect_message(
+    trial_group %>%
+      dplyr::filter(dplyr::row_number() != 1L) %>%
+      tbl_summary(include = c(marker, age), by = trt) %>%
+      add_p(test = list(age = "paired.t.test", marker = "paired.wilcox.test"),
+            include = age, group = id)
+  )
+
+
   tbl_groups <-
     trial_group %>%
     select(
@@ -370,8 +392,8 @@ test_that("p-values are replicated within tbl_summary()", {
 })
 
 test_that("Groups arg and lme4", {
-  skip_if_not(require("lme4"))
-  skip_if_not(require("broom.mixed"))
+  skip_if_not(broom.helpers::.assert_package("lme4", pkg_search = "gtsummary", boolean = TRUE))
+  skip_if_not(broom.helpers::.assert_package("broom.mixed", pkg_search = "gtsummary", boolean = TRUE))
 
   tbl_groups <-
     trial_group %>%
@@ -421,13 +443,29 @@ test_that("no error with missing data", {
   )
 })
 
-test_that("add_p can be run after add_difference", {
+test_that("add_p can be run after add_difference()", {
   expect_error(
     trial %>%
       select(age, trt) %>%
       tbl_summary(by = trt) %>%
       add_difference() %>%
       add_p(all_continuous() ~ "t.test")
+  )
+
+  expect_error(
+    trial %>%
+      select(age, trt) %>%
+      tbl_summary(by = trt) %>%
+      add_p() %>%
+      add_p()
+  )
+
+  expect_error(
+    trial %>%
+      select(age, trt) %>%
+      tbl_summary(by = trt) %>%
+      add_difference() %>%
+      add_difference()
   )
 
   expect_error(

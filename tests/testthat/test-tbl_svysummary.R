@@ -1,5 +1,5 @@
 skip_on_cran()
-skip_if_not(requireNamespace("survey"))
+skip_if_not(broom.helpers::.assert_package("survey", pkg_search = "gtsummary", boolean = TRUE))
 
 d <- survey::svydesign(~1, data = as.data.frame(Titanic), weights = ~Freq)
 data(api, package = "survey")
@@ -279,9 +279,9 @@ test_that("tbl_svysummary-all_categorical() use with `type=`", {
   expect_true(
     !"dichotomous" %in%
       (survey::svydesign(data = trial, ids = ~1, weights = ~1) %>%
-        tbl_svysummary(type = all_dichotomous() ~ "categorical") %>%
-        purrr::pluck("meta_data") %>%
-        dplyr::pull(summary_type))
+         tbl_svysummary(type = all_dichotomous() ~ "categorical") %>%
+         purrr::pluck("meta_data") %>%
+         dplyr::pull(summary_type))
   )
 })
 
@@ -410,12 +410,19 @@ test_that("tbl_svysummary-no error when by variable is ordered factor", {
 
 test_that("tbl_svysummary-provides similar results than tbl_summary for simple weights", {
   t1 <- survey::svydesign(~1, data = as.data.frame(Titanic), weights = ~Freq) %>%
-    tbl_svysummary()
+    tbl_svysummary(include = c(Class, Sex, Age, Survived))
   t2 <- as.data.frame(Titanic) %>%
     tidyr::uncount(Freq) %>%
     tbl_summary()
   expect_equal(t1$table_body, t2$table_body)
-  expect_equal(t1$table_styling, t2$table_styling)
+  expect_equal(
+    t1$table_styling %>% purrr::list_modify(header = NULL),
+    t2$table_styling %>% purrr::list_modify(header = NULL)
+  )
+  expect_equal(
+    t1$table_styling$header %>% select(-contains("unweighted")),
+    t2$table_styling$header %>% select(-contains("unweighted"))
+  )
 
   statistic <- list(all_continuous() ~ "{mean}", all_categorical() ~ "{n} ({p}%)")
   t1 <- survey::svydesign(~1, data = trial, weights = ~1) %>%
@@ -423,27 +430,36 @@ test_that("tbl_svysummary-provides similar results than tbl_summary for simple w
   t2 <- trial %>%
     tbl_summary(by = trt, statistic = statistic)
   expect_equal(t1$table_body, t2$table_body)
-  expect_equal(t1$table_styling, t2$table_styling)
+  expect_equal(
+    t1$table_styling %>% purrr::list_modify(header = NULL),
+    t2$table_styling %>% purrr::list_modify(header = NULL)
+  )
+  expect_equal(
+    t1$table_styling$header %>% select(-contains("unweighted")) %>% select(all_of(names(.) %>% sort())),
+    t2$table_styling$header %>% select(-contains("unweighted")) %>% select(all_of(names(.) %>% sort()))
+  )
 })
 
 test_that("tbl_svysummary-calculates unweighted N with continuous variables and {N_obs_unweighted}", {
-  t1 <- as_tibble(Titanic) %>%
+  t1 <-
+    as_tibble(Titanic) %>%
     mutate(age = round(as.numeric(list(runif(1, min = 5, max = 100))))) %>%
-    ungroup() %>%
+    dplyr::ungroup() %>%
     survey::svydesign(data = ., ids = ~1, weights = ~n) %>%
     tbl_svysummary(
       by = Sex,
+      include = -n,
       statistic = list(all_continuous() ~ "{N_obs_unweighted}")
     )
 
   expect_equal(
     t1$meta_data$df_stats[[1]] %>%
-      pull("N_obs_unweighted") %>%
+      dplyr::pull("N_obs_unweighted") %>%
       dplyr::first(),
     as_tibble(Titanic) %>%
-      group_by(Sex) %>%
-      count() %>%
-      pull(n) %>%
+      dplyr::group_by(Sex) %>%
+      dplyr::count() %>%
+      dplyr::pull(n) %>%
       dplyr::first()
   )
 })
@@ -521,5 +537,37 @@ test_that("tbl_svysummary() works with date and date/time", {
   expect_error(
     tbl2 <- df_date %>% tbl_svysummary(by = group),
     NA
+  )
+
+
+  # checking that formatting the unweighted proportion works
+  data(api, package = "survey")
+  dstrat <-
+    survey::svydesign(id = ~1, strata = ~stype,
+                      weights = ~pw, data = apistrat, fpc = ~fpc,
+                      variables = apistrat[, c("pcttest", "growth", "awards")])
+  expect_equal(
+    tbl_svysummary(
+      data = dstrat,
+      include = awards,
+      type = awards ~ "categorical",
+      statistic = all_categorical() ~ "{p_unweighted}%",
+      digits = all_categorical() ~ 2
+    ) %>%
+      as_tibble(col_labels = FALSE) %>%
+      dplyr::pull(),
+    c(NA, "43.50%", "56.50%")
+  )
+
+  expect_equal(
+    tbl_svysummary(
+      data = dstrat,
+      include = awards,
+      type = awards ~ "categorical",
+      statistic = all_categorical() ~ "{p_unweighted}%"
+    ) %>%
+      as_tibble(col_labels = FALSE) %>%
+      dplyr::pull(),
+    c(NA, "44%", "56%")
   )
 })
