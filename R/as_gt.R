@@ -126,12 +126,12 @@ table_styling_to_gt_calls <- function(x, ...) {
   # fmt_missing ----------------------------------------------------------------
   gt_calls[["fmt_missing"]] <-
     expr(
-      gt::fmt_missing(columns = gt::everything(), missing_text = "")
+      gt::sub_missing(columns = gt::everything(), missing_text = "")
     ) %>%
     c(
       map(
         seq_len(nrow(x$table_styling$fmt_missing)),
-        ~ expr(gt::fmt_missing(
+        ~ expr(gt::sub_missing(
           columns = !!x$table_styling$fmt_missing$column[[.x]],
           rows = !!x$table_styling$fmt_missing$row_numbers[[.x]],
           missing_text = !!x$table_styling$fmt_missing$symbol[[.x]]

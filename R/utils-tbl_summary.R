@@ -507,11 +507,10 @@ tbl_summary_data_checks <- function(data) {
   }
 }
 
-tbl_summary_input_checks <- function(data, by, label, type, value, statistic,
-                                     digits, missing, missing_text, sort) {
+tbl_summary_input_checks <- function(data, by, missing_text, include) {
   # data -----------------------------------------------------------------------
   tbl_summary_data_checks(data)
-  check_haven_labelled(data)
+  check_haven_labelled(data, variables = c(include, by))
 
   # missing_text ---------------------------------------------------------------
   # input must be character
@@ -537,18 +536,26 @@ stat_label_match <- function(stat_display, iqr = TRUE, range = TRUE) {
       "{n}", "n",
       "{N}", "N",
       "{p}%", "%",
-      "{p_miss}%", "% missing",
-      "{p_nonmiss}%", "% not missing",
       "{p}", "%",
+      "{p_miss}%", "% missing",
       "{p_miss}", "% missing",
+      "{p_nonmiss}%", "% not missing",
       "{p_nonmiss}", "% not missing",
       "{N_miss}", "N missing",
       "{N_nonmiss}", "N",
       "{N_obs}", "No. obs.",
+      "{p.std.error}%", "SE(%)",
+      "{p.std.error}", "SE(%)",
+      "{N_unweighted}", "N (unweighted)",
+      "{n_unweighted}", "n (unweighted)",
       "{N_obs_unweighted}", "Total N (unweighted)",
       "{N_miss_unweighted}", "N Missing (unweighted)",
       "{N_nonmiss_unweighted}", "N not Missing (unweighted)",
+      "{p_unweighted}%", "% (unweighted)",
+      "{p_unweighted}", "% (unweighted)",
+      "{p_miss_unweighted}%", "% Missing (unweighted)",
       "{p_miss_unweighted}", "% Missing (unweighted)",
+      "{p_nonmiss_unweighted}%", "% not Missing (unweighted)",
       "{p_nonmiss_unweighted}", "% not Missing (unweighted)"
     ) %>%
     # adding in quartiles
@@ -648,7 +655,7 @@ summarize_categorical <- function(data, variable, by, class, dichotomous_value,
     "by"
   ))
   data <- data %>%
-    select(c(variable, by)) %>%
+    select(any_of(c(variable, by))) %>%
     # renaming variables to c("variable", "by") (if there is a by variable)
     set_names(variable_by_chr)
 
@@ -758,7 +765,7 @@ summarize_continuous <- function(data, variable, by, stat_display, summary_type)
   df_by <- df_by(data, by)
   data <-
     data %>%
-    select(c(variable, by)) %>%
+    select(any_of(c(variable, by))) %>%
     # renaming variables to c("variable", "by") (if there is a by variable)
     set_names(variable_by_chr)
 
@@ -968,12 +975,18 @@ adding_formatting_as_attr <- function(df_stats, data, variable, summary_type,
         }
 
         # if the variable is categorical and a percent, use `style_percent`
-        else if (summary_type %in% c("categorical", "dichotomous") & colname %in% c("p", "p_unweighted")) {
+        else if (summary_type %in% c("categorical", "dichotomous") &
+                 colname %in% c("p", "p_unweighted", "p_miss", "p_nonmiss",
+                                "p_miss_unweighted", "p_nonmiss_unweighted")) {
           attr(column, "fmt_fun") <- percent_fun
         }
 
         # if the variable is categorical and an N, use `style_number`
-        else if (summary_type %in% c("categorical", "dichotomous") & colname %in% c("N", "n")) {
+        else if (summary_type %in% c("categorical", "dichotomous") &
+                 colname %in% c("N", "n", "n_unweighted", "N_unweighted",
+                                "N_obs", "N_miss", "N_nonmiss",
+                                "N_obs_unweighted", "N_miss_unweighted",
+                                "N_nonmiss_unweighted")) {
           attr(column, "fmt_fun") <- style_number
         }
 
@@ -988,7 +1001,7 @@ adding_formatting_as_attr <- function(df_stats, data, variable, summary_type,
         }
 
         # that should cover everything in `tbl_summary()`,
-        # but these are somtimes used in `tbl_custom_summary()`
+        # but these are sometimes used in `tbl_custom_summary()`
         else if (is.numeric(column)) {
           attr(column, "fmt_fun") <- style_sigfig
         }
@@ -1007,12 +1020,6 @@ adding_formatting_as_attr <- function(df_stats, data, variable, summary_type,
 # df_stats_to_tbl --------------------------------------------------------------
 df_stats_to_tbl <- function(data, variable, summary_type, by, var_label, stat_display,
                             df_stats, missing, missing_text) {
-  if (is_survey(data)) {
-    calculate_missing_fun <- calculate_missing_row_survey
-  } else {
-    calculate_missing_fun <- calculate_missing_row
-  }
-
   # styling the statistics -----------------------------------------------------
   df_stats_original <- df_stats
   for (v in (names(df_stats) %>% setdiff(c("by", "variable", "variable_levels", "stat_display")))) {
@@ -1096,17 +1103,22 @@ df_stats_to_tbl <- function(data, variable, summary_type, by, var_label, stat_di
 
   # add rows for missing -------------------------------------------------------
   if (missing == "always" || (missing == "ifany" & has_na(data, variable))) {
+    # browser()
+
+    missing_stat <- get_theme_element("tbl_summary-str:missing_stat", default = "{N_miss}")
     result <-
       result %>%
       bind_rows(
         df_stats_original %>%
-          select(any_of(c("by", "variable", "N_miss"))) %>%
+          select(any_of(c("by", "variable", "N_miss", "N_obs", "p_miss", "N_nonmiss", "p_nonmiss",
+                          "N_obs_unweighted", "N_miss_unweighted", "N_nonmiss_unweighted",
+                          "p_miss_unweighted", "p_nonmiss_unweighted"))) %>%
           distinct() %>%
-          mutate(stat_display = "{N_miss}") %>%
+          mutate(stat_display = .env$missing_stat) %>%
           {
             df_stats_to_tbl(
               data = data, variable = variable, summary_type = "dichotomous", by = by,
-              var_label = missing_text, stat_display = "{N_miss}", df_stats = .,
+              var_label = missing_text, stat_display = missing_stat, df_stats = .,
               missing = "no", missing_text = "Doesn't Matter -- Text should never appear"
             )
           } %>%
@@ -1123,38 +1135,6 @@ df_stats_to_tbl <- function(data, variable, summary_type, by, var_label, stat_di
   result %>% select(all_of(c("variable", "row_type", "label", stat_vars)))
 }
 
-# calculate_missing_row --------------------------------------------------------
-calculate_missing_row <- function(data, variable, by, missing_text) {
-  # converting variable to TRUE/FALSE for missing
-  data <-
-    data %>%
-    select(c(variable, by)) %>%
-    mutate(
-      !!variable := is.na(.data[[variable]])
-    )
-
-
-  # passing the T/F variable through the functions to format as we do in
-  # the tbl_summary output
-  summarize_categorical(
-    data = data, variable = variable, by = by, class = "logical",
-    dichotomous_value = TRUE, sort = "alphanumeric", percent = "column",
-    stat_display = "{n}"
-  ) %>%
-    adding_formatting_as_attr(
-      data = data, variable = variable,
-      summary_type = "dichotomous", stat_display = "{n}", digits = NULL
-    ) %>%
-    {
-      df_stats_to_tbl(
-        data = data, variable = variable, summary_type = "dichotomous", by = by,
-        var_label = missing_text, stat_display = "{n}", df_stats = .,
-        missing = "no", missing_text = "Doesn't Matter -- Text should never appear"
-      )
-    } %>%
-    # changing row_type to missing
-    mutate(row_type = "missing")
-}
 
 # df_stats_fun -----------------------------------------------------------------
 # this function creates df_stats in the tbl_summary meta data table
@@ -1285,13 +1265,13 @@ eval_rhs <- function(x) {
   rlang::f_rhs(x) %>% rlang::eval_tidy(env = rlang::f_env(x))
 }
 
-check_haven_labelled <- function(data) {
+check_haven_labelled <- function(data, variables) {
   # extract data frame
   data <- switch(is_survey(data),
     data$variables
   ) %||% data
 
-  if (purrr::some(data, ~ inherits(., "haven_labelled"))) {
+  if (purrr::some(data[variables], ~ inherits(., "haven_labelled"))) {
     # list of columns with haven_labelled
     haven_labelled_vars <-
       purrr::map_lgl(data, ~ inherits(.x, "haven_labelled")) %>%

@@ -1,15 +1,18 @@
 #' Collection of custom tidiers
 #'
+#' @description
 #' \lifecycle{maturing}
-#' Collection of tidiers that can be passed to `tbl_regression()`
-#' and `tbl_uvregression()` to obtain modified results. See examples below.
+#' Collection of tidiers that can be utilized in gtsummary. See details below.
 #'
-#' @section Details:
+#' # Regression Model Tidiers
+#'
+#' These tidiers are passed to `tbl_regression()` and `tbl_uvregression()` to
+#' obtain modified results.
 #'
 #' - `tidy_standardize()` tidier to report standardized coefficients. The
-#' [effectsize](https://easystats.github.io/effectsize/reference/standardize_parameters.html)
+#' [parameters](https://easystats.github.io/parameters/reference/standardize_parameters.html)
 #' package includes a wonderful function to estimate standardized coefficients.
-#' The tidier uses the output from `effectsize::standardize_parameters()`, and
+#' The tidier uses the output from `parameters::standardize_parameters()`, and
 #' merely takes the result and puts it in `broom::tidy()` format.
 #'
 #' - `tidy_bootstrap()` tidier to report bootstrapped coefficients. The
@@ -31,10 +34,12 @@
 #' using the mice package. Pass the mice model object *before* the model results
 #' have been pooled. See example.
 #'
-#' - `tidy_wald_test()` tidier to report Wald p-values, wrapping the `aod::wald.test()` function.
+#' # Other Tidiers
 #'
-#' Ensure your model type is compatible with the methods/functions used to estimate
-#' the model parameters before attempting to use the tidier with `tbl_regression()`
+#' - `tidy_wald_test()` tidier to report Wald p-values, wrapping the
+#'   `aod::wald.test()` function.
+#'   Use this tidier with `add_global_p(anova_fun = tidy_wald_test)`
+#'
 #' @inheritParams broom::tidy.glm
 #' @inheritParams tbl_regression
 #' @inheritParams add_global_p
@@ -44,7 +49,7 @@
 #' `parameters::model_parameters()`
 #' @param ... arguments passed to method;
 #' - `pool_and_tidy_mice()`: `mice::tidy(x, ...)`
-#' - `tidy_standardize()`: `effectsize::standardize_parameters(x, ...)`
+#' - `tidy_standardize()`: `parameters::standardize_parameters(x, ...)`
 #' - `tidy_bootstrap()`: `parameters::bootstrap_parameters(x, ...)`
 #' - `tidy_robust()`: `parameters::model_parameters(x, ...)`
 #'
@@ -100,12 +105,12 @@ tidy_standardize <- function(x, exponentiate = FALSE,
   dots <- list(...)
 
   # calculating standardize coefs
-  std_coef_expr <- expr(effectsize::standardize_parameters(model = x, ci = !!conf.level, !!!dots))
+  std_coef_expr <- expr(parameters::standardize_parameters(model = x, ci = !!conf.level, !!!dots))
   if (quiet == FALSE) {
     inform(glue("tidy_standardize(): Estimating standardized coefs with\n  `{deparse(std_coef_expr, width.cutoff = 500L)}`"))
   }
   std_coef <-
-    expr(effectsize::standardize_parameters(model = !!x, ci = !!conf.level, !!!dots)) %>%
+    expr(parameters::standardize_parameters(model = !!x, ci = !!conf.level, !!!dots)) %>%
     eval()
 
   # converting output to broom::tidy format

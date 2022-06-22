@@ -64,7 +64,7 @@ interval in the tidied output. Defaults to \code{FALSE}.}
 \item{...}{arguments passed to method;
 \itemize{
 \item \code{pool_and_tidy_mice()}: \code{mice::tidy(x, ...)}
-\item \code{tidy_standardize()}: \code{effectsize::standardize_parameters(x, ...)}
+\item \code{tidy_standardize()}: \code{parameters::standardize_parameters(x, ...)}
 \item \code{tidy_bootstrap()}: \code{parameters::bootstrap_parameters(x, ...)}
 \item \code{tidy_robust()}: \code{parameters::model_parameters(x, ...)}
 }}
@@ -85,16 +85,16 @@ if installed.}
 }
 \description{
 \lifecycle{maturing}
-Collection of tidiers that can be passed to \code{tbl_regression()}
-and \code{tbl_uvregression()} to obtain modified results. See examples below.
+Collection of tidiers that can be utilized in gtsummary. See details below.
 }
-\section{Details}{
-
+\section{Regression Model Tidiers}{
+These tidiers are passed to \code{tbl_regression()} and \code{tbl_uvregression()} to
+obtain modified results.
 \itemize{
 \item \code{tidy_standardize()} tidier to report standardized coefficients. The
-\href{https://easystats.github.io/effectsize/reference/standardize_parameters.html}{effectsize}
+\href{https://easystats.github.io/parameters/reference/standardize_parameters.html}{parameters}
 package includes a wonderful function to estimate standardized coefficients.
-The tidier uses the output from \code{effectsize::standardize_parameters()}, and
+The tidier uses the output from \code{parameters::standardize_parameters()}, and
 merely takes the result and puts it in \code{broom::tidy()} format.
 \item \code{tidy_bootstrap()} tidier to report bootstrapped coefficients. The
 \href{https://easystats.github.io/parameters/reference/model_parameters.default.html}{parameters}
@@ -112,11 +112,15 @@ function with \code{tbl_regression()}, pass a function with the arguments for
 \item \code{pool_and_tidy_mice()} tidier to report models resulting from multiply imputed data
 using the mice package. Pass the mice model object \emph{before} the model results
 have been pooled. See example.
-\item \code{tidy_wald_test()} tidier to report Wald p-values, wrapping the \code{aod::wald.test()} function.
+}
 }
 
-Ensure your model type is compatible with the methods/functions used to estimate
-the model parameters before attempting to use the tidier with \code{tbl_regression()}
+\section{Other Tidiers}{
+\itemize{
+\item \code{tidy_wald_test()} tidier to report Wald p-values, wrapping the
+\code{aod::wald.test()} function.
+Use this tidier with \code{add_global_p(anova_fun = tidy_wald_test)}
+}
 }
 
 \section{Example Output}{

@@ -54,6 +54,7 @@ calculate a p-value from \code{t.test()} assuming equal variance, use
 \tabular{lll}{
    \strong{alias} \tab \strong{description} \tab \strong{pseudo-code} \cr
    \code{"logrank"} \tab Log-rank test \tab \code{survival::survdiff(Surv(.) ~ variable, data, rho = 0)} \cr
+   \code{"tarone"} \tab Tarone-Ware test \tab \code{survival::survdiff(Surv(.) ~ variable, data, rho = 1.5)} \cr
    \code{"petopeto_gehanwilcoxon"} \tab Peto & Peto modification of Gehan-Wilcoxon test \tab \code{survival::survdiff(Surv(.) ~ variable, data, rho = 1)} \cr
    \code{"survdiff"} \tab G-rho family test \tab \code{survival::survdiff(Surv(.) ~ variable, data, ...)} \cr
    \code{"coxph_lrt"} \tab Cox regression (LRT) \tab \code{survival::coxph(Surv(.) ~ variable, data, ...)} \cr
@@ -80,7 +81,6 @@ calculate a p-value from \code{t.test()} assuming equal variance, use
    \strong{alias} \tab \strong{description} \tab \strong{difference statistic} \tab \strong{pseudo-code} \tab \strong{details} \cr
    \code{"t.test"} \tab t-test \tab mean difference \tab \code{t.test(variable ~ as.factor(by), data = data, conf.level = 0.95, ...)} \tab  \cr
    \code{"paired.t.test"} \tab Paired t-test \tab mean difference \tab \verb{tidyr::pivot_wider(id_cols = group, ...); t.test(by_1, by_2, paired = TRUE, conf.level = 0.95, ...)} \tab  \cr
-   \code{"paired.wilcox.test"} \tab Paired Wilcoxon rank-sum test \tab rate difference \tab \verb{tidyr::pivot_wider(id_cols = group, ...); wilcox.test(by_1, by_2, paired = TRUE, conf.int = TRUE, conf.level = 0.95, ...)} \tab  \cr
    \code{"prop.test"} \tab Test for equality of proportions \tab rate difference \tab \code{prop.test(x, n, conf.level = 0.95, ...)} \tab  \cr
    \code{"ancova"} \tab ANCOVA \tab mean difference \tab \code{lm(variable ~ by + adj.vars)} \tab  \cr
    \code{"ancova_lme4"} \tab ANCOVA with random intercept \tab mean difference \tab \verb{lme4::lmer(variable ~ by + adj.vars + (1 \\UFF5C group), data)} \tab  \cr
@@ -109,7 +109,9 @@ statistical test. The \code{add_p()} and \code{add_comparison()} functions will 
 p-value, difference, confidence interval, and the test name used in the footnote.
 
 Example calculating a p-value from a t-test assuming a common variance
-between groups.\if{html}{\out{<div class="sourceCode r">}}\preformatted{ttest_common_variance <- function(data, variable, by, ...) \{
+between groups.
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{ttest_common_variance <- function(data, variable, by, ...) \{
   data <- data[c(variable, by)] \%>\% dplyr::filter(complete.cases(.))
   t.test(data[[variable]] ~ factor(data[[by]]), var.equal = TRUE) \%>\%
   broom::tidy()
@@ -121,7 +123,9 @@ trial[c("age", "trt")] \%>\%
 }\if{html}{\out{</div>}}
 
 A custom \code{add_difference()} is similar, and accepts arguments \verb{conf.level=}
-and \verb{adj.vars=} as well.\if{html}{\out{<div class="sourceCode r">}}\preformatted{ttest_common_variance <- function(data, variable, by, conf.level, ...) \{
+and \verb{adj.vars=} as well.
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{ttest_common_variance <- function(data, variable, by, conf.level, ...) \{
   data <- data[c(variable, by)] \%>\% dplyr::filter(complete.cases(.))
   t.test(data[[variable]] ~ factor(data[[by]]), conf.level = conf.level, var.equal = TRUE) \%>\%
   broom::tidy()

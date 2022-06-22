@@ -190,6 +190,27 @@ test_that("setting themes", {
       x = list("style_number-arg:decimal.mark" = "."),
       expr = tbl_summary(trial, include = marker, missing = "no") %>% as_tibble(col_labels = FALSE)
     )
+    thm_names <- names(get_gtsummary_theme())
+    get_gtsummary_theme()},
+  theme_gtsummary_journal("lancet", set_theme = FALSE)[thm_names],
+  ignore_function_env = TRUE
+  )
+
+  expect_true({
+    reset_gtsummary_theme()
+    with_gtsummary_theme(
+      x = list("style_number-arg:decimal.mark" = ","),
+      expr = tbl_summary(trial, include = marker, missing = "no") %>% as_tibble(col_labels = FALSE)
+    )
+    rlang::is_empty(get_gtsummary_theme())}
+  )
+
+  expect_equal({
+    theme_gtsummary_journal("lancet")
+    with_gtsummary_theme(
+      x = list("style_number-arg:decimal.mark" = "."),
+      expr = tbl_summary(trial, include = marker, missing = "no") %>% as_tibble(col_labels = FALSE)
+    )
     tbl_summary(trial, include = marker, missing = "no") %>%
       as_tibble(col_labels = FALSE) %>%
       dplyr::pull(stat_0)},
@@ -203,6 +224,19 @@ test_that("setting themes", {
   expect_message(check_gtsummary_theme(list("not_a_theme" = 5)))
   expect_message(check_gtsummary_theme(list("style_number-arg:decimal.mark" = ".")), "*Looks good*")
 
+  # check the message is printed in with_gtsummary_theme()
+  reset_gtsummary_theme()
+  list("tbl_summary-str:continuous_stat" = "{median}") %>%
+    set_gtsummary_theme()
+
+  expect_message(
+    with_gtsummary_theme(
+      x = list("tbl_summary-str:continuous_stat" = "{mean}"),
+      expr = tbl_summary(trial, include = age) %>% as_kable(),
+      msg_ignored_elements = "Theme element(s) {.val {elements}} is/are utilized internally and were ignored."
+    ),
+    "*continuous_stat*"
+  )
 })
 
 reset_gtsummary_theme()
