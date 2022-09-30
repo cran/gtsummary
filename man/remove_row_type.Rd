@@ -7,7 +7,8 @@
 remove_row_type(
   x,
   variables = everything(),
-  type = c("header", "reference", "missing")
+  type = c("header", "reference", "missing", "level", "all"),
+  level_value = NULL
 )
 }
 \arguments{
@@ -15,7 +16,10 @@ remove_row_type(
 
 \item{variables}{variables to to remove rows from. Default is \code{everything()}}
 
-\item{type}{type of row to remove. Must be one of
+\item{type}{type of row to remove. Must be one of}
+
+\item{level_value}{When \code{type='level'} you can specify the \emph{character} value of the level to remove.
+When \code{NULL} all levels are removed.
 \code{c("header", "reference", "missing")}}
 }
 \description{
@@ -25,7 +29,9 @@ Removes either the header, reference, or missing rows from a gtsummary table.
 
 \if{html}{Example 1}
 
-\if{html}{\figure{remove_row_type_ex1.png}{options: width=60\%}}
+\if{html}{\out{
+<img src="https://raw.githubusercontent.com/ddsjoberg/gtsummary/main/man-images/remove_row_type_ex1.png" alt="image of rendered example table" style="width:60\%;">
+}}
 }
 
 \examples{

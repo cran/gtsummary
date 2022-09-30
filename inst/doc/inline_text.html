@@ -120,13 +120,20 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   for (var i = 0; i < sheets.length; i++) {
     if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
     try { var rules = sheets[i].cssRules; } catch (e) { continue; }
-    for (var j = 0; j < rules.length; j++) {
+    var j = 0;
+    while (j < rules.length) {
       var rule = rules[j];
       // check if there is a div.sourceCode rule
-      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -373,12 +380,12 @@ from the trial data set.</p>
 vignette</a> for detailed overview of this function if needed).</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>tab1 <span class="ot">&lt;-</span> <span class="fu">tbl_summary</span>(trial2, <span class="at">by =</span> trt)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>tab1</span></code></pre></div>
-<div id="kotjspwkye" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<div id="bkpbjexwev" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
 <style>html {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
 }
 
-#kotjspwkye .gt_table {
+#bkpbjexwev .gt_table {
   display: table;
   border-collapse: collapse;
   margin-left: auto;
@@ -403,7 +410,7 @@ vignette</a> for detailed overview of this function if needed).</p>
   border-left-color: #D3D3D3;
 }
 
-#kotjspwkye .gt_heading {
+#bkpbjexwev .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -415,7 +422,7 @@ vignette</a> for detailed overview of this function if needed).</p>
   border-right-color: #D3D3D3;
 }
 
-#kotjspwkye .gt_title {
+#bkpbjexwev .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -427,7 +434,7 @@ vignette</a> for detailed overview of this function if needed).</p>
   border-bottom-width: 0;
 }
 
-#kotjspwkye .gt_subtitle {
+#bkpbjexwev .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -439,13 +446,13 @@ vignette</a> for detailed overview of this function if needed).</p>
   border-top-width: 0;
 }
 
-#kotjspwkye .gt_bottom_border {
+#bkpbjexwev .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#kotjspwkye .gt_col_headings {
+#bkpbjexwev .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -460,7 +467,7 @@ vignette</a> for detailed overview of this function if needed).</p>
   border-right-color: #D3D3D3;
 }
 
-#kotjspwkye .gt_col_heading {
+#bkpbjexwev .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -480,7 +487,7 @@ vignette</a> for detailed overview of this function if needed).</p>
   overflow-x: hidden;
 }
 
-#kotjspwkye .gt_column_spanner_outer {
+#bkpbjexwev .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -492,15 +499,15 @@ vignette</a> for detailed overview of this function if needed).</p>
   padding-right: 4px;
 }
 
-#kotjspwkye .gt_column_spanner_outer:first-child {
+#bkpbjexwev .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#kotjspwkye .gt_column_spanner_outer:last-child {
+#bkpbjexwev .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#kotjspwkye .gt_column_spanner {
+#bkpbjexwev .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -512,7 +519,7 @@ vignette</a> for detailed overview of this function if needed).</p>
   width: 100%;
 }
 
-#kotjspwkye .gt_group_heading {
+#bkpbjexwev .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -537,7 +544,7 @@ vignette</a> for detailed overview of this function if needed).</p>
   vertical-align: middle;
 }
 
-#kotjspwkye .gt_empty_group_heading {
+#bkpbjexwev .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -552,15 +559,15 @@ vignette</a> for detailed overview of this function if needed).</p>
   vertical-align: middle;
 }
 
-#kotjspwkye .gt_from_md > :first-child {
+#bkpbjexwev .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#kotjspwkye .gt_from_md > :last-child {
+#bkpbjexwev .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#kotjspwkye .gt_row {
+#bkpbjexwev .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -579,7 +586,7 @@ vignette</a> for detailed overview of this function if needed).</p>
   overflow-x: hidden;
 }
 
-#kotjspwkye .gt_stub {
+#bkpbjexwev .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -592,7 +599,7 @@ vignette</a> for detailed overview of this function if needed).</p>
   padding-right: 5px;
 }
 
-#kotjspwkye .gt_stub_row_group {
+#bkpbjexwev .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -606,11 +613,11 @@ vignette</a> for detailed overview of this function if needed).</p>
   vertical-align: top;
 }
 
-#kotjspwkye .gt_row_group_first td {
+#bkpbjexwev .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#kotjspwkye .gt_summary_row {
+#bkpbjexwev .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -620,16 +627,16 @@ vignette</a> for detailed overview of this function if needed).</p>
   padding-right: 5px;
 }
 
-#kotjspwkye .gt_first_summary_row {
+#bkpbjexwev .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#kotjspwkye .gt_first_summary_row.thick {
+#bkpbjexwev .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#kotjspwkye .gt_last_summary_row {
+#bkpbjexwev .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -639,7 +646,7 @@ vignette</a> for detailed overview of this function if needed).</p>
   border-bottom-color: #D3D3D3;
 }
 
-#kotjspwkye .gt_grand_summary_row {
+#bkpbjexwev .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -649,7 +656,7 @@ vignette</a> for detailed overview of this function if needed).</p>
   padding-right: 5px;
 }
 
-#kotjspwkye .gt_first_grand_summary_row {
+#bkpbjexwev .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -659,11 +666,11 @@ vignette</a> for detailed overview of this function if needed).</p>
   border-top-color: #D3D3D3;
 }
 
-#kotjspwkye .gt_striped {
+#bkpbjexwev .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#kotjspwkye .gt_table_body {
+#bkpbjexwev .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -672,7 +679,7 @@ vignette</a> for detailed overview of this function if needed).</p>
   border-bottom-color: #D3D3D3;
 }
 
-#kotjspwkye .gt_footnotes {
+#bkpbjexwev .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -686,7 +693,7 @@ vignette</a> for detailed overview of this function if needed).</p>
   border-right-color: #D3D3D3;
 }
 
-#kotjspwkye .gt_footnote {
+#bkpbjexwev .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-left: 4px;
@@ -695,7 +702,7 @@ vignette</a> for detailed overview of this function if needed).</p>
   padding-right: 5px;
 }
 
-#kotjspwkye .gt_sourcenotes {
+#bkpbjexwev .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -709,7 +716,7 @@ vignette</a> for detailed overview of this function if needed).</p>
   border-right-color: #D3D3D3;
 }
 
-#kotjspwkye .gt_sourcenote {
+#bkpbjexwev .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -717,103 +724,96 @@ vignette</a> for detailed overview of this function if needed).</p>
   padding-right: 5px;
 }
 
-#kotjspwkye .gt_left {
+#bkpbjexwev .gt_left {
   text-align: left;
 }
 
-#kotjspwkye .gt_center {
+#bkpbjexwev .gt_center {
   text-align: center;
 }
 
-#kotjspwkye .gt_right {
+#bkpbjexwev .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#kotjspwkye .gt_font_normal {
+#bkpbjexwev .gt_font_normal {
   font-weight: normal;
 }
 
-#kotjspwkye .gt_font_bold {
+#bkpbjexwev .gt_font_bold {
   font-weight: bold;
 }
 
-#kotjspwkye .gt_font_italic {
+#bkpbjexwev .gt_font_italic {
   font-style: italic;
 }
 
-#kotjspwkye .gt_super {
+#bkpbjexwev .gt_super {
   font-size: 65%;
 }
 
-#kotjspwkye .gt_two_val_uncert {
-  display: inline-block;
-  line-height: 1em;
-  text-align: right;
-  font-size: 60%;
-  vertical-align: -0.25em;
-  margin-left: 0.1em;
-}
-
-#kotjspwkye .gt_footnote_marks {
+#bkpbjexwev .gt_footnote_marks {
   font-style: italic;
   font-weight: normal;
   font-size: 75%;
   vertical-align: 0.4em;
 }
 
-#kotjspwkye .gt_asterisk {
+#bkpbjexwev .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#kotjspwkye .gt_slash_mark {
-  font-size: 0.7em;
-  line-height: 0.7em;
-  vertical-align: 0.15em;
+#bkpbjexwev .gt_indent_1 {
+  text-indent: 5px;
 }
 
-#kotjspwkye .gt_fraction_numerator {
-  font-size: 0.6em;
-  line-height: 0.6em;
-  vertical-align: 0.45em;
+#bkpbjexwev .gt_indent_2 {
+  text-indent: 10px;
 }
 
-#kotjspwkye .gt_fraction_denominator {
-  font-size: 0.6em;
-  line-height: 0.6em;
-  vertical-align: -0.05em;
+#bkpbjexwev .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#bkpbjexwev .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#bkpbjexwev .gt_indent_5 {
+  text-indent: 25px;
 }
 </style>
 <table class="gt_table">
   
   <thead class="gt_col_headings">
     <tr>
-      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1"><strong>Characteristic</strong></th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>Drug A</strong>, N = 98<sup class="gt_footnote_marks">1</sup></th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>Drug B</strong>, N = 102<sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col"><strong>Characteristic</strong></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col"><strong>Drug A</strong>, N = 98<sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col"><strong>Drug B</strong>, N = 102<sup class="gt_footnote_marks">1</sup></th>
     </tr>
   </thead>
   <tbody class="gt_table_body">
     <tr><td class="gt_row gt_left">Marker Level (ng/mL)</td>
 <td class="gt_row gt_center">0.84 (0.24, 1.57)</td>
 <td class="gt_row gt_center">0.52 (0.19, 1.20)</td></tr>
-    <tr><td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Unknown</td>
+    <tr><td class="gt_row gt_left">    Unknown</td>
 <td class="gt_row gt_center">6</td>
 <td class="gt_row gt_center">4</td></tr>
     <tr><td class="gt_row gt_left">T Stage</td>
 <td class="gt_row gt_center"></td>
 <td class="gt_row gt_center"></td></tr>
-    <tr><td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">T1</td>
+    <tr><td class="gt_row gt_left">    T1</td>
 <td class="gt_row gt_center">28 (29%)</td>
 <td class="gt_row gt_center">25 (25%)</td></tr>
-    <tr><td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">T2</td>
+    <tr><td class="gt_row gt_left">    T2</td>
 <td class="gt_row gt_center">25 (26%)</td>
 <td class="gt_row gt_center">29 (28%)</td></tr>
-    <tr><td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">T3</td>
+    <tr><td class="gt_row gt_left">    T3</td>
 <td class="gt_row gt_center">22 (22%)</td>
 <td class="gt_row gt_center">21 (21%)</td></tr>
-    <tr><td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">T4</td>
+    <tr><td class="gt_row gt_left">    T4</td>
 <td class="gt_row gt_center">23 (23%)</td>
 <td class="gt_row gt_center">27 (26%)</td></tr>
   </tbody>
@@ -859,12 +859,12 @@ vignette</a> if you need detailed guidance on using these functions.</p>
 exponentiate to get the odds ratios.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>tbl_m1 <span class="ot">&lt;-</span> <span class="fu">tbl_regression</span>(m1, <span class="at">exponentiate =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>tbl_m1</span></code></pre></div>
-<div id="fjdhgjfpcb" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<div id="qapekksbtj" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
 <style>html {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
 }
 
-#fjdhgjfpcb .gt_table {
+#qapekksbtj .gt_table {
   display: table;
   border-collapse: collapse;
   margin-left: auto;
@@ -889,7 +889,7 @@ exponentiate to get the odds ratios.</p>
   border-left-color: #D3D3D3;
 }
 
-#fjdhgjfpcb .gt_heading {
+#qapekksbtj .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -901,7 +901,7 @@ exponentiate to get the odds ratios.</p>
   border-right-color: #D3D3D3;
 }
 
-#fjdhgjfpcb .gt_title {
+#qapekksbtj .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -913,7 +913,7 @@ exponentiate to get the odds ratios.</p>
   border-bottom-width: 0;
 }
 
-#fjdhgjfpcb .gt_subtitle {
+#qapekksbtj .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -925,13 +925,13 @@ exponentiate to get the odds ratios.</p>
   border-top-width: 0;
 }
 
-#fjdhgjfpcb .gt_bottom_border {
+#qapekksbtj .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#fjdhgjfpcb .gt_col_headings {
+#qapekksbtj .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -946,7 +946,7 @@ exponentiate to get the odds ratios.</p>
   border-right-color: #D3D3D3;
 }
 
-#fjdhgjfpcb .gt_col_heading {
+#qapekksbtj .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -966,7 +966,7 @@ exponentiate to get the odds ratios.</p>
   overflow-x: hidden;
 }
 
-#fjdhgjfpcb .gt_column_spanner_outer {
+#qapekksbtj .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -978,15 +978,15 @@ exponentiate to get the odds ratios.</p>
   padding-right: 4px;
 }
 
-#fjdhgjfpcb .gt_column_spanner_outer:first-child {
+#qapekksbtj .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#fjdhgjfpcb .gt_column_spanner_outer:last-child {
+#qapekksbtj .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#fjdhgjfpcb .gt_column_spanner {
+#qapekksbtj .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -998,7 +998,7 @@ exponentiate to get the odds ratios.</p>
   width: 100%;
 }
 
-#fjdhgjfpcb .gt_group_heading {
+#qapekksbtj .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1023,7 +1023,7 @@ exponentiate to get the odds ratios.</p>
   vertical-align: middle;
 }
 
-#fjdhgjfpcb .gt_empty_group_heading {
+#qapekksbtj .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1038,15 +1038,15 @@ exponentiate to get the odds ratios.</p>
   vertical-align: middle;
 }
 
-#fjdhgjfpcb .gt_from_md > :first-child {
+#qapekksbtj .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#fjdhgjfpcb .gt_from_md > :last-child {
+#qapekksbtj .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#fjdhgjfpcb .gt_row {
+#qapekksbtj .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1065,7 +1065,7 @@ exponentiate to get the odds ratios.</p>
   overflow-x: hidden;
 }
 
-#fjdhgjfpcb .gt_stub {
+#qapekksbtj .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1078,7 +1078,7 @@ exponentiate to get the odds ratios.</p>
   padding-right: 5px;
 }
 
-#fjdhgjfpcb .gt_stub_row_group {
+#qapekksbtj .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1092,11 +1092,11 @@ exponentiate to get the odds ratios.</p>
   vertical-align: top;
 }
 
-#fjdhgjfpcb .gt_row_group_first td {
+#qapekksbtj .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#fjdhgjfpcb .gt_summary_row {
+#qapekksbtj .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1106,16 +1106,16 @@ exponentiate to get the odds ratios.</p>
   padding-right: 5px;
 }
 
-#fjdhgjfpcb .gt_first_summary_row {
+#qapekksbtj .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#fjdhgjfpcb .gt_first_summary_row.thick {
+#qapekksbtj .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#fjdhgjfpcb .gt_last_summary_row {
+#qapekksbtj .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1125,7 +1125,7 @@ exponentiate to get the odds ratios.</p>
   border-bottom-color: #D3D3D3;
 }
 
-#fjdhgjfpcb .gt_grand_summary_row {
+#qapekksbtj .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1135,7 +1135,7 @@ exponentiate to get the odds ratios.</p>
   padding-right: 5px;
 }
 
-#fjdhgjfpcb .gt_first_grand_summary_row {
+#qapekksbtj .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1145,11 +1145,11 @@ exponentiate to get the odds ratios.</p>
   border-top-color: #D3D3D3;
 }
 
-#fjdhgjfpcb .gt_striped {
+#qapekksbtj .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#fjdhgjfpcb .gt_table_body {
+#qapekksbtj .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1158,7 +1158,7 @@ exponentiate to get the odds ratios.</p>
   border-bottom-color: #D3D3D3;
 }
 
-#fjdhgjfpcb .gt_footnotes {
+#qapekksbtj .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1172,7 +1172,7 @@ exponentiate to get the odds ratios.</p>
   border-right-color: #D3D3D3;
 }
 
-#fjdhgjfpcb .gt_footnote {
+#qapekksbtj .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-left: 4px;
@@ -1181,7 +1181,7 @@ exponentiate to get the odds ratios.</p>
   padding-right: 5px;
 }
 
-#fjdhgjfpcb .gt_sourcenotes {
+#qapekksbtj .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1195,7 +1195,7 @@ exponentiate to get the odds ratios.</p>
   border-right-color: #D3D3D3;
 }
 
-#fjdhgjfpcb .gt_sourcenote {
+#qapekksbtj .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -1203,82 +1203,75 @@ exponentiate to get the odds ratios.</p>
   padding-right: 5px;
 }
 
-#fjdhgjfpcb .gt_left {
+#qapekksbtj .gt_left {
   text-align: left;
 }
 
-#fjdhgjfpcb .gt_center {
+#qapekksbtj .gt_center {
   text-align: center;
 }
 
-#fjdhgjfpcb .gt_right {
+#qapekksbtj .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#fjdhgjfpcb .gt_font_normal {
+#qapekksbtj .gt_font_normal {
   font-weight: normal;
 }
 
-#fjdhgjfpcb .gt_font_bold {
+#qapekksbtj .gt_font_bold {
   font-weight: bold;
 }
 
-#fjdhgjfpcb .gt_font_italic {
+#qapekksbtj .gt_font_italic {
   font-style: italic;
 }
 
-#fjdhgjfpcb .gt_super {
+#qapekksbtj .gt_super {
   font-size: 65%;
 }
 
-#fjdhgjfpcb .gt_two_val_uncert {
-  display: inline-block;
-  line-height: 1em;
-  text-align: right;
-  font-size: 60%;
-  vertical-align: -0.25em;
-  margin-left: 0.1em;
-}
-
-#fjdhgjfpcb .gt_footnote_marks {
+#qapekksbtj .gt_footnote_marks {
   font-style: italic;
   font-weight: normal;
   font-size: 75%;
   vertical-align: 0.4em;
 }
 
-#fjdhgjfpcb .gt_asterisk {
+#qapekksbtj .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#fjdhgjfpcb .gt_slash_mark {
-  font-size: 0.7em;
-  line-height: 0.7em;
-  vertical-align: 0.15em;
+#qapekksbtj .gt_indent_1 {
+  text-indent: 5px;
 }
 
-#fjdhgjfpcb .gt_fraction_numerator {
-  font-size: 0.6em;
-  line-height: 0.6em;
-  vertical-align: 0.45em;
+#qapekksbtj .gt_indent_2 {
+  text-indent: 10px;
 }
 
-#fjdhgjfpcb .gt_fraction_denominator {
-  font-size: 0.6em;
-  line-height: 0.6em;
-  vertical-align: -0.05em;
+#qapekksbtj .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#qapekksbtj .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#qapekksbtj .gt_indent_5 {
+  text-indent: 25px;
 }
 </style>
 <table class="gt_table">
   
   <thead class="gt_col_headings">
     <tr>
-      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1"><strong>Characteristic</strong></th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>OR</strong><sup class="gt_footnote_marks">1</sup></th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>95% CI</strong><sup class="gt_footnote_marks">1</sup></th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>p-value</strong></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col"><strong>Characteristic</strong></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col"><strong>OR</strong><sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col"><strong>95% CI</strong><sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col"><strong>p-value</strong></th>
     </tr>
   </thead>
   <tbody class="gt_table_body">
@@ -1290,19 +1283,19 @@ exponentiate to get the odds ratios.</p>
 <td class="gt_row gt_center"></td>
 <td class="gt_row gt_center"></td>
 <td class="gt_row gt_center"></td></tr>
-    <tr><td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">T1</td>
+    <tr><td class="gt_row gt_left">    T1</td>
 <td class="gt_row gt_center">—</td>
 <td class="gt_row gt_center">—</td>
 <td class="gt_row gt_center"></td></tr>
-    <tr><td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">T2</td>
+    <tr><td class="gt_row gt_left">    T2</td>
 <td class="gt_row gt_center">0.58</td>
 <td class="gt_row gt_center">0.24, 1.37</td>
 <td class="gt_row gt_center">0.2</td></tr>
-    <tr><td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">T3</td>
+    <tr><td class="gt_row gt_left">    T3</td>
 <td class="gt_row gt_center">0.94</td>
 <td class="gt_row gt_center">0.39, 2.28</td>
 <td class="gt_row gt_center">0.9</td></tr>
-    <tr><td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">T4</td>
+    <tr><td class="gt_row gt_left">    T4</td>
 <td class="gt_row gt_center">0.79</td>
 <td class="gt_row gt_center">0.33, 1.90</td>
 <td class="gt_row gt_center">0.6</td></tr>
@@ -1331,12 +1324,12 @@ objects being inserted between curly brackets. The default is
 <code>pattern = &quot;{estimate} ({conf.level*100}% CI {conf.low}, {conf.high}; {p.value})&quot;</code>.
 You have access the to following fields within the <code>pattern</code>
 argument.</p>
-<div id="welzifoxzq" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<div id="xajfycnuws" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
 <style>html {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
 }
 
-#welzifoxzq .gt_table {
+#xajfycnuws .gt_table {
   display: table;
   border-collapse: collapse;
   margin-left: auto;
@@ -1361,7 +1354,7 @@ argument.</p>
   border-left-color: #D3D3D3;
 }
 
-#welzifoxzq .gt_heading {
+#xajfycnuws .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -1373,7 +1366,7 @@ argument.</p>
   border-right-color: #D3D3D3;
 }
 
-#welzifoxzq .gt_title {
+#xajfycnuws .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -1385,7 +1378,7 @@ argument.</p>
   border-bottom-width: 0;
 }
 
-#welzifoxzq .gt_subtitle {
+#xajfycnuws .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -1397,13 +1390,13 @@ argument.</p>
   border-top-width: 0;
 }
 
-#welzifoxzq .gt_bottom_border {
+#xajfycnuws .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#welzifoxzq .gt_col_headings {
+#xajfycnuws .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1418,7 +1411,7 @@ argument.</p>
   border-right-color: #D3D3D3;
 }
 
-#welzifoxzq .gt_col_heading {
+#xajfycnuws .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1438,7 +1431,7 @@ argument.</p>
   overflow-x: hidden;
 }
 
-#welzifoxzq .gt_column_spanner_outer {
+#xajfycnuws .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1450,15 +1443,15 @@ argument.</p>
   padding-right: 4px;
 }
 
-#welzifoxzq .gt_column_spanner_outer:first-child {
+#xajfycnuws .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#welzifoxzq .gt_column_spanner_outer:last-child {
+#xajfycnuws .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#welzifoxzq .gt_column_spanner {
+#xajfycnuws .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -1470,7 +1463,7 @@ argument.</p>
   width: 100%;
 }
 
-#welzifoxzq .gt_group_heading {
+#xajfycnuws .gt_group_heading {
   padding-top: 1px;
   padding-bottom: 1px;
   padding-left: 5px;
@@ -1495,7 +1488,7 @@ argument.</p>
   vertical-align: middle;
 }
 
-#welzifoxzq .gt_empty_group_heading {
+#xajfycnuws .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1510,15 +1503,15 @@ argument.</p>
   vertical-align: middle;
 }
 
-#welzifoxzq .gt_from_md > :first-child {
+#xajfycnuws .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#welzifoxzq .gt_from_md > :last-child {
+#xajfycnuws .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#welzifoxzq .gt_row {
+#xajfycnuws .gt_row {
   padding-top: 1px;
   padding-bottom: 1px;
   padding-left: 5px;
@@ -1537,7 +1530,7 @@ argument.</p>
   overflow-x: hidden;
 }
 
-#welzifoxzq .gt_stub {
+#xajfycnuws .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1550,7 +1543,7 @@ argument.</p>
   padding-right: 5px;
 }
 
-#welzifoxzq .gt_stub_row_group {
+#xajfycnuws .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1564,11 +1557,11 @@ argument.</p>
   vertical-align: top;
 }
 
-#welzifoxzq .gt_row_group_first td {
+#xajfycnuws .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#welzifoxzq .gt_summary_row {
+#xajfycnuws .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1578,16 +1571,16 @@ argument.</p>
   padding-right: 5px;
 }
 
-#welzifoxzq .gt_first_summary_row {
+#xajfycnuws .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#welzifoxzq .gt_first_summary_row.thick {
+#xajfycnuws .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#welzifoxzq .gt_last_summary_row {
+#xajfycnuws .gt_last_summary_row {
   padding-top: 1px;
   padding-bottom: 1px;
   padding-left: 5px;
@@ -1597,7 +1590,7 @@ argument.</p>
   border-bottom-color: #D3D3D3;
 }
 
-#welzifoxzq .gt_grand_summary_row {
+#xajfycnuws .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1607,7 +1600,7 @@ argument.</p>
   padding-right: 5px;
 }
 
-#welzifoxzq .gt_first_grand_summary_row {
+#xajfycnuws .gt_first_grand_summary_row {
   padding-top: 1px;
   padding-bottom: 1px;
   padding-left: 5px;
@@ -1617,11 +1610,11 @@ argument.</p>
   border-top-color: #D3D3D3;
 }
 
-#welzifoxzq .gt_striped {
+#xajfycnuws .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#welzifoxzq .gt_table_body {
+#xajfycnuws .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1630,7 +1623,7 @@ argument.</p>
   border-bottom-color: #D3D3D3;
 }
 
-#welzifoxzq .gt_footnotes {
+#xajfycnuws .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1644,7 +1637,7 @@ argument.</p>
   border-right-color: #D3D3D3;
 }
 
-#welzifoxzq .gt_footnote {
+#xajfycnuws .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-left: 1px;
@@ -1653,7 +1646,7 @@ argument.</p>
   padding-right: 5px;
 }
 
-#welzifoxzq .gt_sourcenotes {
+#xajfycnuws .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1667,7 +1660,7 @@ argument.</p>
   border-right-color: #D3D3D3;
 }
 
-#welzifoxzq .gt_sourcenote {
+#xajfycnuws .gt_sourcenote {
   font-size: 90%;
   padding-top: 1px;
   padding-bottom: 1px;
@@ -1675,80 +1668,73 @@ argument.</p>
   padding-right: 5px;
 }
 
-#welzifoxzq .gt_left {
+#xajfycnuws .gt_left {
   text-align: left;
 }
 
-#welzifoxzq .gt_center {
+#xajfycnuws .gt_center {
   text-align: center;
 }
 
-#welzifoxzq .gt_right {
+#xajfycnuws .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#welzifoxzq .gt_font_normal {
+#xajfycnuws .gt_font_normal {
   font-weight: normal;
 }
 
-#welzifoxzq .gt_font_bold {
+#xajfycnuws .gt_font_bold {
   font-weight: bold;
 }
 
-#welzifoxzq .gt_font_italic {
+#xajfycnuws .gt_font_italic {
   font-style: italic;
 }
 
-#welzifoxzq .gt_super {
+#xajfycnuws .gt_super {
   font-size: 65%;
 }
 
-#welzifoxzq .gt_two_val_uncert {
-  display: inline-block;
-  line-height: 1em;
-  text-align: right;
-  font-size: 60%;
-  vertical-align: -0.25em;
-  margin-left: 0.1em;
-}
-
-#welzifoxzq .gt_footnote_marks {
+#xajfycnuws .gt_footnote_marks {
   font-style: italic;
   font-weight: normal;
   font-size: 75%;
   vertical-align: 0.4em;
 }
 
-#welzifoxzq .gt_asterisk {
+#xajfycnuws .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#welzifoxzq .gt_slash_mark {
-  font-size: 0.7em;
-  line-height: 0.7em;
-  vertical-align: 0.15em;
+#xajfycnuws .gt_indent_1 {
+  text-indent: 5px;
 }
 
-#welzifoxzq .gt_fraction_numerator {
-  font-size: 0.6em;
-  line-height: 0.6em;
-  vertical-align: 0.45em;
+#xajfycnuws .gt_indent_2 {
+  text-indent: 10px;
 }
 
-#welzifoxzq .gt_fraction_denominator {
-  font-size: 0.6em;
-  line-height: 0.6em;
-  vertical-align: -0.05em;
+#xajfycnuws .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#xajfycnuws .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#xajfycnuws .gt_indent_5 {
+  text-indent: 25px;
 }
 </style>
 <table class="gt_table">
   
   <thead class="gt_col_headings">
     <tr>
-      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1">Parameter</th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1">Description</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col">Parameter</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col">Description</th>
     </tr>
   </thead>
   <tbody class="gt_table_body">

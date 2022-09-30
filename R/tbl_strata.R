@@ -96,12 +96,16 @@
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
-#' \if{html}{\figure{tbl_strata_ex1.png}{options: width=84\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "tbl_strata_ex1.png", width = "84")`
+#' }}
 #'
 #' @section Example Output:
 #' \if{html}{Example 2}
 #'
-#' \if{html}{\figure{tbl_strata_ex2.png}{options: width=30\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "tbl_strata_ex2.png", width = "30")`
+#' }}
 NULL
 
 #' @export
@@ -216,7 +220,7 @@ tbl_strata_internal <- function(data,
   }
   df_by <-
     df_by %>%
-    select(strata = .data$by,
+    select(strata = "by",
            any_of(c("n", "N", "p",
                     "n_unweighted", "N_unweighted", "p_unweighted"))) %>%
     mutate(header = glue::glue_data(dplyr::cur_data(), .header))
@@ -230,7 +234,7 @@ tbl_strata_internal <- function(data,
     mutate(strata = paste(!!!syms(names(new_strata_names)), sep = .sep)) %>%
     ungroup() %>%
     left_join(
-      df_by %>% select(.data$strata, .data$header),
+      df_by %>% select("strata", "header"),
       by = "strata"
     ) %>%
     mutate(
@@ -284,7 +288,7 @@ tbl_strata_internal <- function(data,
   }
 
   # return tbl -----------------------------------------------------------------
-  tbl$df_strata <- df_tbls %>% select(starts_with("strata_"), .data$header)
+  tbl$df_strata <- df_tbls %>% select(starts_with("strata_"), "header")
   class(tbl) <- c("tbl_strata", .combine_with, "gtsummary")
   tbl
 }

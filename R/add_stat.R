@@ -52,6 +52,7 @@
 #' @export
 #' @seealso Review [list, formula, and selector syntax][syntax] used throughout gtsummary
 #' @examples
+#' \donttest{
 #' library(dplyr, warn.conflicts = FALSE)
 #' library(stringr)
 #' # Example 1 ----------------------------------
@@ -115,18 +116,25 @@
 #'       p.value ~ style_pvalue
 #'     )
 #'   )
+#' }
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
-#' \if{html}{\figure{add_stat_ex1.png}{options: width=60\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_stat_ex1.png", width = "60")`
+#' }}
 #'
 #' \if{html}{Example 2}
 #'
-#' \if{html}{\figure{add_stat_ex2.png}{options: width=60\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_stat_ex2.png", width = "60")`
+#' }}
 #'
 #' \if{html}{Example 3}
 #'
-#' \if{html}{\figure{add_stat_ex3.png}{options: width=60\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_stat_ex3.png", width = "60")`
+#' }}
 
 add_stat <- function(x, fns, location = NULL, ...) {
   updated_call_list <- c(x$call_list, list(add_stat = match.call()))
@@ -144,14 +152,13 @@ add_stat <- function(x, fns, location = NULL, ...) {
     dep_args,
     function(.x, .y) {
       if (!is.null(dots[[.y]]))
-        lifecycle::deprecate_warn(when = "1.4.0", what = .x[[1]], with = .x[[2]],
-                                  details = "Argument has been ignored.")
+        lifecycle::deprecate_stop(when = "1.4.0", what = .x[[1]], with = .x[[2]])
     }
   )
 
   # convert to named lists -----------------------------------------------------
   if (rlang::is_string(location)) {
-    lifecycle::deprecate_warn(
+    lifecycle::deprecate_stop(
       "1.4.0",
       "gtsummary::add_stat(location = 'must be a formula list, e.g. `everything() ~ \"label\"`,')"
     )
@@ -201,7 +208,7 @@ add_stat <- function(x, fns, location = NULL, ...) {
   # calculating statistics -----------------------------------------------------
   df_new_stat <-
     tibble(variable = names(fns)) %>%
-    left_join(x$meta_data %>% select(.data$variable, .data$summary_type),
+    left_join(x$meta_data %>% select("variable", "summary_type"),
               by = "variable"
     ) %>%
     mutate(
@@ -214,7 +221,7 @@ add_stat <- function(x, fns, location = NULL, ...) {
     mutate(
       df_add_stats = purrr::imap(fns, ~ eval_fn_safe(tbl = x, variable = .y, fn = .x))
     ) %>%
-    select(-.data$summary_type)
+    select(-"summary_type")
 
   # converting returned statistics to a tibble if not already ------------------
   df_new_stat$df_add_stats <-
@@ -252,7 +259,7 @@ add_stat <- function(x, fns, location = NULL, ...) {
     x %>%
     modify_table_body(
       left_join,
-      df_new_stat %>% tidyr::unnest(cols = c(.data$label, .data$df_add_stats)),
+      df_new_stat %>% tidyr::unnest(cols = c("label", "df_add_stats")),
       by = c("variable", "row_type", "label")
     ) %>%
     # showing all new columns

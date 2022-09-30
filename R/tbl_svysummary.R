@@ -33,6 +33,7 @@
 #' \itemize{
 #'   \item `{median}` median
 #'   \item `{mean}` mean
+#'   \item `{mean.std.error}` standard error of the sample mean computed with [survey::svymean()]
 #'   \item `{sd}` standard deviation
 #'   \item `{var}` variance
 #'   \item `{min}` minimum
@@ -68,7 +69,7 @@
 #' @family tbl_svysummary tools
 #' @seealso Review [list, formula, and selector syntax][syntax] used throughout gtsummary
 #' @author Joseph Larmarange
-#' @examplesIf broom.helpers::.assert_package("survey", pkg_search = "gtsummary", boolean = TRUE)
+#' @examplesIf identical(Sys.getenv("IN_PKGDOWN"), "true") && broom.helpers::.assert_package("survey", pkg_search = "gtsummary", boolean = TRUE)
 #' # A simple weighted dataset
 #' tbl_svysummary_ex1 <-
 #'   survey::svydesign(~1, data = as.data.frame(Titanic), weights = ~Freq) %>%
@@ -83,11 +84,15 @@
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
-#' \if{html}{\figure{tbl_svysummary_ex1.png}{options: width=31\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "tbl_svysummary_ex1.png", width = "31")`
+#' }}
 #'
 #' \if{html}{Example 2}
 #'
-#' \if{html}{\figure{tbl_svysummary_ex2.png}{options: width=36\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "tbl_svysummary_ex2.png", width = "36")`
+#' }}
 tbl_svysummary <- function(data, by = NULL, label = NULL, statistic = NULL,
                            digits = NULL, type = NULL, value = NULL,
                            missing = NULL, missing_text = NULL, sort = NULL,
@@ -217,9 +222,9 @@ tbl_svysummary <- function(data, by = NULL, label = NULL, statistic = NULL,
         }
       )
     ) %>%
-    select(var_type = .data$summary_type, .data$var_label, .data$tbl_stats) %>%
-    unnest(.data$tbl_stats) %>%
-    select(.data$variable, .data$var_type, .data$var_label, everything())
+    select(var_type = "summary_type", "var_label", "tbl_stats") %>%
+    unnest("tbl_stats") %>%
+    select("variable", "var_type", "var_label", everything())
 
   # table of column headers ----------------------------------------------------
   x <-
@@ -245,18 +250,18 @@ tbl_svysummary <- function(data, by = NULL, label = NULL, statistic = NULL,
       dplyr::left_join(
         x$df_by %>%
           select(
-            column = .data$by_col,
-            modify_stat_n = .data$n,
-            modify_stat_N = .data$N,
-            modify_stat_p = .data$p,
-            modify_stat_n_unweighted = .data$n_unweighted,
-            modify_stat_N_unweighted = .data$N_unweighted,
-            modify_stat_p_unweighted = .data$p_unweighted,
-            modify_stat_level = .data$by_chr
+            column = "by_col",
+            modify_stat_n = "n",
+            modify_stat_N = "N",
+            modify_stat_p = "p",
+            modify_stat_n_unweighted = "n_unweighted",
+            modify_stat_N_unweighted = "N_unweighted",
+            modify_stat_p_unweighted = "p_unweighted",
+            modify_stat_level = "by_chr"
           ),
         by = "column"
       ) %>%
-      tidyr::fill(c(.data$modify_stat_N, .data$modify_stat_N_unweighted), .direction = "updown")
+      tidyr::fill("modify_stat_N", "modify_stat_N_unweighted", .direction = "updown")
   }
 
   # adding headers and footnote ------------------------------------------------
@@ -305,7 +310,7 @@ summarize_categorical_survey <- function(data, variable, by,
       dichotomous_value = dichotomous_value,
       sort = sort, percent = percent, stat_display = stat_display
     ) %>%
-    rename(n_unweighted = .data$n, N_unweighted = .data$N, p_unweighted = .data$p)
+    rename(n_unweighted = "n", N_unweighted = "N", p_unweighted = "p")
 
   # convert to factor if not already a factor
   if (!is.factor(data$variables[[variable]])) {
@@ -341,7 +346,7 @@ summarize_categorical_survey <- function(data, variable, by,
         mutate(
           variable_levels = str_sub(.data$var_level, stringr::str_length(variable) + 1)
         ) %>%
-        select(p = .data$mean, p.std.error = .data$SE, .data$variable_levels)
+        select(p = "mean", p.std.error = "SE", "variable_levels")
     } else {
       # this will have p=1 for all and p.std.error=0 for all
       svy_p <- tibble(
@@ -400,7 +405,7 @@ summarize_categorical_survey <- function(data, variable, by,
       svy_p <- survey::svymean(c_inter(by, variable), data, na.rm = TRUE) %>%
         as_tibble(rownames = "var_level") %>%
         dplyr::left_join(inttemp, by = "var_level") %>%
-        select(p = .data$mean, p.std.error = .data$SE, .data$by, .data$variable_levels)
+        select(p = "mean", p.std.error = "SE", "by", "variable_levels")
     }
 
     svy_table <-
@@ -439,7 +444,7 @@ summarize_categorical_survey <- function(data, variable, by,
   if (!is.null(dichotomous_value)) {
     svy_table <- svy_table %>%
       filter(.data$variable_levels == !!dichotomous_value) %>%
-      select(-.data$variable_levels)
+      select(-"variable_levels")
   }
 
   suppressMessages(
@@ -535,6 +540,9 @@ compute_survey_stat <- function(data, variable, by, f) {
   if (f %in% c("var", "sd")) {
     fun <- survey::svyvar
   }
+  if (f == "mean.std.error") {
+    fun <- svymean.std.error
+  }
   if (f == "median") {
     fun <- svyquantile_version
     args$quantiles <- .5
@@ -624,14 +632,14 @@ df_stats_fun_survey <- function(summary_type, variable, dichotomous_value, sort,
     sort = "alphanumeric", percent = "column",
     stat_display = "{n}"
   ) %>%
-    select(-.data$stat_display, -.data$p.std.error) %>%
+    select(-"stat_display", -"p.std.error") %>%
     rename(
-      p_miss = .data$p,
-      N_obs = .data$N,
-      N_miss = .data$n,
-      p_miss_unweighted = .data$p_unweighted,
-      N_obs_unweighted = .data$N_unweighted,
-      N_miss_unweighted = .data$n_unweighted
+      p_miss = "p",
+      N_obs = "N",
+      N_miss = "n",
+      p_miss_unweighted = "p_unweighted",
+      N_obs_unweighted = "N_unweighted",
+      N_miss_unweighted = "n_unweighted"
     ) %>%
     mutate(
       N_nonmiss = .data$N_obs - .data$N_miss,
@@ -652,7 +660,7 @@ df_stats_fun_survey <- function(summary_type, variable, dichotomous_value, sort,
     return <-
       return %>%
       left_join(df_by(data, by)[c("by", "by_col")], by = "by") %>%
-      rename(col_name = .data$by_col)
+      rename(col_name = "by_col")
   } else if ("variable_levels" %in% names(return)) {
     return$label <- as.character(return$variable_levels)
     return$col_name <- "stat_0"
@@ -701,6 +709,11 @@ svymin <- function(x, design, na.rm = FALSE, ...) {
 svymax <- function(x, design, na.rm = FALSE, ...) {
   x <- all.vars(x)
   max(design$variables[[x]], na.rm = na.rm)
+}
+
+# mean standard error
+svymean.std.error <- function(x, design, na.rm = FALSE, ...) {
+  survey::svymean(x = x, design = design, na.rm = na.rm, ...) %>% survey::SE()
 }
 
 # function chooses which quantile function to sue based on the survey pkg version

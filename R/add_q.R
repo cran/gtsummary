@@ -15,7 +15,7 @@
 #' @family tbl_regression tools
 #' @family tbl_uvregression tools
 #' @export
-#' @examplesIf broom.helpers::.assert_package("car", pkg_search = "gtsummary", boolean = TRUE)
+#' @examplesIf identical(Sys.getenv("IN_PKGDOWN"), "true") && broom.helpers::.assert_package("car", pkg_search = "gtsummary", boolean = TRUE)
 #' \donttest{
 #' # Example 1 ----------------------------------
 #' add_q_ex1 <-
@@ -39,11 +39,15 @@
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
-#' \if{html}{\figure{add_q_ex1.png}{options: width=65\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_q_ex1.png", width = "65")`
+#' }}
 #'
 #' \if{html}{Example 2}
 #'
-#' \if{html}{\figure{add_q_ex2.png}{options: width=60\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_q_ex2.png", width = "60")`
+#' }}
 
 add_q <- function(x, method = "fdr", pvalue_fun = NULL, quiet = NULL) {
   updated_call_list <- c(x$call_list, list(add_q = match.call()))
@@ -68,7 +72,7 @@ add_q <- function(x, method = "fdr", pvalue_fun = NULL, quiet = NULL) {
     get_theme_element("add_q-arg:pvalue_fun") %||%
     get_theme_element("pkgwide-fn:pvalue_fun") %||%
     # default from p-value formatting function
-    (filter(x$table_styling$fmt_fun, .data$column == "p.value") %>% pull(.data$fmt_fun) %>% pluck(1)) %>%
+    (filter(x$table_styling$fmt_fun, .data$column == "p.value") %>% pull("fmt_fun") %>% pluck(1)) %>%
     gts_mapper("add_q(pvalue_fun=)")
 
   # checking pvalue_fun are functions

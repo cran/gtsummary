@@ -43,6 +43,7 @@ add_p <- function(x, ...) {
 #' @return A `tbl_summary` object
 #' @author Daniel D. Sjoberg, Emily C. Zabor
 #' @examples
+#' \donttest{
 #' # Example 1 ----------------------------------
 #' add_p_ex1 <-
 #'   trial[c("age", "grade", "trt")] %>%
@@ -60,14 +61,19 @@ add_p <- function(x, ...) {
 #'     # assume equal variance in the t-test
 #'     test.args = all_tests("t.test") ~ list(var.equal = TRUE)
 #'   )
+#' }
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
-#' \if{html}{\figure{add_p_ex1.png}{options: width=60\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_p_ex1.png", width = "60")`
+#' }}
 #'
 #' \if{html}{Example 2}
 #'
-#' \if{html}{\figure{add_p_ex2.png}{options: width=60\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_p_ex2.png", width = "60")`
+#' }}
 
 add_p.tbl_summary <- function(x, test = NULL, pvalue_fun = NULL,
                               group = NULL, include = everything(), test.args = NULL,
@@ -163,7 +169,7 @@ add_p.tbl_summary <- function(x, test = NULL, pvalue_fun = NULL,
   # getting the test name and pvalue
   meta_data <-
     x$meta_data %>%
-    select(.data$variable, .data$summary_type) %>%
+    select("variable", "summary_type") %>%
     filter(.data$variable %in% include) %>%
     mutate(
       test =
@@ -188,7 +194,7 @@ add_p.tbl_summary <- function(x, test = NULL, pvalue_fun = NULL,
     x$table_body %>%
     select(-any_of(c("test_name", "test_result"))) %>%
     left_join(meta_data[c("variable", "test_name")], by = "variable") %>%
-    select(.data$variable, .data$test_name, everything())
+    select("variable", "test_name", everything())
 
   # converting to named list
   test.args <-
@@ -218,7 +224,7 @@ add_p.tbl_summary <- function(x, test = NULL, pvalue_fun = NULL,
       p.value = map_dbl(.data$test_result, ~ pluck(.x, "df_result", "p.value")),
       stat_test_lbl = map_chr(.data$test_result, ~ pluck(.x, "df_result", "method"))
     ) %>%
-    select(.data$variable, .data$test_result, .data$p.value, .data$stat_test_lbl) %>%
+    select("variable", "test_result", "p.value", "stat_test_lbl") %>%
     {
       left_join(
         x$meta_data %>% select(-any_of(c("test_result", "p.value", "stat_test_lbl"))),
@@ -263,12 +269,12 @@ add_p_merge_p_values <- function(x, lgl_add_p = TRUE,
       x,
       left_join,
       meta_data %>%
-        select(.data$variable, .data$test_result) %>%
+        select("variable", "test_result") %>%
         mutate(
           df_result = map(.data$test_result, ~pluck(.x, "df_result")),
           row_type = "label"
         ) %>%
-        unnest(.data$df_result) %>%
+        unnest("df_result") %>%
         select(
           -any_of("method"),
           # removing any columns already present in table_body
@@ -318,8 +324,8 @@ add_p_merge_p_values <- function(x, lgl_add_p = TRUE,
               rows = glue(".data$variable == '{variable}'") %>% rlang::parse_expr() %>% list()
             ) %>%
             ungroup() %>%
-            select(.data$column, .data$rows, .data$fmt_fun) %>%
-            unnest(cols = .data$column)
+            select("column", "rows", "fmt_fun") %>%
+            unnest(cols = "column")
         )
     }
 
@@ -344,7 +350,7 @@ add_p_merge_p_values <- function(x, lgl_add_p = TRUE,
               )
             )
         ) %>%
-        modify_table_body(dplyr::relocate, .data$ci, .before = "conf.low") %>%
+        modify_table_body(dplyr::relocate, "ci", .before = "conf.low") %>%
         # adding print instructions for estimates
         modify_table_styling(
           any_of("ci"),
@@ -385,6 +391,7 @@ add_p_merge_p_values <- function(x, lgl_add_p = TRUE,
 #' @author Karissa Whiting
 #' @export
 #' @examples
+#' \donttest{
 #' # Example 1 ----------------------------------
 #' add_p_cross_ex1 <-
 #'   trial %>%
@@ -396,14 +403,19 @@ add_p_merge_p_values <- function(x, lgl_add_p = TRUE,
 #'   trial %>%
 #'   tbl_cross(row = stage, col = trt) %>%
 #'   add_p(source_note = TRUE)
+#' }
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
-#' \if{html}{\figure{add_p_cross_ex1.png}{options: width=50\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_p_cross_ex1.png", width = "50")`
+#' }}
 #'
 #' \if{html}{Example 2}
 #'
-#' \if{html}{\figure{add_p_cross_ex2.png}{options: width=45\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_p_cross_ex2.png", width = "45")`
+#' }}
 add_p.tbl_cross <- function(x, test = NULL, pvalue_fun = NULL,
                             source_note = NULL,
                             test.args = NULL, ...) {
@@ -519,7 +531,8 @@ add_p.tbl_cross <- function(x, test = NULL, pvalue_fun = NULL,
 #' ```
 #'
 #' @export
-#' @examplesIf broom.helpers::.assert_package("survival", pkg_search = "gtsummary", boolean = TRUE)
+#' @examplesIf identical(Sys.getenv("IN_PKGDOWN"), "true") && broom.helpers::.assert_package("survival", pkg_search = "gtsummary", boolean = TRUE)
+#' \donttest{
 #' library(survival)
 #'
 #' gts_survfit <-
@@ -539,14 +552,19 @@ add_p.tbl_cross <- function(x, test = NULL, pvalue_fun = NULL,
 #' add_p_tbl_survfit_ex2 <-
 #'   gts_survfit %>%
 #'   add_p(test = "survdiff", test.args = list(rho = 0.5))
+#' }
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
-#' \if{html}{\figure{add_p_tbl_survfit_ex1.png}{options: width=55\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_p_tbl_survfit_ex1.png", width = "55")`
+#' }}
 #'
 #' \if{html}{Example 2}
 #'
-#' \if{html}{\figure{add_p_tbl_survfit_ex2.png}{options: width=45\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_p_tbl_survfit_ex2.png", width = "45")`
+#' }}
 
 add_p.tbl_survfit <- function(x, test = "logrank", test.args = NULL,
                               pvalue_fun = style_pvalue,
@@ -591,7 +609,7 @@ add_p.tbl_survfit <- function(x, test = "logrank", test.args = NULL,
   meta_data <-
     x$meta_data %>%
     filter(.data$stratified == TRUE & .data$variable %in% include) %>%
-    select(.data$variable, .data$survfit) %>%
+    select("variable", "survfit") %>%
     mutate(
       test = map(.data$variable, ~ test[[.x]] %||% "logrank"),
       test_info = map(
@@ -603,7 +621,7 @@ add_p.tbl_survfit <- function(x, test = "logrank", test.args = NULL,
   # adding test_name to table body so it can be used to select vars by the test
   x$table_body <-
     left_join(x$table_body, meta_data[c("variable", "test_name")], by = "variable") %>%
-    select(.data$variable, .data$test_name, everything())
+    select("variable", "test_name", everything())
 
   # converting to named list
   test.args <-
@@ -645,7 +663,7 @@ add_p.tbl_survfit <- function(x, test = "logrank", test.args = NULL,
       p.value = map_dbl(.data$test_result, ~ pluck(.x, "df_result", "p.value")),
       stat_test_lbl = map_chr(.data$test_result, ~ pluck(.x, "df_result", "method"))
     ) %>%
-    select(.data$variable, .data$test_result, .data$p.value, .data$stat_test_lbl) %>%
+    select("variable", "test_result", "p.value", "stat_test_lbl") %>%
     {
       left_join(x$meta_data, ., by = "variable")
     }
@@ -685,7 +703,7 @@ add_p.tbl_survfit <- function(x, test = "logrank", test.args = NULL,
 #' @export
 #' @return A `tbl_svysummary` object
 #' @author Joseph Larmarange
-#' @examplesIf broom.helpers::.assert_package("survey", pkg_search = "gtsummary", boolean = TRUE)
+#' @examplesIf identical(Sys.getenv("IN_PKGDOWN"), "true") && broom.helpers::.assert_package("survey", pkg_search = "gtsummary", boolean = TRUE)
 #' \donttest{
 #' # Example 1 ----------------------------------
 #' # A simple weighted dataset
@@ -717,15 +735,21 @@ add_p.tbl_survfit <- function(x, test = "logrank", test.args = NULL,
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
-#' \if{html}{\figure{add_p_svysummary_ex1.png}{options: width=45\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_p_svysummary_ex1.png", width = "45")`
+#' }}
 #'
 #' \if{html}{Example 2}
 #'
-#' \if{html}{\figure{add_p_svysummary_ex2.png}{options: width=65\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_p_svysummary_ex2.png", width = "65")`
+#' }}
 #'
 #' \if{html}{Example 3}
 #'
-#' \if{html}{\figure{add_p_svysummary_ex3.png}{options: width=60\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_p_svysummary_ex3.png", width = "60")`
+#' }}
 
 add_p.tbl_svysummary <- function(x, test = NULL, pvalue_fun = NULL,
                                  include = everything(), test.args = NULL, ...) {
@@ -788,7 +812,7 @@ add_p.tbl_svysummary <- function(x, test = NULL, pvalue_fun = NULL,
   # getting the test name and pvalue
   meta_data <-
     x$meta_data %>%
-    select(.data$variable, .data$summary_type) %>%
+    select("variable", "summary_type") %>%
     filter(.data$variable %in% include) %>%
     mutate(
       test = map2(
@@ -809,7 +833,7 @@ add_p.tbl_svysummary <- function(x, test = NULL, pvalue_fun = NULL,
   # adding test_name to table body so it can be used to select vars by the test
   x$table_body <-
     left_join(x$table_body, meta_data[c("variable", "test_name")], by = "variable") %>%
-    select(.data$variable, .data$test_name, everything())
+    select("variable", "test_name", everything())
 
   # converting to named list
   test.args <-
@@ -839,7 +863,7 @@ add_p.tbl_svysummary <- function(x, test = NULL, pvalue_fun = NULL,
       p.value = map_dbl(.data$test_result, ~ pluck(.x, "df_result", "p.value")),
       stat_test_lbl = map_chr(.data$test_result, ~ pluck(.x, "df_result", "method"))
     ) %>%
-    select(.data$variable, .data$test_result, .data$p.value, .data$stat_test_lbl) %>%
+    select("variable", "test_result", "p.value", "stat_test_lbl") %>%
     {
       left_join(x$meta_data, ., by = "variable")
     }
@@ -915,7 +939,7 @@ add_p.tbl_continuous <- function(x, test = NULL, pvalue_fun = NULL,
   # getting the test name and pvalue
   meta_data <-
     x$meta_data %>%
-    select(.data$variable, .data$summary_type) %>%
+    select("variable", "summary_type") %>%
     filter(.data$variable %in% .env$include) %>%
     mutate(
       test =
@@ -942,7 +966,7 @@ add_p.tbl_continuous <- function(x, test = NULL, pvalue_fun = NULL,
     x$table_body %>%
     select(-any_of(c("test_name", "test_result"))) %>%
     left_join(meta_data[c("variable", "test_name")], by = "variable") %>%
-    select(.data$variable, .data$test_name, everything())
+    select("variable", "test_name", everything())
 
   # converting to named list
   test.args <-
@@ -973,7 +997,7 @@ add_p.tbl_continuous <- function(x, test = NULL, pvalue_fun = NULL,
       p.value = map_dbl(.data$test_result, ~ pluck(.x, "df_result", "p.value")),
       stat_test_lbl = map_chr(.data$test_result, ~ pluck(.x, "df_result", "method"))
     ) %>%
-    select(.data$variable, .data$test_result, .data$p.value, .data$stat_test_lbl) %>%
+    select("variable", "test_result", "p.value", "stat_test_lbl") %>%
     {
       left_join(
         x$meta_data %>% select(-any_of(c("test_result", "p.value", "stat_test_lbl"))),

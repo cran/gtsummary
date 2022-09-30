@@ -56,7 +56,9 @@ add_n <- function(x, ...) {
 #'
 #' \if{html}{Example 1}
 #'
-#' \if{html}{\figure{tbl_n_ex.png}{options: width=50\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "tbl_n_ex.png", width = "50")`
+#' }}
 
 add_n.tbl_summary <- function(x, statistic = "{n}", col_label = "**N**", footnote = FALSE,
                               last = FALSE, ...) {
@@ -136,7 +138,7 @@ add_n.tbl_summary <- function(x, statistic = "{n}", col_label = "**N**", footnot
       statistic = glue(.env$statistic) %>% as.character(),
       row_type = "label"
     ) %>%
-    select(.data$variable, .data$row_type, n = .data$statistic)
+    select("variable", "row_type", n = "statistic")
 
   # merging result with existing tbl_summary -----------------------------------
   x$table_body <-
@@ -214,7 +216,8 @@ add_n.tbl_svysummary <- add_n.tbl_summary
 #' @export
 #' @seealso Review [list, formula, and selector syntax][syntax] used throughout gtsummary
 #' @family tbl_survfit tools
-#' @examplesIf broom.helpers::.assert_package("survival", pkg_search = "gtsummary", boolean = TRUE)
+#' @examplesIf identical(Sys.getenv("IN_PKGDOWN"), "true") && broom.helpers::.assert_package("survival", pkg_search = "gtsummary", boolean = TRUE)
+#' \donttest{
 #' library(survival)
 #' fit1 <- survfit(Surv(ttdeath, death) ~ 1, trial)
 #' fit2 <- survfit(Surv(ttdeath, death) ~ trt, trial)
@@ -224,10 +227,13 @@ add_n.tbl_svysummary <- add_n.tbl_summary
 #'   list(fit1, fit2) %>%
 #'   tbl_survfit(times = c(12, 24)) %>%
 #'   add_n()
+#' }
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
-#' \if{html}{\figure{add_n.tbl_survfit_ex1.png}{options: width=64\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_n.tbl_survfit_ex1.png", width = "64")`
+#' }}
 
 add_n.tbl_survfit <- function(x, ...) {
   check_dots_empty(error = function(e) inform(c(e$message, e$body)))
@@ -313,11 +319,15 @@ add_n.tbl_survfit <- function(x, ...) {
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
-#' \if{html}{\figure{add_n.tbl_regression_ex1.png}{options: width=64\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_n.tbl_regression_ex1.png", width = "64")`
+#' }}
 #'
 #' \if{html}{Example 2}
 #'
-#' \if{html}{\figure{add_n.tbl_regression_ex2.png}{options: width=64\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_n.tbl_regression_ex2.png", width = "64")`
+#' }}
 NULL
 
 #' @rdname add_n_regression
@@ -361,8 +371,8 @@ add_n.tbl_regression <- function(x, location = NULL, ...) {
     ) %>%
     modify_table_body(
       dplyr::relocate,
-      .data$stat_n,
-      .after = .data$label
+      "stat_n",
+      .after = "label"
     ) %>%
     modify_table_styling(
       columns = all_of("stat_n"),

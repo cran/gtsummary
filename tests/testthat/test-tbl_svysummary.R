@@ -19,7 +19,7 @@ test_that("tbl_svysummary creates output without error/warning (no by var)", {
 
 test_that("tbl_svysummary creates output without error/warning (with by var)", {
   statistics <- list(
-    all_continuous() ~ "{median} {mean} {sd} {var} {min} {max} {sum} {p25} {p42} {p75} {p89}",
+    all_continuous() ~ "{median} {mean} {sd} {var} {min} {max} {sum} {p25} {p42} {p75} {p89} {mean.std.error}",
     all_categorical() ~ "{n} {N} {p} | {n_unweighted} {N_unweighted} {p_unweighted}"
   )
   expect_error(
@@ -66,7 +66,7 @@ test_that("tbl_svysummary works in character inputs for `by=`", {
   my_by_variable <- "Survived"
 
   expect_error(
-    tbl_svysummary(d, by = my_by_variable),
+    tbl_svysummary(d, by = all_of(my_by_variable)),
     NA
   )
   expect_error(
@@ -76,7 +76,7 @@ test_that("tbl_svysummary works in character inputs for `by=`", {
   expect_error(
     purrr::map(
       c("Survived", "Class", "Sex", "Age"),
-      ~ tbl_svysummary(d, by = .x)
+      ~ tbl_svysummary(d, by = all_of(.x))
     ),
     NA
   )

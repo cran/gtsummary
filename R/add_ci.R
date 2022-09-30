@@ -60,11 +60,15 @@
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
-#' \if{html}{\figure{add_ci_ex1.png}{options: width=50\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_ci_ex1.png", width = "50")`
+#' }}
 #'
 #' \if{html}{Example 2}
 #'
-#' \if{html}{\figure{add_ci_ex2.png}{options: width=45\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_ci_ex2.png", width = "45")`
+#' }}
 add_ci <- function(x, ...) {
   UseMethod("add_ci")
 }
@@ -89,7 +93,7 @@ add_ci.tbl_summary <- function(x,
   summary_type <-
     x$meta_data %>%
     filter(.data$variable %in% .env$include) %>%
-    select(.data$variable, .data$summary_type) %>%
+    select("variable", "summary_type") %>%
     tibble::deframe()
 
   method <-
@@ -312,7 +316,7 @@ single_ci <- function(variable, by, tbl, method, conf.level,
         df_single_ci %>%
         dplyr::rename(by = all_of(tbl$by)) %>%
         left_join(
-          tbl$df_by %>% select(.data$by, col_name = .data$by_col),
+          tbl$df_by %>% select("by", col_name = "by_col"),
           by = "by"
         ) %>%
         select(any_of(c("by", "col_name", "ci")))
@@ -327,8 +331,8 @@ single_ci <- function(variable, by, tbl, method, conf.level,
   df_single_ci %>%
     tidyr::pivot_wider(
       id_cols = any_of("variable_levels"),
-      values_from = .data$ci,
-      names_from = .data$col_name
+      values_from = "ci",
+      names_from = "col_name"
     ) %>%
     select(all_stat_cols()) %>%
     dplyr::rename_with(.fn = ~paste0(., "_ci"))

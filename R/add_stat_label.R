@@ -40,6 +40,7 @@
 #' @export
 #' @return A `tbl_summary` or `tbl_svysummary` object
 #' @examples
+#' \donttest{
 #' tbl <- trial %>%
 #'   dplyr::select(trt, age, grade, response) %>%
 #'   tbl_summary(by = trt)
@@ -71,18 +72,25 @@
 #'     statistic = all_continuous() ~ c("{mean} ({sd})", "{min} - {max}"),
 #'   ) %>%
 #'   add_stat_label(label = age ~ c("Mean (SD)", "Min - Max"))
+#' }
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
-#' \if{html}{\figure{add_stat_label_ex1.png}{options: width=60\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_stat_label_ex1.png", width = "60")`
+#' }}
 #'
 #' \if{html}{Example 2}
 #'
-#' \if{html}{\figure{add_stat_label_ex2.png}{options: width=60\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_stat_label_ex2.png", width = "60")`
+#' }}
 #'
 #' \if{html}{Example 3}
 #'
-#' \if{html}{\figure{add_stat_label_ex3.png}{options: width=45\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_stat_label_ex3.png", width = "45")`
+#' }}
 
 add_stat_label <- function(x, location = NULL, label = NULL) {
   updated_call_list <- c(x$call_list, list(add_stat_label = match.call()))
@@ -120,7 +128,7 @@ add_stat_label <- function(x, location = NULL, label = NULL) {
   df_stat_label <-
     x$meta_data %>%
     filter(!.data$summary_type %in% "continuous2") %>%
-    select(.data$variable, .data$stat_label) %>%
+    select("variable", "stat_label") %>%
     tibble::deframe() %>%
     # updating the default values with values in label
     purrr::imap_chr(~ label[[.y]] %||% .x) %>%
@@ -132,7 +140,7 @@ add_stat_label <- function(x, location = NULL, label = NULL) {
     modify_table_body(
       ~ .x %>%
         left_join(df_stat_label, by = "variable") %>%
-        dplyr::relocate(.data$stat_label, .after = .data$label) %>%
+        dplyr::relocate("stat_label", .after = "label") %>%
         mutate(
           # adding in "n" for missing rows, and header
           stat_label = case_when(
@@ -158,13 +166,13 @@ add_stat_label <- function(x, location = NULL, label = NULL) {
   df_con2_update <-
     x$meta_data %>%
     filter(.data$summary_type %in% "continuous2") %>%
-    select(.data$variable, .data$summary_type, .data$stat_label) %>%
+    select("variable", "summary_type", "stat_label") %>%
     mutate(
       stat_label = map2(.data$stat_label, .data$variable, ~ label[[.y]] %||% .x),
       row_type = "level"
     ) %>%
-    tidyr::unnest(.data$stat_label) %>%
-    dplyr::rename(var_type = .data$summary_type, label = .data$stat_label)
+    tidyr::unnest("stat_label") %>%
+    dplyr::rename(var_type = "summary_type", label = "stat_label")
   rows_to_update <-
     x$table_body$variable %in% unique(df_con2_update$variable) &
       x$table_body$var_type %in% "continuous2" &

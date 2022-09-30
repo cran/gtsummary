@@ -6,18 +6,20 @@
 \usage{
 add_significance_stars(
   x,
-  pattern = "{estimate}{stars}",
+  pattern = NULL,
   thresholds = c(0.001, 0.01, 0.05),
   hide_ci = TRUE,
-  hide_p = TRUE,
+  hide_p = inherits(x, c("tbl_regression", "tbl_uvregression")),
   hide_se = FALSE
 )
 }
 \arguments{
-\item{x}{a \code{'tbl_regression'} or \code{'tbl_uvregression'} object}
+\item{x}{a \code{'gtsummary'} object with a \code{'p.value'} column}
 
 \item{pattern}{glue-syntax string indicating what to display in formatted column.
-Default is \code{"{estimate}{stars}"}. Other common patterns are
+Default is \code{"{estimate}{stars}"} for regression summaries and \code{"{p.value}{stars}"} otherwise.
+A footnote is placed on the first column listed in the pattern.
+Other common patterns are
 \code{"{estimate}{stars} ({conf.low}, {conf.high})"} and
 \code{"{estimate} ({conf.low} to {conf.high}){stars}"}}
 
@@ -25,7 +27,7 @@ Default is \code{"{estimate}{stars}"}. Other common patterns are
 
 \item{hide_ci}{logical whether to hide confidence interval. Default is \code{TRUE}}
 
-\item{hide_p}{logical whether to hide p-value. Default is \code{TRUE}}
+\item{hide_p}{logical whether to hide p-value. Default is \code{TRUE} for regression summaries, and \code{FALSE} otherwise.}
 
 \item{hide_se}{logical whether to hide standard error. Default is \code{FALSE}}
 }
@@ -49,18 +51,32 @@ numeric columns numeric. For the \emph{vast majority} of users,
 
 \if{html}{Example 1}
 
-\if{html}{\figure{add_significance_stars_ex1.png}{options: width=45\%}}
+\if{html}{\out{
+<img src="https://raw.githubusercontent.com/ddsjoberg/gtsummary/main/man-images/add_significance_stars_ex1.png" alt="image of rendered example table" style="width:45\%;">
+}}
 
 \if{html}{Example 2}
 
-\if{html}{\figure{add_significance_stars_ex2.png}{options: width=35\%}}
+\if{html}{\out{
+<img src="https://raw.githubusercontent.com/ddsjoberg/gtsummary/main/man-images/add_significance_stars_ex2.png" alt="image of rendered example table" style="width:35\%;">
+}}
 
 \if{html}{Example 3}
 
-\if{html}{\figure{add_significance_stars_ex3.png}{options: width=30\%}}
+\if{html}{\out{
+<img src="https://raw.githubusercontent.com/ddsjoberg/gtsummary/main/man-images/add_significance_stars_ex3.png" alt="image of rendered example table" style="width:30\%;">
+}}
+
+\if{html}{Example 4}
+
+\if{html}{\out{
+<img src="https://raw.githubusercontent.com/ddsjoberg/gtsummary/main/man-images/add_significance_stars_ex4.png" alt="image of rendered example table" style="width:30\%;">
+}}
 }
 
 \examples{
+\dontshow{if (identical(Sys.getenv("IN_PKGDOWN"), "true") && broom.helpers::.assert_package("car", pkg_search = "gtsummary", boolean = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\donttest{
 tbl <-
   lm(time ~ ph.ecog + sex, survival::lung) \%>\%
   tbl_regression(label = list(ph.ecog = "ECOG Score", sex = "Sex"))
@@ -95,4 +111,19 @@ add_significance_stars_ex3 <-
     style = "vertical-align:top",
     locations = gt::cells_body(columns = label)
   )
+
+# Example 4 ----------------------------------
+add_significance_stars_ex4 <-
+  lm(marker ~ stage + grade, data = trial) \%>\%
+  tbl_regression() \%>\%
+  add_global_p() \%>\%
+  add_significance_stars(hide_p = FALSE,
+                           pattern = "{p.value}{stars}") \%>\%
+  as_gt() \%>\%
+  gt::tab_style(
+    style = "vertical-align:top",
+    locations = gt::cells_body(columns = label)
+  )
+}
+\dontshow{\}) # examplesIf}
 }

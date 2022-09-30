@@ -14,15 +14,20 @@
 #' @family tbl_svysummary tools
 #' @seealso Review [list, formula, and selector syntax][syntax] used throughout gtsummary
 #' @examples
+#' # Example 1 ----------------------------------
 #' separate_p_footnotes_ex1 <-
 #'   trial %>%
 #'   select(trt, age, grade) %>%
 #'   tbl_summary(by = trt) %>%
 #'   add_p() %>%
 #'   separate_p_footnotes()
-#'
 #' @section Example Output:
-#' \if{html}{\figure{separate_p_footnotes_ex1.png}{options: width=80\%}}
+#'
+#' \if{html}{Example 1}
+#'
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "separate_p_footnotes_ex1.png", width = "80")`
+#' }}
 
 separate_p_footnotes <- function(x) {
   # check inputs ---------------------------------------------------------------
@@ -39,7 +44,7 @@ separate_p_footnotes <- function(x) {
   # add footnotes to the body of the table -------------------------------------
   footnote_calls <-
     x$meta_data %>%
-    dplyr::select(.data$variable, .data$stat_test_lbl) %>%
+    dplyr::select("variable", "stat_test_lbl") %>%
     tibble::deframe() %>%
     map(translate_text) %>%
     purrr::imap(

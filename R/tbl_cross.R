@@ -50,11 +50,15 @@
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
-#' \if{html}{\figure{tbl_cross_ex1.png}{options: width=50\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "tbl_cross_ex1.png", width = "50")`
+#' }}
 #'
 #' \if{html}{Example 2}
 #'
-#' \if{html}{\figure{tbl_cross_ex2.png}{options: width=60\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "tbl_cross_ex2.png", width = "60")`
+#' }}
 
 tbl_cross <- function(data,
                       row = NULL,
@@ -155,9 +159,9 @@ tbl_cross <- function(data,
 
   # omit missing data, or factorize missing level ------------------------------
   data <- data %>%
-    mutate_at(vars(row, col), as.factor) %>%
+    mutate_at(vars(any_of(c(row, col))), as.factor) %>%
     mutate_at(
-      vars(row, col),
+      vars(any_of(c(row, col))),
       ~ switch(missing,
         "no" = .,
         "ifany" = forcats::fct_explicit_na(., missing_text),
@@ -178,7 +182,7 @@ tbl_cross <- function(data,
     data %>%
     select(any_of(c(row, col, "..total.."))) %>%
     tbl_summary(
-      by = col,
+      by = any_of(col),
       statistic = ~glue("{statistic}"),
       digits = switch(!is.null(digits), everything() ~ digits),
       percent = ifelse(percent == "none", "cell", percent),

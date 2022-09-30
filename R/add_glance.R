@@ -73,11 +73,15 @@
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
-#' \if{html}{\figure{add_glance_ex1.png}{options: width=35\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_glance_ex1.png", width = "35")`
+#' }}
 #'
 #' \if{html}{Example 2}
 #'
-#' \if{html}{\figure{add_glance_ex2.png}{options: width=35\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_glance_ex2.png", width = "35")`
+#' }}
 NULL
 
 #' @export
@@ -111,7 +115,7 @@ add_glance_table <- function(x, include = everything(), label = NULL,
   # creating modify_fmt_fun calls, and running them
   df_modify_fmt_fun <-
     lst_prep_glance$df_fmt_fun %>%
-    nest(glance_statistic = .data$glance_statistic) %>%
+    nest(glance_statistic = "glance_statistic") %>%
     rowwise() %>%
     mutate(
       glance_statistic = unlist(.data$glance_statistic) %>% unname() %>% list(),
@@ -166,7 +170,7 @@ add_glance_source_note <- function(x, include = everything(), label = NULL,
         paste0(.data$label, sep1, .)
       }
     ) %>%
-    pull(.data$fmt_stat) %>%
+    pull("fmt_stat") %>%
     paste(collapse = sep2)
   attr(x$table_styling$source_note, "text_interpret") <- match.arg(text_interpret)
 

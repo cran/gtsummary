@@ -27,13 +27,18 @@
 #' @author Daniel D. Sjoberg
 #' @export
 #' @examples
-#' as_gt_ex <-
+#' # Example 1 ----------------------------------
+#' as_gt_ex1 <-
 #'   trial[c("trt", "age", "response", "grade")] %>%
 #'   tbl_summary(by = trt) %>%
 #'   as_gt()
 #' @section Example Output:
 #'
-#' \if{html}{\figure{as_gt_ex.png}{options: width=50\%}}
+#' \if{html}{Example 1}
+#'
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "as_gt_ex1.png", width = "50")`
+#' }}
 
 as_gt <- function(x, include = everything(), return_calls = FALSE, ...,
                   exclude = NULL) {
@@ -142,7 +147,7 @@ table_styling_to_gt_calls <- function(x, ...) {
   # cols_align -----------------------------------------------------------------
   df_cols_align <-
     x$table_styling$header %>%
-    select(.data$column, .data$align) %>%
+    select("column", "align") %>%
     group_by(.data$align) %>%
     nest() %>%
     mutate(cols = map(.data$data, ~ pull(.x, column)))
@@ -158,29 +163,29 @@ table_styling_to_gt_calls <- function(x, ...) {
 
   # indent ---------------------------------------------------------------------
   df_indent <- x$table_styling$text_format %>% filter(.data$format_type == "indent")
-  gt_calls[["tab_style_indent"]] <-
+  gt_calls[["indent"]] <-
     map(
       seq_len(nrow(df_indent)),
-      ~ expr(gt::tab_style(
-        style = gt::cell_text(indent = gt::px(10), align = "left"),
+      ~ expr(gt::text_transform(
         locations = gt::cells_body(
           columns = !!df_indent$column[[.x]],
           rows = !!df_indent$row_numbers[[.x]]
-        )
+        ),
+        fn = function(x) paste0("\U00A0\U00A0\U00A0\U00A0", x)
       ))
     )
 
   # indent2 --------------------------------------------------------------------
   df_indent2 <- x$table_styling$text_format %>% filter(.data$format_type == "indent2")
-  gt_calls[["tab_style_indent2"]] <-
+  gt_calls[["indent2"]] <-
     map(
       seq_len(nrow(df_indent2)),
-      ~ expr(gt::tab_style(
-        style = gt::cell_text(indent = gt::px(20), align = "left"),
+      ~ expr(gt::text_transform(
         locations = gt::cells_body(
           columns = !!df_indent2$column[[.x]],
           rows = !!df_indent2$row_numbers[[.x]]
-        )
+        ),
+        fn = function(x) paste0("\U00A0\U00A0\U00A0\U00A0\U00A0\U00A0\U00A0\U00A0", x)
       ))
     )
 
@@ -246,11 +251,11 @@ table_styling_to_gt_calls <- function(x, ...) {
         x$table_styling$footnote,
         x$table_styling$footnote_abbrev
       ) %>%
-      nest(data = c(.data$column, .data$row_numbers)) %>%
+      nest(data = c("column", "row_numbers")) %>%
       rowwise() %>%
       mutate(
-        columns = .data$data %>% pull(.data$column) %>% unique() %>% list(),
-        rows = .data$data %>% pull(.data$row_numbers) %>% unique() %>% list()
+        columns = .data$data %>% pull("column") %>% unique() %>% list(),
+        rows = .data$data %>% pull("row_numbers") %>% unique() %>% list()
       ) %>%
       ungroup()
     df_footnotes$footnote_exp <-
@@ -291,9 +296,9 @@ table_styling_to_gt_calls <- function(x, ...) {
   # spanning_header ------------------------------------------------------------
   df_spanning_header <-
     x$table_styling$header %>%
-    select(.data$column, .data$interpret_spanning_header, .data$spanning_header) %>%
+    select("column", "interpret_spanning_header", "spanning_header") %>%
     filter(!is.na(.data$spanning_header)) %>%
-    nest(cols = .data$column) %>%
+    nest(cols = "column") %>%
     mutate(
       spanning_header = map2(
         .data$interpret_spanning_header, .data$spanning_header,
@@ -301,7 +306,7 @@ table_styling_to_gt_calls <- function(x, ...) {
       ),
       cols = map(.data$cols, ~pull(.x))
     ) %>%
-    select(.data$spanning_header, .data$cols)
+    select("spanning_header", "cols")
 
   gt_calls[["tab_spanner"]] <-
     map(

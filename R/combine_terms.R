@@ -19,7 +19,7 @@
 #' @return `tbl_regression` object
 #' @export
 #'
-#' @examplesIf broom.helpers::.assert_package("survival", pkg_search = "gtsummary", boolean = TRUE)
+#' @examplesIf identical(Sys.getenv("IN_PKGDOWN"), "true") && broom.helpers::.assert_package("survival", pkg_search = "gtsummary", boolean = TRUE)
 #' \donttest{
 #' # Example 1 ----------------------------------
 #' # Logistic Regression Example, LRT p-value
@@ -40,7 +40,9 @@
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
-#' \if{html}{\figure{combine_terms_ex1.png}{options: width=45\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "combine_terms_ex1.png", width = "45")`
+#' }}
 
 combine_terms <- function(x, formula_update, label = NULL, quiet = NULL, ...) {
   assert_package("survival", "combine_terms()") # required for survreg() models
@@ -160,8 +162,8 @@ combine_terms <- function(x, formula_update, label = NULL, quiet = NULL, ...) {
     left_join(
       new_model_tbl$table_body %>%
         select(
-          .data$variable, .data$var_type, .data$reference_row,
-          .data$row_type, .data$label
+          "variable", "var_type", "reference_row",
+          "row_type", "label"
         ) %>%
         mutate(collapse_row = FALSE),
       by = c("variable", "var_type", "row_type", "reference_row", "label")
@@ -173,7 +175,7 @@ combine_terms <- function(x, formula_update, label = NULL, quiet = NULL, ...) {
       (dplyr::row_number() == 1 & .data$collapse_row == TRUE)) %>%
     # updating column values for collapsed rows
     mutate_at(
-      vars(.data$estimate, .data$conf.low, .data$conf.high, .data$ci),
+      vars("estimate", "conf.low", "conf.high", "ci"),
       ~ ifelse(.data$collapse_row == TRUE, NA, .)
     ) %>%
     mutate(
@@ -192,7 +194,7 @@ combine_terms <- function(x, formula_update, label = NULL, quiet = NULL, ...) {
   # writing over the table_body in x -------------------------------------------
   x$table_body <-
     table_body %>%
-    select(-.data$collapse_row)
+    select(-"collapse_row")
 
   # returning updated tbl object -----------------------------------------------
   x$call_list <- updated_call_list

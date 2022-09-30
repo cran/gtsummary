@@ -192,15 +192,21 @@
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
-#' \if{html}{\figure{tbl_custom_summary_ex1.png}{options: width=45\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "tbl_custom_summary_ex1.png", width = "45")`
+#' }}
 #'
 #' \if{html}{Example 2}
 #'
-#' \if{html}{\figure{tbl_custom_summary_ex2.png}{options: width=45\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "tbl_custom_summary_ex2.png", width = "45")`
+#' }}
 #'
 #' \if{html}{Example 3}
 #'
-#' \if{html}{\figure{tbl_custom_summary_ex3.png}{options: width=35\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "tbl_custom_summary_ex3.png", width = "35")`
+#' }}
 
 tbl_custom_summary <- function(
                         data, by = NULL, label = NULL,
@@ -315,9 +321,9 @@ tbl_custom_summary <- function(
         }
       )
     ) %>%
-    select(var_type = .data$summary_type, .data$var_label, .data$tbl_stats) %>%
-    unnest(.data$tbl_stats) %>%
-    select(.data$variable, .data$var_type, .data$var_label, everything())
+    select(var_type = "summary_type", "var_label", "tbl_stats") %>%
+    unnest("tbl_stats") %>%
+    select("variable", "var_type", "var_label", everything())
 
   # table of column headers ----------------------------------------------------
   x <-
@@ -338,10 +344,10 @@ tbl_custom_summary <- function(
       x$table_styling$header %>%
       dplyr::left_join(
         x$df_by %>%
-          select(column = .data$by_col,
-                 modify_stat_n = .data$n,
-                 modify_stat_p = .data$p,
-                 modify_stat_level = .data$by_chr),
+          select(column = "by_col",
+                 modify_stat_n = "n",
+                 modify_stat_p = "p",
+                 modify_stat_level = "by_chr"),
         by = "column"
       )
   }
@@ -514,8 +520,8 @@ df_custom_stats_fun <- function(summary_type, variable, dichotomous_value, stat_
     sort = "alphanumeric", percent = "column",
     stat_display = "{n}"
   ) %>%
-    select(-.data$stat_display) %>%
-    rename(p_miss = .data$p, N_obs = .data$N, N_miss = .data$n) %>%
+    select(-"stat_display") %>%
+    rename(p_miss = "p", N_obs = "N", N_miss = "n") %>%
     mutate(
       N_nonmiss = .data$N_obs - .data$N_miss,
       p_nonmiss = 1 - .data$p_miss
@@ -532,7 +538,7 @@ df_custom_stats_fun <- function(summary_type, variable, dichotomous_value, stat_
     return <-
       return %>%
       left_join(df_by(data, by)[c("by", "by_col")], by = "by") %>%
-      rename(col_name = .data$by_col)
+      rename(col_name = "by_col")
   }
   else {
     return$col_name <- "stat_0"
@@ -574,7 +580,7 @@ summarize_custom <- function(data, stat_fn, variable, by, stat_display,
     switch (summary_type %in% c("categorical", "dichotomous"), variable)
   )
   data <- data %>%
-    dplyr::filter(!is.na(data[[variable]])) %>%
+    dplyr::filter(!is.na(.data[[variable]])) %>%
     dplyr::group_by(dplyr::across(all_of(group_vars)), .drop = FALSE)
 
   # calculating stats
@@ -588,17 +594,18 @@ summarize_custom <- function(data, stat_fn, variable, by, stat_display,
       stat_display = stat_display,
       .keep = TRUE
     ) %>%
-    dplyr::mutate(variable = variable) %>%
+    dplyr::rename(any_of(c(by = by))) %>%
+    dplyr::mutate(variable = .env$variable) %>%
     dplyr::ungroup() %>%
-    dplyr::rename(any_of(c(by = by, variable_levels = variable)))
+    dplyr::rename(any_of(c(variable_levels = variable)))
 
   # replacing by variable with original (non-factor version)
   if (!is.null(by)) {
     df_stats <-
       df_stats %>%
-      select(by_fct = .data$by, everything()) %>%
+      select(by_fct = "by", everything()) %>%
       left_join(df_by[c("by", "by_fct")], by = "by_fct") %>%
-      select(-.data$by_fct)
+      select(-"by_fct")
   }
 
   # adding stat_display to the data frame
@@ -625,7 +632,7 @@ summarize_custom <- function(data, stat_fn, variable, by, stat_display,
   if (!is.null(dichotomous_value)) {
     return <- return %>%
       filter(.data$variable_levels == !!dichotomous_value) %>%
-      select(-.data$variable_levels)
+      select(-"variable_levels")
   }
 
   # returning final object

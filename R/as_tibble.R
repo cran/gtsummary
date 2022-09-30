@@ -12,6 +12,7 @@
 #' @author Daniel D. Sjoberg
 #' @export
 #' @examples
+#' \donttest{
 #' tbl <-
 #'   trial %>%
 #'   select(trt, age, grade, response) %>%
@@ -21,6 +22,7 @@
 #'
 #' # without column labels
 #' as_tibble(tbl, col_labels = FALSE)
+#' }
 as_tibble.gtsummary <- function(x, include = everything(), col_labels = TRUE,
                                 return_calls = FALSE, exclude = NULL,
                                 fmt_missing = FALSE, ...) {
@@ -162,7 +164,7 @@ table_styling_to_tibble_calls <- function(x, col_labels = TRUE, fmt_missing = FA
         seq_len(nrow(x$table_styling$fmt_missing)),
         ~expr(
           ifelse(
-            dplyr::row_number() %in% !!x$table_styling$fmt_missing$row_numbers[.x] & is.na(!!sym(x$table_styling$fmt_missing$column[.x])),
+            dplyr::row_number() %in% !!x$table_styling$fmt_missing$row_numbers[[.x]] & is.na(!!sym(x$table_styling$fmt_missing$column[.x])),
             !!x$table_styling$fmt_missing$symbol[.x],
             !!sym(x$table_styling$fmt_missing$column[.x])
           )

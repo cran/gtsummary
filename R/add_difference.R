@@ -54,11 +54,15 @@
 #' @section Example Output:
 #' \if{html}{Example 1}
 #'
-#' \if{html}{\figure{add_difference_ex1.png}{options: width=60\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_difference_ex1.png", width = "60")`
+#' }}
 #'
 #' \if{html}{Example 2}
 #'
-#' \if{html}{\figure{add_difference_ex2.png}{options: width=60\%}}
+#' \if{html}{\out{
+#' `r man_create_image_tag(file = "add_difference_ex2.png", width = "60")`
+#' }}
 add_difference <- function(x, test = NULL, group = NULL,
                            adj.vars = NULL, test.args = NULL,
                            conf.level = 0.95, include = everything(),
@@ -74,13 +78,11 @@ add_difference <- function(x, test = NULL, group = NULL,
     stop("`add_difference()` cannot be run after `add_p()` or `add_difference()`", call. = FALSE)
   }
   if (rlang::is_function(estimate_fun)) {
-    lifecycle::deprecate_warn(
+    lifecycle::deprecate_stop(
       "1.4.0",
       "gtsummary::add_difference(estimate_fun = 'must be a list of forumulas')",
       details = "Argument has been converted to `list(everything() ~ estimate_fun)`"
     )
-    estimate_fun <-
-      inject(everything() ~ !!gts_mapper(estimate_fun, "add_difference(estimate_fun=)"))
   }
 
   # expanding formula lists/var selects ----------------------------------------
@@ -156,7 +158,7 @@ add_difference <- function(x, test = NULL, group = NULL,
         .data$summary_type %in% c("categorical", "dichotomous"),
         .data$variable %in% include
       ) %>%
-      pull(.data$variable)
+      pull("variable")
     if (!rlang::is_empty(bad_percent_vars)) {
       paste(
         "{.code add_difference()} results for categorical variables",
@@ -175,7 +177,7 @@ add_difference <- function(x, test = NULL, group = NULL,
   # getting the test name and pvalue
   meta_data <-
     x$meta_data %>%
-    select(.data$variable, .data$summary_type) %>%
+    select("variable", "summary_type") %>%
     filter(.data$variable %in% include) %>%
     mutate(
       test = map2(
@@ -201,7 +203,7 @@ add_difference <- function(x, test = NULL, group = NULL,
   # adding test_name to table body so it can be used to select vars by the test
   x$table_body <-
     left_join(x$table_body, meta_data[c("variable", "test_name")], by = "variable") %>%
-    select(.data$variable, .data$test_name, everything())
+    select("variable", "test_name", everything())
 
   # converting to named list
   test.args <-
@@ -231,7 +233,7 @@ add_difference <- function(x, test = NULL, group = NULL,
         }
       )
     ) %>%
-    select(.data$variable, .data$test_result) %>%
+    select("variable", "test_result") %>%
     {
       left_join(x$meta_data, ., by = "variable")
     }

@@ -56,7 +56,7 @@ inline reporting in an R markdown document. Detailed examples in the
 \href{https://www.danieldsjoberg.com/gtsummary/articles/inline_text.html}{inline_text vignette}
 }
 \examples{
-\dontshow{if (broom.helpers::.assert_package("survival", pkg_search = "gtsummary", boolean = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (identical(Sys.getenv("IN_PKGDOWN"), "true") && broom.helpers::.assert_package("survival", pkg_search = "gtsummary", boolean = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 library(survival)
 # fit survfit
 fit1 <- survfit(Surv(ttdeath, death) ~ trt, trial)
@@ -67,7 +67,7 @@ tbl1 <-
   tbl_survfit(
     fit1,
     times = c(12, 24),
-    label = "Treatment",
+    label = ~"Treatment",
     label_header = "**{time} Month**"
   ) \%>\%
   add_p()
