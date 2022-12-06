@@ -3,6 +3,7 @@ Biostatistics
 CMD
 Codecov
 DOI
+GGally
 GVIF
 Gehan
 Hmisc
@@ -28,7 +29,6 @@ Waerden's
 Wainberg
 YAML
 bstfun
-ci
 cli
 codebase
 coef
@@ -46,6 +46,7 @@ exponentiate
 flextable
 ftExtra
 ggplot
+ggstats
 glm
 huxtable
 kable
@@ -67,7 +68,6 @@ pvalue
 quosure
 quosures
 saddlepoint
-sig
 smd
 srvyr
 styler

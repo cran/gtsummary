@@ -19,6 +19,15 @@ add_p_test_aov <- function(data, variable, by, ...) {
     dplyr::slice(1)
 }
 
+add_p_test_oneway.test <- function(data, variable, by, test.args, ...) {
+  .superfluous_args(variable, ...)
+
+  rlang::inject(
+    stats::oneway.test(!!rlang::sym(variable) ~ as.factor(!!rlang::sym(by)), data = data, !!!test.args)
+  ) %>%
+    broom::tidy()
+}
+
 add_p_test_kruskal.test <- function(data, variable, by, ...) {
   .superfluous_args(variable, ...)
   stats::kruskal.test(data[[variable]], as.factor(data[[by]])) %>%
@@ -611,11 +620,10 @@ add_p_tbl_survfit_survdiff <- function(data, variable, test.args, ...) {
   broom::glance(survdiff_result) %>%
     dplyr::mutate(
       method =
-        purrr::when(
-          test.args$rho,
-          is.null(.) || . == 0 ~ "Log-rank test",
-          . == 1 ~ "Peto & Peto modification of Gehan-Wilcoxon test",
-          . == 1.5 ~ "Tarone-Ware test",
+        .purrr_when(
+          is.null(test.args$rho) || test.args$rho == 0 ~ "Log-rank test",
+          test.args$rho == 1 ~ "Peto & Peto modification of Gehan-Wilcoxon test",
+          test.args$rho == 1.5 ~ "Tarone-Ware test",
           TRUE ~ stringr::str_glue("G-rho (\U03C1 = {test.args$rho}) test")
         )
     )

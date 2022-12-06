@@ -1,3 +1,32 @@
+# gtsummary 1.6.3
+
+* The `as_flex_table()` function now recognizes markdown bold (`**`) and italic (`_`) syntax in the headers and spanning headers. Restrictions apply. See help file for details. Users can no longer place sets of double stars and underscores *without* the text being formatted as markdown syntax. (#1361)
+
+* The `modify_caption()` function now works with tables created with `gtreg::tbl_listing()` that do not contain a column named `"label"`. (#1358)
+
+* Functions `tbl_summary()` and `tbl_svysummary()` now support `"{n}"`, `"{p}"`, and `"{level}"` when no `by=` variable is present for use in functions like `modify_header()`. For example, the following previously invalid code works well for both the overall column and the stratified columns:
+
+  ```r
+  trial %>%
+    tbl_summary(by = trt) %>%
+    add_overall() %>%
+    modify_header(all_stat_cols() ~ "**{level}**, N = {n}")
+  ```
+  
+  For the survey summary, the unweighted variants are also available. (#1366)
+  
+* Added experimental feature where additional arguments can be passed to `broom.helpers::tidy_plus_plus()` via `tbl_regression(...)`. (#1383)
+
+* Updated the arguments in `tidy_robust()` to account for updates in {parameters}. (#1376)
+
+* Allowing for 'survfit' objects of class `survfit2` in `add_nevent.tbl_survfit()`. (#1389)
+
+* Added `oneway.test()` test to `add_p()`. (#1382)
+
+* Now using {ggstats} to plot regression model coefficients via `plot()` instead of {GGally}. (#1367)
+
+* Bug fix in `tbl_custom_summary()`: the full dataset (including missing observations) is now properly passed as `full_data` (#1388)
+
 # gtsummary 1.6.2
 
 * The following updates were made to the indentation implementation for gt output:
