@@ -13,7 +13,6 @@
 #' (e.g. [tbl_summary] or [tbl_regression])
 #' @inheritParams as_gt
 #' @inheritParams as_tibble.gtsummary
-#' @param exclude DEPRECATED
 #' @param ... Additional arguments passed to [knitr::kable]
 #' @export
 #' @return A `knitr_kable` object
@@ -26,22 +25,8 @@
 #'   bold_labels() %>%
 #'   as_kable()
 #' }
-as_kable <- function(x, ..., include = everything(), return_calls = FALSE,
-                     exclude = NULL) {
+as_kable <- function(x, ..., include = everything(), return_calls = FALSE) {
   .assert_class(x, "gtsummary")
-  # DEPRECATION notes ----------------------------------------------------------
-  if (!rlang::quo_is_null(rlang::enquo(exclude))) {
-    lifecycle::deprecate_stop(
-      "1.2.5",
-      "gtsummary::as_kable(exclude = )",
-      "as_kable(include = )",
-      details = paste0(
-        "The `include` argument accepts quoted and unquoted expressions similar\n",
-        "to `dplyr::select()`. To exclude commands, use the minus sign.\n",
-        "For example, `include = -cols_hide`"
-      )
-    )
-  }
 
   # running pre-conversion function, if present --------------------------------
   x <- do.call(get_theme_element("pkgwide-fun:pre_conversion", default = identity), list(x))
@@ -78,8 +63,10 @@ table_styling_to_kable_calls <- function(x, ...) {
   dots <- rlang::enexprs(...)
 
   if (!is.null(dots[["fmt_missing"]])) {
-    lifecycle::deprecate_warn(when = "1.6.0",
-                              what = "gtsummary::as_kable_extra(fmt_missing=)")
+    lifecycle::deprecate_warn(
+      when = "1.6.0",
+      what = "gtsummary::as_kable_extra(fmt_missing=)"
+    )
     dots <- purrr::list_modify(fmt_missing = NULL) %>% purrr::compact()
   }
 
@@ -88,8 +75,10 @@ table_styling_to_kable_calls <- function(x, ...) {
 
   # fmt_missing ----------------------------------------------------------------
   kable_calls[["fmt_missing"]] <-
-    c(kable_calls[["fmt_missing"]],
-      list(expr(dplyr::mutate_all(~ ifelse(is.na(.), "", .)))))
+    c(
+      kable_calls[["fmt_missing"]],
+      list(expr(dplyr::mutate_all(~ ifelse(is.na(.), "", .))))
+    )
 
   # kable ----------------------------------------------------------------------
   kable_calls[["kable"]] <- .construct_call_to_kable(x, ...)
@@ -108,8 +97,8 @@ table_styling_to_kable_calls <- function(x, ...) {
       col.names = dplyr::filter(x$table_styling$header, .data$hide == FALSE)$label,
       align =
         filter(x$table_styling$header, .data$hide == FALSE) %>%
-        dplyr::pull("align") %>%
-        stringr::str_sub(1, 1)
+          dplyr::pull("align") %>%
+          stringr::str_sub(1, 1)
     ) %>%
     # update with any args from theme element
     purrr::list_modify(!!!get_theme_element("as_kable-arg:dots")) %>%

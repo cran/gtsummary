@@ -33,7 +33,7 @@ tidy_robust(
   exponentiate = FALSE,
   conf.level = 0.95,
   conf.int = TRUE,
-  vcov = "HC",
+  vcov = NULL,
   vcov_args = NULL,
   ...,
   quiet = FALSE
@@ -72,7 +72,8 @@ interval in the tidied output. Defaults to \code{FALSE}.}
 \code{FALSE}}
 
 \item{vcov, vcov_args}{arguments passed to
-\code{parameters::model_parameters()}}
+\code{parameters::model_parameters()}. At least one of these arguments \strong{must}
+be specified.}
 
 \item{pool.args}{named list of arguments passed to \code{mice::pool()} in
 \code{pool_and_tidy_mice()}. Default is \code{NULL}}
@@ -144,7 +145,7 @@ Use this tidier with \code{add_global_p(anova_fun = tidy_wald_test)}
 }
 
 \examples{
-\dontshow{if (identical(Sys.getenv("IN_PKGDOWN"), "true") && broom.helpers::.assert_package("effectsize", pkg_search = "gtsummary", boolean = TRUE) && broom.helpers::.assert_package("parameters", pkg_search = "gtsummary", boolean = TRUE) && broom.helpers::.assert_package("mice", pkg_search = "gtsummary", boolean = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (broom.helpers::.assert_package("effectsize", pkg_search = "gtsummary", boolean = TRUE) && broom.helpers::.assert_package("parameters", pkg_search = "gtsummary", boolean = TRUE) && broom.helpers::.assert_package("mice", pkg_search = "gtsummary", boolean = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 \donttest{
 # Example 1 ----------------------------------
 mod <- lm(age ~ marker + grade, trial)

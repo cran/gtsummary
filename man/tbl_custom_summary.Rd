@@ -203,8 +203,8 @@ statistics refer to a third variable.
 \donttest{
 # Example 1 ----------------------------------
 my_stats <- function(data, ...) {
-  marker_sum = sum(data$marker, na.rm = TRUE)
-  mean_age = mean(data$age, na.rm = TRUE)
+  marker_sum <- sum(data$marker, na.rm = TRUE)
+  mean_age <- mean(data$age, na.rm = TRUE)
   dplyr::tibble(
     marker_sum = marker_sum,
     mean_age = mean_age
@@ -246,8 +246,8 @@ tbl_custom_summary_ex2 <-
   tbl_custom_summary(
     include = c("marker", "ttdeath"),
     by = "trt",
-    stat_fns = ~ mean_ci,
-    statistic = ~ "{mean} [{conf.low}; {conf.high}]"
+    stat_fns = ~mean_ci,
+    statistic = ~"{mean} [{conf.low}; {conf.high}]"
   ) \%>\%
   add_overall(last = TRUE) \%>\%
   modify_footnote(
@@ -274,8 +274,8 @@ tbl_custom_summary_ex3 <-
   tbl_custom_summary(
     include = c("grade", "stage"),
     by = "trt",
-    stat_fns = ~ diff_to_great_mean,
-    statistic = ~ "{mean} ({level}, diff: {diff})",
+    stat_fns = ~diff_to_great_mean,
+    statistic = ~"{mean} ({level}, diff: {diff})",
     overall_row = TRUE
   ) \%>\%
   bold_labels()
@@ -285,7 +285,6 @@ tbl_custom_summary_ex3 <-
 Review \link[=syntax]{list, formula, and selector syntax} used throughout gtsummary
 
 Other tbl_summary tools: 
-\code{\link{add_ci}()},
 \code{\link{add_n.tbl_summary}()},
 \code{\link{add_overall}()},
 \code{\link{add_p.tbl_summary}()},

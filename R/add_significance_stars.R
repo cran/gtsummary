@@ -26,7 +26,7 @@
 #' numeric columns numeric. For the _vast majority_ of users,
 #' _the planned change will be go unnoticed_.
 #'
-#' @examplesIf identical(Sys.getenv("IN_PKGDOWN"), "true") && broom.helpers::.assert_package("car", pkg_search = "gtsummary", boolean = TRUE)
+#' @examplesIf broom.helpers::.assert_package("car", pkg_search = "gtsummary", boolean = TRUE)
 #' \donttest{
 #' tbl <-
 #'   lm(time ~ ph.ecog + sex, survival::lung) %>%
@@ -48,16 +48,17 @@
 #'   modify_footnote(estimate ~ "CI = Confidence Interval", abbreviation = TRUE)
 #'
 #' # Example 3 ----------------------------------
-#' # Use <br> to put a line break between beta and SE in HTML output
+#' # Use '  \n' to put a line break between beta and SE
 #' add_significance_stars_ex3 <-
 #'   tbl %>%
 #'   add_significance_stars(
 #'     hide_se = TRUE,
-#'     pattern = "{estimate}{stars}<br>({std.error})"
+#'     pattern = "{estimate}{stars}  \n({std.error})"
 #'   ) %>%
-#'   modify_header(estimate ~ "**Beta (SE)**") %>%
+#'   modify_header(estimate ~ "**Beta  \n(SE)**") %>%
 #'   modify_footnote(estimate ~ "SE = Standard Error", abbreviation = TRUE) %>%
 #'   as_gt() %>%
+#'   gt::fmt_markdown(columns = everything()) %>%
 #'   gt::tab_style(
 #'     style = "vertical-align:top",
 #'     locations = gt::cells_body(columns = label)
@@ -68,8 +69,10 @@
 #'   lm(marker ~ stage + grade, data = trial) %>%
 #'   tbl_regression() %>%
 #'   add_global_p() %>%
-#'   add_significance_stars(hide_p = FALSE,
-#'                            pattern = "{p.value}{stars}") %>%
+#'   add_significance_stars(
+#'     hide_p = FALSE,
+#'     pattern = "{p.value}{stars}"
+#'   ) %>%
 #'   as_gt() %>%
 #'   gt::tab_style(
 #'     style = "vertical-align:top",
@@ -110,7 +113,8 @@ add_significance_stars <- function(x, pattern = NULL,
   .assert_class(x, "gtsummary")
   if (!"p.value" %in% names(x$table_body)) {
     cli::cli_abort(c(
-      "!" = "There is no p-value column in the table and significance stars cannot be placed."))
+      "!" = "There is no p-value column in the table and significance stars cannot be placed."
+    ))
   }
 
   # assign default pattern and footnote placement ------------------------------
@@ -129,8 +133,8 @@ add_significance_stars <- function(x, pattern = NULL,
   if (!is_string(pattern)) abort("`pattern=` must be a string.")
   pattern_cols <-
     str_extract_all(pattern, "\\{.*?\\}") %>%
-    map(~str_remove_all(.x, pattern = fixed("}"))) %>%
-    map(~str_remove_all(.x, pattern = fixed("{"))) %>%
+    map(~ str_remove_all(.x, pattern = fixed("}"))) %>%
+    map(~ str_remove_all(.x, pattern = fixed("{"))) %>%
     unlist()
   if (isTRUE(is_empty(pattern_cols))) {
     abort("`pattern=` must be a string using glue syntax to select columns.")
@@ -183,7 +187,7 @@ add_significance_stars <- function(x, pattern = NULL,
       x = x,
       columns = pattern_cols[1],
       rows =
-        !!expr(!is.na(.data$p.value) ),
+        !!expr(!is.na(.data$p.value)),
       cols_merge_pattern = pattern
     )
 

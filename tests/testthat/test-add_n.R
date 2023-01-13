@@ -1,27 +1,42 @@
 skip_on_cran()
-skip_if_not(broom.helpers::.assert_package("survival", pkg_search = "gtsummary", boolean = TRUE))
 
 t1 <- trial %>% tbl_summary()
 t2 <- trial %>% tbl_summary(by = trt)
 test_that("no errors/warnings with standard use", {
-  expect_error(t1 %>% add_n(), NA)
-  expect_error(t2 %>% add_n(), NA)
+  expect_error(res <- t1 %>% add_n(), NA)
+  expect_snapshot(res %>% render_as_html())
+  expect_error(res <- t2 %>% add_n(), NA)
+  expect_snapshot(res %>% render_as_html())
+
   expect_warning(t1 %>% add_n(), NA)
   expect_warning(t2 %>% add_n(), NA)
 
-  expect_error(t1 %>% add_n(last = TRUE), NA)
-  expect_error(t2 %>% add_n(last = TRUE), NA)
+  expect_error(res <- t1 %>% add_n(last = TRUE), NA)
+  expect_snapshot(res %>% render_as_html())
+  expect_error(res <- t2 %>% add_n(last = TRUE), NA)
+  expect_snapshot(res %>% render_as_html())
   expect_warning(t1 %>% add_n(last = TRUE), NA)
   expect_warning(t2 %>% add_n(last = TRUE), NA)
 
-  expect_error(t1 %>% add_n(
-    statistic = "{N}{n}{n_miss}{p}{p_miss}",
-    footnote = TRUE
-  ), NA)
-  expect_error(t2 %>% add_n(
-    statistic = "{N}{n}{n_miss}{p}{p_miss}",
-    footnote = TRUE
-  ), NA)
+  expect_error(
+    res <-
+      t1 %>%
+      add_n(
+        statistic = "{N}{n}{n_miss}{p}{p_miss}",
+        footnote = TRUE
+      ),
+    NA
+  )
+  expect_snapshot(res %>% render_as_html())
+  expect_error(
+    t2 %>%
+      add_n(
+        statistic = "{N}{n}{n_miss}{p}{p_miss}",
+        footnote = TRUE
+      ),
+    NA
+  )
+  expect_snapshot(res %>% render_as_html())
   expect_warning(t1 %>% add_n(
     statistic = "{N}{n}{n_miss}{p}{p_miss}",
     footnote = TRUE
@@ -42,25 +57,41 @@ test_that("no errors/warnings with standard use", {
 
 t1 <- trial %>% tbl_summary(type = all_continuous() ~ "continuous2")
 t2 <- trial %>% tbl_summary(by = trt, type = all_continuous() ~ "continuous2")
-test_that("no errors/warnings with standard use wit continuous2", {
-  expect_error(t1 %>% add_n(), NA)
-  expect_error(t2 %>% add_n(), NA)
+test_that("no errors/warnings with standard use with continuous2", {
+  expect_error(res <- t1 %>% add_n(), NA)
+  expect_snapshot(res %>% render_as_html())
+  expect_error(res <- t2 %>% add_n(), NA)
+  expect_snapshot(res %>% render_as_html())
   expect_warning(t1 %>% add_n(), NA)
   expect_warning(t2 %>% add_n(), NA)
 
-  expect_error(t1 %>% add_n(last = TRUE), NA)
-  expect_error(t2 %>% add_n(last = TRUE), NA)
+  expect_error(res <- t1 %>% add_n(last = TRUE), NA)
+  expect_snapshot(res %>% render_as_html())
+  expect_error(res <- t2 %>% add_n(last = TRUE), NA)
+  expect_snapshot(res %>% render_as_html())
   expect_warning(t1 %>% add_n(last = TRUE), NA)
   expect_warning(t2 %>% add_n(last = TRUE), NA)
 
-  expect_error(t1 %>% add_n(
-    statistic = "{N}{n}{n_miss}{p}{p_miss}",
-    footnote = TRUE
-  ), NA)
-  expect_error(t2 %>% add_n(
-    statistic = "{N}{n}{n_miss}{p}{p_miss}",
-    footnote = TRUE
-  ), NA)
+  expect_error(
+    res <- t1 %>%
+      add_n(
+        statistic = "{N}{n}{n_miss}{p}{p_miss}",
+        footnote = TRUE
+      ),
+    NA
+  )
+  expect_snapshot(res %>% render_as_html())
+
+  expect_error(
+    res <- t2 %>%
+      add_n(
+        statistic = "{N}{n}{n_miss}{p}{p_miss}",
+        footnote = TRUE
+      ),
+    NA
+  )
+  expect_snapshot(res %>% render_as_html())
+
   expect_warning(t1 %>% add_n(
     statistic = "{N}{n}{n_miss}{p}{p_miss}",
     footnote = TRUE
@@ -71,8 +102,10 @@ test_that("no errors/warnings with standard use wit continuous2", {
   ), NA)
 
   expect_equal(
-    data.frame(x = c(1,2,NA, NA, NA, 1, 2, 1),
-               y = c(rep(0,4), rep(1,4))) %>%
+    data.frame(
+      x = c(1, 2, NA, NA, NA, 1, 2, 1),
+      y = c(rep(0, 4), rep(1, 4))
+    ) %>%
       tbl_summary(by = y) %>%
       add_n(statistic = "{n_miss}/{N} = {p_miss}%") %>%
       as_tibble(col_labels = FALSE) %>%
@@ -81,8 +114,10 @@ test_that("no errors/warnings with standard use wit continuous2", {
   )
 
   expect_equal(
-    data.frame(x = c(1,2,NA, NA, NA, 1, 2, 1),
-               y = c(rep(0,4), rep(1,4))) %>%
+    data.frame(
+      x = c(1, 2, NA, NA, NA, 1, 2, 1),
+      y = c(rep(0, 4), rep(1, 4))
+    ) %>%
       select(x) %>%
       tbl_summary() %>%
       add_n(statistic = "{n_miss}/{N} = {p_miss}%") %>%
@@ -100,10 +135,12 @@ test_that("no errors/warnings with standard use for tbl_svysummary", {
     survey::svydesign(data = ., ids = ~1, weights = ~1) %>%
     tbl_svysummary(by = trt)
 
-  expect_error(t %>% add_n(), NA)
+  expect_error(res <- t %>% add_n(), NA)
+  expect_snapshot(res %>% render_as_html())
   expect_warning(t %>% add_n(), NA)
 
-  expect_error(t %>% add_n(last = TRUE), NA)
+  expect_error(res <- t %>% add_n(last = TRUE), NA)
+  expect_snapshot(res %>% render_as_html())
   expect_warning(t %>% add_n(last = TRUE), NA)
 
   t <- Titanic %>%
@@ -111,10 +148,16 @@ test_that("no errors/warnings with standard use for tbl_svysummary", {
     survey::svydesign(data = ., ids = ~1, weights = ~Freq) %>%
     tbl_svysummary(by = Survived)
 
-  expect_error(t %>% add_n(
-    statistic = "{N}{n}{n_miss}{p}{p_miss}",
-    footnote = TRUE
-  ), NA)
+  expect_error(
+    res <-
+      t %>%
+      add_n(
+        statistic = "{N}{n}{n_miss}{p}{p_miss}",
+        footnote = TRUE
+      ),
+    NA
+  )
+  expect_snapshot(res %>% render_as_html())
   expect_warning(t %>% add_n(
     statistic = "{N}{n}{n_miss}{p}{p_miss}",
     footnote = TRUE
@@ -128,10 +171,12 @@ test_that("no errors/warnings with standard use for tbl_svysummary with continuo
     survey::svydesign(data = ., ids = ~1, weights = ~1) %>%
     tbl_svysummary(by = trt, type = all_continuous() ~ "continuous2")
 
-  expect_error(t %>% add_n(), NA)
+  expect_error(res <- t %>% add_n(), NA)
+  expect_snapshot(res %>% render_as_html())
   expect_warning(t %>% add_n(), NA)
 
-  expect_error(t %>% add_n(last = TRUE), NA)
+  expect_error(res <- t %>% add_n(last = TRUE), NA)
+  expect_snapshot(res %>% render_as_html())
   expect_warning(t %>% add_n(last = TRUE), NA)
 
   t <- Titanic %>%
@@ -139,10 +184,15 @@ test_that("no errors/warnings with standard use for tbl_svysummary with continuo
     survey::svydesign(data = ., ids = ~1, weights = ~Freq) %>%
     tbl_svysummary(by = Survived, type = all_continuous() ~ "continuous2")
 
-  expect_error(t %>% add_n(
-    statistic = "{N}{n}{n_miss}{p}{p_miss}",
-    footnote = TRUE
-  ), NA)
+  expect_error(
+    res <- t %>%
+      add_n(
+        statistic = "{N}{n}{n_miss}{p}{p_miss}",
+        footnote = TRUE
+      ),
+    NA
+  )
+  expect_snapshot(res %>% render_as_html())
   expect_warning(t %>% add_n(
     statistic = "{N}{n}{n_miss}{p}{p_miss}",
     footnote = TRUE
@@ -153,19 +203,20 @@ test_that("no errors/warnings with standard use for tbl_svysummary with continuo
 # add_n.tbl_surfit --------------------------------------------------------
 
 test_that("add_n.tbl_surfit", {
-  library(survival)
+  skip_if_not(broom.helpers::.assert_package("survival", pkg_search = "gtsummary", boolean = TRUE))
 
   tbl_survfit <-
     list(
-      survfit(Surv(ttdeath, death) ~ 1, trial),
-      survfit(Surv(ttdeath, death) ~ trt, trial)
+      survival::survfit(survival::Surv(ttdeath, death) ~ 1, trial),
+      survival::survfit(survival::Surv(ttdeath, death) ~ trt, trial)
     ) %>%
     tbl_survfit(times = c(12, 24))
 
   expect_error(
-    add_n(tbl_survfit),
+    res <- add_n(tbl_survfit),
     NA
   )
+  expect_snapshot(res %>% render_as_html())
 })
 
 
@@ -176,16 +227,19 @@ test_that("add_n.tbl_regression", {
     tbl_regression()
 
   expect_error(
-    tbl %>% add_n(), NA
+    res <- tbl %>% add_n(), NA
   )
+  expect_snapshot(res %>% render_as_html())
 
   expect_error(
-    tbl %>% add_n(location = "level"), NA
+    res <- tbl %>% add_n(location = "level"), NA
   )
+  expect_snapshot(res %>% render_as_html())
 
   expect_error(
-    tbl %>% add_n(location = c("label", "level")), NA
+    res <- tbl %>% add_n(location = c("label", "level")), NA
   )
+  expect_snapshot(res %>% render_as_html())
 })
 
 # add_n.tbl_uvregression ---------------------------------------------------------
@@ -200,14 +254,17 @@ test_that("add_n.tbl_regression", {
     )
 
   expect_error(
-    tbl %>% add_n(), NA
+    res <- tbl %>% add_n(), NA
   )
+  expect_snapshot(res %>% render_as_html())
 
   expect_error(
-    tbl %>% add_n(location = "level"), NA
+    res <- tbl %>% add_n(location = "level"), NA
   )
+  expect_snapshot(res %>% render_as_html())
 
   expect_error(
-    tbl %>% add_n(location = c("label", "level")), NA
+    res <- tbl %>% add_n(location = c("label", "level")), NA
   )
+  expect_snapshot(res %>% render_as_html())
 })

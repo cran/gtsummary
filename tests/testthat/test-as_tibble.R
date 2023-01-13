@@ -27,12 +27,18 @@ t3 <-
 test_that("as_tibble works with standard use", {
   expect_error(as_tibble(t1), NA)
   expect_warning(as_tibble(t1), NA)
+  expect_snapshot(as_tibble(t1))
+
   expect_error(as_tibble(t1, return_calls = TRUE), NA)
   expect_warning(as_tibble(t1, return_calls = TRUE), NA)
+
   expect_error(as_tibble(t2), NA)
   expect_warning(as_tibble(t2), NA)
+  expect_snapshot(as_tibble(t3))
+
   expect_error(as_tibble(t3), NA)
   expect_warning(as_tibble(t3), NA)
+  expect_snapshot(as_tibble(t3))
 })
 
 
@@ -89,6 +95,7 @@ test_that("as_tibble(fmt_missing=) works", {
       as_tibble(fmt_missing = TRUE, col_labels = FALSE),
     NA
   )
+  expect_snapshot(tbl)
   expect_equal(
     tbl$estimate_1,
     c(NA_character_, "—", "-6.9", "-12")
@@ -103,12 +110,11 @@ test_that("as_tibble(fmt_missing=) works", {
       select(age) %>%
       tbl_summary() %>%
       modify_table_body(
-        ~.x %>% mutate(stat_0 = NA_character_)
+        ~ .x %>% mutate(stat_0 = NA_character_)
       ) %>%
       modify_table_styling(stat_0, rows = !is.na(label), missing_symbol = "-") %>%
       as_tibble(fmt_missing = TRUE, col_labels = FALSE) %>%
       dplyr::pull(stat_0),
     c("-", "-")
   )
-
 })

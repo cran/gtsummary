@@ -109,12 +109,12 @@ tbl_overall_ex2 <-
     include = grade,
     by = trt,
     percent = "row",
-    statistic = ~ "{p}\%",
-    digits = ~ 1
+    statistic = ~"{p}\%",
+    digits = ~1
   ) \%>\%
   add_overall(
     last = TRUE,
-    statistic = ~ "{p}\% (n={n})",
+    statistic = ~"{p}\% (n={n})",
     digits = ~ c(1, 0)
   )
 
@@ -131,7 +131,6 @@ tbl_overall_ex3 <-
 }
 \seealso{
 Other tbl_summary tools: 
-\code{\link{add_ci}()},
 \code{\link{add_n.tbl_summary}()},
 \code{\link{add_p.tbl_summary}()},
 \code{\link{add_q}()},

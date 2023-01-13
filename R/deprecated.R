@@ -10,15 +10,16 @@ NULL
 
 # tentative deprecation schedule
 # "warn" for 18 months
+#   1.6.3 2022-12-06
 #   1.6.2 2022-09-30
 #   1.6.1 2022-06-22
 #   1.6.0 2022-04-25
 #   1.5.2 2022-01-29
 #   1.5.1 2022-01-20
 #   1.5.0 2021-10-16
-#   1.4.2 2021-07-13
 
 # "stop" for 18 months, then delete from pkg
+#   1.4.2 2021-07-13
 #   1.4.1 2021-05-19
 #   1.4.0 2021-04-13
 #   1.3.7 2021-02-26
@@ -30,21 +31,6 @@ NULL
 #   1.3.1 2020-06-02
 #   1.3.0 2020-04-17
 #   1.2.6 2020-02-13
-#   1.2.5 2020-02-11
-
-
-# v1.2.5 (2020-02-11) ----------------------------------------------------------
-#' @rdname deprecated
-#' @export
-tbl_summary_ <- function(...) {
-  lifecycle::deprecate_stop("1.2.5", "gtsummary::tbl_summary_()", "tbl_summary()")
-}
-
-#' @rdname deprecated
-#' @export
-add_p_ <- function(...) {
-  lifecycle::deprecate_stop("1.2.5", "gtsummary::add_p_()", "add_p()")
-}
 
 # v1.3.3 (2020-08-11) ----------------------------------------------------------
 #' @rdname deprecated

@@ -22,7 +22,7 @@
 #'   - `"nejm"` _The New England Journal of Medicine_
 #'       - Round large p-values to 2 decimal places; separate confidence intervals with `"ll to ul"`.
 #'       - `tbl_summary()` Doesn't show percent symbol; use em-dash to separate IQR
-#'   - `"qjecon"` _The Quarterly Journal of Economics_ ___Under Development___
+#'   - `"qjecon"` _The Quarterly Journal of Economics_
 #'       - `tbl_summary()` all percentages rounded to one decimal place
 #'       - `tbl_regression()`/`tbl_uvregression()` add significance stars with `add_significance_stars()`; hides CI and p-value from output
 #' - `theme_gtsummary_compact()`
@@ -168,8 +168,7 @@ theme_gtsummary_journal <- function(journal = c("jama", "lancet", "nejm", "qjeco
           )
         }
       )
-  }
-  else if (journal == "nejm") {
+  } else if (journal == "nejm") {
     lst_theme <-
       list(
         "pkgwide-str:theme_name" = "New England Journal of Medicine",
@@ -181,21 +180,79 @@ theme_gtsummary_journal <- function(journal = c("jama", "lancet", "nejm", "qjeco
         "tbl_summary-str:categorical_stat" = "{n} ({p})",
         "pkgwide-str:ci.sep" = " to "
       )
-  }
-  else if (journal == "lancet") {
+  } else if (journal == "lancet") {
     lst_theme <-
       list(
         "pkgwide-str:theme_name" = "The Lancet",
-        "pkgwide-fn:pvalue_fun" = function(x) style_pvalue(x, digits = 2),
-        "pkgwide-fn:prependpvalue_fun" = function(x) style_pvalue(x, digits = 2, prepend_p = TRUE),
+        "pkgwide-fn:pvalue_fun" =
+          function(x, prepend_p = FALSE) {
+            # this function assures that 5s are rounded up (and not to even, the default in `round()`)
+            round2 <- function(x, digits = 0) {
+              round(x + .Machine$double.eps * sign(x), digits = digits)
+            }
+
+            p_fmt <-
+              dplyr::case_when(
+                # allowing some leeway for numeric storage errors
+                x > 1 + 1e-15 ~ NA_character_,
+                x < 0 - 1e-15 ~ NA_character_,
+                x > 0.99 ~ paste0(">", gtsummary::style_number(x = 0.99, digits = 2)),
+                round2(x, digits = 2) >= 0.10 ~ gtsummary::style_number(x, digits = 2),
+                round2(x, digits = 3) >= 0.01 ~ gtsummary::style_number(x, digits = 3),
+                x >= 0.0001 ~ gtsummary::style_number(x, digits = 4),
+                x < 0.0001 ~ paste0("<", gtsummary::style_number(x = 0.0001, digits = 4))
+              )
+
+            # prepending a p = in front of value
+            if (prepend_p == TRUE) {
+              p_fmt <- dplyr::case_when(
+                is.na(p_fmt) ~ NA_character_,
+                stringr::str_sub(p_fmt, end = 1L) %in% c("<", ">") ~ paste0("p", p_fmt),
+                TRUE ~ paste0("p=", p_fmt)
+              )
+            }
+
+            attributes(p_fmt) <- attributes(x)
+            return(p_fmt)
+          },
+        "pkgwide-fn:prependpvalue_fun" =
+          function(x, prepend_p = TRUE) {
+            # this function assures that 5s are rounded up (and not to even, the default in `round()`)
+            round2 <- function(x, digits = 0) {
+              round(x + .Machine$double.eps * sign(x), digits = digits)
+            }
+
+            p_fmt <-
+              dplyr::case_when(
+                # allowing some leeway for numeric storage errors
+                x > 1 + 1e-15 ~ NA_character_,
+                x < 0 - 1e-15 ~ NA_character_,
+                x > 0.99 ~ paste0(">", gtsummary::style_number(x = 0.99, digits = 2)),
+                round2(x, digits = 2) >= 0.10 ~ gtsummary::style_number(x, digits = 2),
+                round2(x, digits = 3) >= 0.01 ~ gtsummary::style_number(x, digits = 3),
+                x >= 0.0001 ~ gtsummary::style_number(x, digits = 4),
+                x < 0.0001 ~ paste0("<", gtsummary::style_number(x = 0.0001, digits = 4))
+              )
+
+            # prepending a p = in front of value
+            if (prepend_p == TRUE) {
+              p_fmt <- dplyr::case_when(
+                is.na(p_fmt) ~ NA_character_,
+                stringr::str_sub(p_fmt, end = 1L) %in% c("<", ">") ~ paste0("p", p_fmt),
+                TRUE ~ paste0("p=", p_fmt)
+              )
+            }
+
+            attributes(p_fmt) <- attributes(x)
+            return(p_fmt)
+          },
         "tbl_summary-str:continuous_stat" = "{median} ({p25} \U2013 {p75})",
         "style_number-arg:decimal.mark" =
           ifelse(.Platform$OS.type == "windows", special_char$interpunct, "\U00B7"),
         "style_number-arg:big.mark" = "\U2009",
         "pkgwide-str:ci.sep" = " to "
       )
-  }
-  else if (journal == "qjecon") {
+  } else if (journal == "qjecon") {
     lst_theme <-
       list(
         "pkgwide-str:theme_name" = "The Quarterly Journal of Economics",
@@ -206,7 +263,7 @@ theme_gtsummary_journal <- function(journal = c("jama", "lancet", "nejm", "qjeco
             paste(
               x$table_styling$header %>% filter(.data$column == "estimate") %>% pull("label"),
               "**(SE)**",
-              sep = " "
+              sep = "  \n"
             )
 
           estimate_footnote <-
@@ -219,14 +276,20 @@ theme_gtsummary_journal <- function(journal = c("jama", "lancet", "nejm", "qjeco
 
           x %>%
             add_significance_stars(
-              pattern = "{estimate}{stars}\n({std.error})",
+              pattern = "{estimate}{stars}  \n({std.error})",
               hide_se = TRUE
             ) %>%
             # update column header
             modify_header(list(estimate = new_header_text)) %>%
             # add SE abbreviation footnote
             modify_footnote(estimate ~ estimate_footnote, abbreviation = TRUE)
-        }
+        },
+        "as_gt-lst:addl_cmds" = list(
+          tab_spanner = list(
+            rlang::expr(gt::fmt_markdown(columns = everything())),
+            rlang::expr(gt::tab_style(style = "vertical-align:top", locations = gt::cells_body(columns = dplyr::any_of("label"))))
+          )
+        )
       )
   }
 

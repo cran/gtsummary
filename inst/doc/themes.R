@@ -6,12 +6,14 @@ knitr::opts_chunk$set(
 )
 
 ## ---- message=FALSE-----------------------------------------------------------
-library(gtsummary); library(gt); library(dplyr)
+library(gtsummary)
+library(gt)
+library(dplyr)
 
 trial %>%
   select(trt, age, grade) %>%
   tbl_summary(by = trt) %>%
-  add_p() 
+  add_p()
 
 ## ---- message=TRUE------------------------------------------------------------
 theme_gtsummary_journal(journal = "jama")
@@ -20,7 +22,7 @@ theme_gtsummary_journal(journal = "jama")
 trial %>%
   select(trt, age, grade) %>%
   tbl_summary(by = trt) %>%
-  add_p() 
+  add_p()
 
 ## ---- message=TRUE------------------------------------------------------------
 theme_gtsummary_journal(journal = "jama")
@@ -30,7 +32,7 @@ theme_gtsummary_compact()
 trial %>%
   select(trt, age, grade) %>%
   tbl_summary(by = trt) %>%
-  add_p() 
+  add_p()
 
 ## ---- message=FALSE, echo = FALSE---------------------------------------------
 set_gtsummary_theme(theme_gtsummary_journal(journal = "jama"))
@@ -41,13 +43,13 @@ set_gtsummary_theme(theme_gtsummary_language("es"))
 trial %>%
   select(trt, age, grade) %>%
   tbl_summary(by = trt) %>%
-  add_p() 
+  add_p()
 
 ## -----------------------------------------------------------------------------
 reset_gtsummary_theme()
 
 ## -----------------------------------------------------------------------------
-my_theme <-   
+my_theme <-
   list(
     # round large p-values to two places
     "pkgwide-fn:pvalue_fun" = function(x) style_pvalue(x, digits = 2),
@@ -71,14 +73,17 @@ gtsummary:::df_theme_elements %>%
   dplyr::group_by(fn) %>%
   gt::gt() %>%
   gt::cols_align(columns = everything(), align = "left") %>%
-  gt::cols_label(name = "Theme Element", desc = "Description",
-                 example = "Example") %>%
+  gt::cols_label(
+    name = "Theme Element", desc = "Description",
+    example = "Example"
+  ) %>%
   gt::fmt_markdown(columns = c(name, desc, example)) %>%
   gt::sub_missing(columns = everything(), missing_text = "") %>%
-  gt::tab_options(table.font.size = 'small',
-                  data_row.padding = gt::px(1),
-                  row_group.padding = gt::px(1))
-
+  gt::tab_options(
+    table.font.size = "small",
+    data_row.padding = gt::px(1),
+    row_group.padding = gt::px(1)
+  )
 
 ## ---- echo=FALSE--------------------------------------------------------------
 gtsummary:::df_theme_elements %>%
@@ -91,7 +96,9 @@ gtsummary:::df_theme_elements %>%
   gt() %>%
   cols_label(arg_list = "Theme Element") %>%
   fmt_markdown(columns = c(arg_list)) %>%
-  tab_options(table.font.size = 'small',
-                  data_row.padding = gt::px(1),
-                  row_group.padding = gt::px(1))
+  tab_options(
+    table.font.size = "small",
+    data_row.padding = gt::px(1),
+    row_group.padding = gt::px(1)
+  )
 

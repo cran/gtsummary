@@ -32,7 +32,6 @@ add_p <- function(x, ...) {
 #' @param test.args List of formulas containing additional arguments to pass to
 #' tests that accept arguments. For example, add an argument for all t-tests,
 #' use `test.args = all_tests("t.test") ~ list(var.equal = TRUE)`
-#' @param exclude DEPRECATED.
 #' @param ... Not used
 #' @inheritParams tbl_regression
 #' @inheritParams tbl_summary
@@ -76,24 +75,10 @@ add_p <- function(x, ...) {
 #' }}
 
 add_p.tbl_summary <- function(x, test = NULL, pvalue_fun = NULL,
-                              group = NULL, include = everything(), test.args = NULL,
-                              exclude = NULL, ...) {
+                              group = NULL, include = everything(),
+                              test.args = NULL, ...) {
   check_dots_empty(error = function(e) inform(c(e$message, e$body)))
   updated_call_list <- c(x$call_list, list(add_p = match.call()))
-
-  # DEPRECATION notes ----------------------------------------------------------
-  if (!rlang::quo_is_null(rlang::enquo(exclude))) {
-    lifecycle::deprecate_stop(
-      "1.2.5",
-      "gtsummary::add_p(exclude = )",
-      "add_p(include = )",
-      details = paste0(
-        "The `include` argument accepts quoted and unquoted expressions similar\n",
-        "to `dplyr::select()`. To exclude variable, use the minus sign.\n",
-        "For example, `include = -c(age, stage)`"
-      )
-    )
-  }
 
   # setting defaults from gtsummary theme --------------------------------------
   test <- test %||% get_theme_element("add_p.tbl_summary-arg:test")
@@ -140,9 +125,11 @@ add_p.tbl_summary <- function(x, test = NULL, pvalue_fun = NULL,
       stop(call. = FALSE)
   }
   if (any(c("add_difference", "add_p") %in% names(x$call_list)) &&
-      "p.value" %in% names(x$table_body)) {
-    paste("`add_p()` cannot be run after `add_difference()` or `add_p()` when a",
-          "'p.value' column is already present.") %>%
+    "p.value" %in% names(x$table_body)) {
+    paste(
+      "`add_p()` cannot be run after `add_difference()` or `add_p()` when a",
+      "'p.value' column is already present."
+    ) %>%
       stop(call. = FALSE)
   }
 
@@ -229,7 +216,8 @@ add_p.tbl_summary <- function(x, test = NULL, pvalue_fun = NULL,
       left_join(
         x$meta_data %>% select(-any_of(c("test_result", "p.value", "stat_test_lbl"))),
         .,
-        by = "variable")
+        by = "variable"
+      )
     }
 
   x$call_list <- updated_call_list
@@ -251,8 +239,7 @@ footnote_add_p <- function(meta_data) {
   if (length(footnotes) > 0) {
     language <- get_theme_element("pkgwide-str:language", default = "en")
     return(paste(map_chr(footnotes, ~ translate_text(.x, language)), collapse = "; "))
-  }
-  else {
+  } else {
     return(NA_character_)
   }
 }
@@ -271,7 +258,7 @@ add_p_merge_p_values <- function(x, lgl_add_p = TRUE,
       meta_data %>%
         select("variable", "test_result") %>%
         mutate(
-          df_result = map(.data$test_result, ~pluck(.x, "df_result")),
+          df_result = map(.data$test_result, ~ pluck(.x, "df_result")),
           row_type = "label"
         ) %>%
         unnest("df_result") %>%
@@ -298,12 +285,12 @@ add_p_merge_p_values <- function(x, lgl_add_p = TRUE,
       modify_table_styling(
         columns = any_of("estimate"),
         label = ifelse(is.null(adj.vars),
-                       paste0("**", translate_text("Difference"), "**"),
-                       paste0("**", translate_text("Adjusted Difference"), "**")
+          paste0("**", translate_text("Difference"), "**"),
+          paste0("**", translate_text("Adjusted Difference"), "**")
         ),
         hide = FALSE,
         fmt_fun = switch(is_function(estimate_fun),
-                         estimate_fun
+          estimate_fun
         ),
         footnote = footnote_add_p(meta_data)
       )
@@ -319,8 +306,8 @@ add_p_merge_p_values <- function(x, lgl_add_p = TRUE,
             mutate(
               column =
                 c("estimate", "conf.low", "conf.high") %>%
-                intersect(names(x$table_body)) %>%
-                list(),
+                  intersect(names(x$table_body)) %>%
+                  list(),
               rows = glue(".data$variable == '{variable}'") %>% rlang::parse_expr() %>% list()
             ) %>%
             ungroup() %>%
@@ -332,7 +319,7 @@ add_p_merge_p_values <- function(x, lgl_add_p = TRUE,
 
     # adding formatted CI column
     if (all(c("conf.low", "conf.high") %in% names(x$table_body)) &&
-        !"ci" %in% names(x$table_body)) {
+      !"ci" %in% names(x$table_body)) {
       ci.sep <- get_theme_element("pkgwide-str:ci.sep", default = ", ")
       x <- x %>%
         modify_table_body(
@@ -343,8 +330,8 @@ add_p_merge_p_values <- function(x, lgl_add_p = TRUE,
                 ~ case_when(
                   !is.na(..2) | !is.na(..3) ~
                     paste(do.call(estimate_fun[[..1]], list(..2)),
-                          do.call(estimate_fun[[..1]], list(..3)),
-                          sep = ci.sep
+                      do.call(estimate_fun[[..1]], list(..3)),
+                      sep = ci.sep
                     )
                 )
               )
@@ -443,10 +430,10 @@ add_p.tbl_cross <- function(x, test = NULL, pvalue_fun = NULL,
 
   # adding test name if supplied (NULL otherwise)
   input_test <- switch(!is.null(test),
-                       rlang::expr(everything() ~ !!test)
+    rlang::expr(everything() ~ !!test)
   )
   input_test.args <- switch(!is.null(test.args),
-                            rlang::expr(everything() ~ !!test.args)
+    rlang::expr(everything() ~ !!test.args)
   )
 
   # running add_p to add the p-value to the output
@@ -456,10 +443,11 @@ add_p.tbl_cross <- function(x, test = NULL, pvalue_fun = NULL,
   x <-
     expr(
       add_p.tbl_summary(x,
-                        test = !!input_test,
-                        test.args = !!input_test.args,
-                        pvalue_fun = !!pvalue_fun,
-                        include = -any_of("..total.."))
+        test = !!input_test,
+        test.args = !!input_test.args,
+        pvalue_fun = !!pvalue_fun,
+        include = -any_of("..total..")
+      )
     ) %>%
     eval()
   # replacing the input data set with the original from the `tbl_cross()` call
@@ -493,11 +481,11 @@ add_p.tbl_cross <- function(x, test = NULL, pvalue_fun = NULL,
         ifelse(
           .data$column %in% "p.value",
           stringr::str_replace_all(.data$label,
-                                   pattern = "\\*\\*(.*?)\\*\\*",
-                                   replacement = "\\1"),
+            pattern = "\\*\\*(.*?)\\*\\*",
+            replacement = "\\1"
+          ),
           .data$label
         )
-
     )
 
   # return tbl_cross -----------------------------------------------------------
@@ -531,7 +519,7 @@ add_p.tbl_cross <- function(x, test = NULL, pvalue_fun = NULL,
 #' ```
 #'
 #' @export
-#' @examplesIf identical(Sys.getenv("IN_PKGDOWN"), "true") && broom.helpers::.assert_package("survival", pkg_search = "gtsummary", boolean = TRUE)
+#' @examplesIf broom.helpers::.assert_package("survival", pkg_search = "gtsummary", boolean = TRUE)
 #' \donttest{
 #' library(survival)
 #'
@@ -703,13 +691,13 @@ add_p.tbl_survfit <- function(x, test = "logrank", test.args = NULL,
 #' @export
 #' @return A `tbl_svysummary` object
 #' @author Joseph Larmarange
-#' @examplesIf identical(Sys.getenv("IN_PKGDOWN"), "true") && broom.helpers::.assert_package("survey", pkg_search = "gtsummary", boolean = TRUE)
+#' @examplesIf broom.helpers::.assert_package("survey", pkg_search = "gtsummary", boolean = TRUE)
 #' \donttest{
 #' # Example 1 ----------------------------------
 #' # A simple weighted dataset
 #' add_p_svysummary_ex1 <-
 #'   survey::svydesign(~1, data = as.data.frame(Titanic), weights = ~Freq) %>%
-#'   tbl_svysummary(by = Survived) %>%
+#'   tbl_svysummary(by = Survived, include = c(Sex, Age)) %>%
 #'   add_p()
 #'
 #' # A dataset with a complex design
@@ -718,7 +706,7 @@ add_p.tbl_survfit <- function(x, test = "logrank", test.args = NULL,
 #'
 #' # Example 2 ----------------------------------
 #' add_p_svysummary_ex2 <-
-#'   tbl_svysummary(d_clust, by = both, include = c(cname, api00, api99, both)) %>%
+#'   tbl_svysummary(d_clust, by = both, include = c(api00, api99, both)) %>%
 #'   add_p()
 #'
 #' # Example 3 ----------------------------------
@@ -1002,11 +990,10 @@ add_p.tbl_continuous <- function(x, test = NULL, pvalue_fun = NULL,
       left_join(
         x$meta_data %>% select(-any_of(c("test_result", "p.value", "stat_test_lbl"))),
         .,
-        by = "variable")
+        by = "variable"
+      )
     }
 
   x$call_list <- updated_call_list
   add_p_merge_p_values(x, meta_data = x$meta_data, pvalue_fun = pvalue_fun)
 }
-
-

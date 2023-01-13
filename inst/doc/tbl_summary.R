@@ -6,23 +6,26 @@ knitr::opts_chunk$set(
 )
 
 gt_compact_fun <- function(x) {
-  gt::tab_options(x, 
-                  table.font.size = 'small',
-                  data_row.padding = gt::px(1),
-                  summary_row.padding = gt::px(1),
-                  grand_summary_row.padding = gt::px(1),
-                  footnotes.padding = gt::px(1),
-                  source_notes.padding = gt::px(1),
-                  row_group.padding = gt::px(1))
+  gt::tab_options(x,
+    table.font.size = "small",
+    data_row.padding = gt::px(1),
+    summary_row.padding = gt::px(1),
+    grand_summary_row.padding = gt::px(1),
+    footnotes.padding = gt::px(1),
+    source_notes.padding = gt::px(1),
+    row_group.padding = gt::px(1)
+  )
 }
 
 ## ---- echo = FALSE, results = 'asis'------------------------------------------
 # we do NOT want the vignette to build on CRAN...it's taking too long
-if (!identical(Sys.getenv("IN_PKGDOWN"), "true") && 
-    !tolower(as.list(Sys.info())$user) %in% c("sjobergd", "currym", "whitingk", "whiting")) {
-  msg <- 
-    paste("View this vignette on the",
-          "[package website](https://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html).")
+if (!identical(Sys.getenv("IN_PKGDOWN"), "true") &&
+  !tolower(as.list(Sys.info())$user) %in% c("sjobergd", "currym", "whitingk", "whiting")) {
+  msg <-
+    paste(
+      "View this vignette on the",
+      "[package website](https://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html)."
+    )
   cat(msg)
   knitr::knit_exit()
 }
@@ -34,9 +37,13 @@ library(gtsummary)
 ## ---- echo = FALSE------------------------------------------------------------
 trial %>%
   purrr::imap_dfr(
-    ~tibble::tibble(Variable = glue::glue("`{.y}`"), 
-                    Class = class(.x),
-                    Label = attr(.x, "label"))) %>%  gt::gt() %>%
+    ~ tibble::tibble(
+      Variable = glue::glue("`{.y}`"),
+      Class = class(.x),
+      Label = attr(.x, "label")
+    )
+  ) %>%
+  gt::gt() %>%
   gt::tab_source_note("Includes mix of continuous, dichotomous, and categorical variables") %>%
   gt::fmt_markdown(columns = Variable) %>%
   gt::cols_align("left") %>%
@@ -52,20 +59,22 @@ trial2 <- trial %>% select(trt, age, grade)
 trial2 %>% tbl_summary()
 
 ## -----------------------------------------------------------------------------
-trial2 %>% tbl_summary(by = trt) %>% add_p()
+trial2 %>%
+  tbl_summary(by = trt) %>%
+  add_p()
 
 ## ----echo=FALSE---------------------------------------------------------------
 tibble::tribble(
-  ~Argument,       ~Description,
-  "`label=`",       "specify the variable labels printed in table",
-  "`type=`",        "specify the variable type (e.g. continuous, categorical, etc.)",
-  "`statistic=`",   "change the summary statistics presented",
-  "`digits=`",      "number of digits the summary statistics will be rounded to",
-  "`missing=`",     "whether to display a row with the number of missing observations",
-  "`missing_text=`","text label for the missing number row",
-  "`sort=`",        "change the sorting of categorical levels by frequency",
-  "`percent=`",     "print column, row, or cell percentages",
-  "`include=`",     "list of variables to include in summary table"
+  ~Argument, ~Description,
+  "`label=`", "specify the variable labels printed in table",
+  "`type=`", "specify the variable type (e.g. continuous, categorical, etc.)",
+  "`statistic=`", "change the summary statistics presented",
+  "`digits=`", "number of digits the summary statistics will be rounded to",
+  "`missing=`", "whether to display a row with the number of missing observations",
+  "`missing_text=`", "text label for the missing number row",
+  "`sort=`", "change the sorting of categorical levels by frequency",
+  "`percent=`", "print column, row, or cell percentages",
+  "`include=`", "list of variables to include in summary table"
 ) %>%
   gt::gt() %>%
   gt::fmt_markdown(columns = Argument) %>%
@@ -75,8 +84,10 @@ tibble::tribble(
 trial2 %>%
   tbl_summary(
     by = trt,
-    statistic = list(all_continuous() ~ "{mean} ({sd})",
-                     all_categorical() ~ "{n} / {N} ({p}%)"),
+    statistic = list(
+      all_continuous() ~ "{mean} ({sd})",
+      all_categorical() ~ "{n} / {N} ({p}%)"
+    ),
     digits = all_continuous() ~ 2,
     label = grade ~ "Tumor Grade",
     missing_text = "(Missing)"
@@ -86,14 +97,16 @@ trial2 %>%
 tibble::tribble(
   ~`select_helper`, ~`varname`, ~`named_list`,
   '`all_continuous() ~ "{mean}"`', '`c("age", "marker") ~ "{mean}"`', '`list(age = "{mean}", marker = "{mean}")`',
-  '`list(all_continuous() ~ "{mean}")`', '`c(age, marker) ~ "{mean}"`', NA_character_ ,
+  '`list(all_continuous() ~ "{mean}")`', '`c(age, marker) ~ "{mean}"`', NA_character_,
   NA_character_, '`list(c(age, marker) ~ "{mean}")`', NA_character_
 ) %>%
   gt::gt() %>%
   gt::fmt_markdown(everything()) %>%
-  gt::cols_label(select_helper = gt::md("**Select with Helpers**"),
-                 varname = gt::md("**Select by Variable Name**"),
-                 named_list = gt::md("**Select with Named List**")) %>%
+  gt::cols_label(
+    select_helper = gt::md("**Select with Helpers**"),
+    varname = gt::md("**Select by Variable Name**"),
+    named_list = gt::md("**Select with Named List**")
+  ) %>%
   gt::sub_missing(columns = everything(), missing_text = "---") %>%
   gt::tab_options(table.font.size = "85%") %>%
   gt::cols_width(everything() ~ gt::px(390))
@@ -122,14 +135,14 @@ tibble::tribble(
 ## ----echo = FALSE-------------------------------------------------------------
 tibble::tribble(
   ~Function,                     ~Description,
-  "`modify_header()`",           "update column headers",   
-  "`modify_footnote()`",         "update column footnote",   
-  "`modify_spanning_header()`",  "update spanning headers",   
-  "`modify_caption()`",          "update table caption/title",   
-  "`bold_labels()`",             "bold variable labels",  
-  "`bold_levels()`",             "bold variable levels",  
-  "`italicize_labels()`",        "italicize variable labels",  
-  "`italicize_levels()`",        "italicize variable levels",  
+  "`modify_header()`",           "update column headers",
+  "`modify_footnote()`",         "update column footnote",
+  "`modify_spanning_header()`",  "update spanning headers",
+  "`modify_caption()`",          "update table caption/title",
+  "`bold_labels()`",             "bold variable labels",
+  "`bold_levels()`",             "bold variable levels",
+  "`italicize_labels()`",        "italicize variable labels",
+  "`italicize_levels()`",        "italicize variable levels",
   "`bold_p()`",                  "bold significant p-values"
 ) %>%
   gt::gt() %>%
@@ -139,7 +152,7 @@ tibble::tribble(
 ## ---- eval = TRUE-------------------------------------------------------------
 trial2 %>%
   tbl_summary(by = trt) %>%
-  add_p(pvalue_fun = ~style_pvalue(.x, digits = 2)) %>%
+  add_p(pvalue_fun = ~ style_pvalue(.x, digits = 2)) %>%
   add_overall() %>%
   add_n() %>%
   modify_header(label ~ "**Variable**") %>%
@@ -167,17 +180,19 @@ trial2 %>%
   tbl_summary(
     by = trt,
     type = all_continuous() ~ "continuous2",
-    statistic = all_continuous() ~ c("{N_nonmiss}",
-                                     "{median} ({p25}, {p75})", 
-                                     "{min}, {max}"),
+    statistic = all_continuous() ~ c(
+      "{N_nonmiss}",
+      "{median} ({p25}, {p75})",
+      "{min}, {max}"
+    ),
     missing = "no"
   ) %>%
-  add_p(pvalue_fun = ~style_pvalue(.x, digits = 2))
+  add_p(pvalue_fun = ~ style_pvalue(.x, digits = 2))
 
 ## ---- echo = FALSE------------------------------------------------------------
 tibble::tribble(
   ~`Internal Object`, ~Description,
-  "`.$table_body`",   "data frame that is printed as the gtsummary output table",
+  "`.$table_body`", "data frame that is printed as the gtsummary output table",
   "`.$table_styling`", "contains instructions for styling `.$table_body` when printed"
 ) %>%
   gt::gt() %>%
@@ -185,7 +200,9 @@ tibble::tribble(
   gt_compact_fun()
 
 ## -----------------------------------------------------------------------------
-tbl_summary(trial2) %>% as_gt(return_calls = TRUE) %>% head(n = 4)
+tbl_summary(trial2) %>%
+  as_gt(return_calls = TRUE) %>%
+  head(n = 4)
 
 ## ----as_gt2-------------------------------------------------------------------
 tbl_summary(trial2, by = trt) %>%
@@ -197,26 +214,28 @@ tbl_summary(trial2, by = trt) %>%
 data(api, package = "survey")
 
 ## -----------------------------------------------------------------------------
-svy_apiclus1 <- 
+svy_apiclus1 <-
   survey::svydesign(
-    id = ~dnum, 
-    weights = ~pw, 
-    data = apiclus1, 
+    id = ~dnum,
+    weights = ~pw,
+    data = apiclus1,
     fpc = ~fpc
-  ) 
+  )
 
 ## -----------------------------------------------------------------------------
 svy_apiclus1 %>%
   tbl_svysummary(
     # stratify summary statistics by the "both" column
-    by = both, 
+    by = both,
     # summarize a subset of the columns
     include = c(api00, api99, both),
     # adding labels to table
-    label = list(api00 ~ "API in 2000",
-                 api99 ~ "API in 1999")
+    label = list(
+      api00 ~ "API in 2000",
+      api99 ~ "API in 1999"
+    )
   ) %>%
-  add_p() %>%   # comparing values by "both" column
+  add_p() %>% # comparing values by "both" column
   add_overall() %>%
   # adding spanning header
   modify_spanning_header(c("stat_1", "stat_2") ~ "**Met Both Targets**")
@@ -224,7 +243,7 @@ svy_apiclus1 %>%
 ## -----------------------------------------------------------------------------
 Titanic %>%
   as_tibble() %>%
-  survey::svydesign(data = ., ids = ~ 1, weights = ~ n) %>%
+  survey::svydesign(data = ., ids = ~1, weights = ~n) %>%
   tbl_svysummary(include = c(Age, Survived))
 
 ## -----------------------------------------------------------------------------

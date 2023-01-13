@@ -1,3 +1,42 @@
+# gtsummary 1.7.0
+
+### Breaking Changes
+
+* Updated the default argument values in `tidy_robust(vcov=NULL, vcov_args=NULL)`. Users must specify the type of robust standard errors using these arguments.
+
+* Fully removed deprecated items that were originally deprecated in v1.2.5 (released 3 years ago).
+  - `add_p(exclude=)`, `as_gt(exclude=)`, `as_kable(exclude=)`, `as_tibble.gtsummary(exclude=)`, `tbl_regression(exclude=)`,  `tbl_uvregression(exclude=)` 
+  - `tbl_summary_()`,`add_p_()`
+  - `add_global_p(terms=)`
+
+### New Functions
+
+* New function `add_ci.tbl_svysummary()` for adding confidence intervals to `tbl_svysummary()` summary statistics. (#965)
+
+### New Functionality
+
+* Arguments pass via the dots in `tbl_uvregression(...)` are now passed to `broom.helpers::tidy_plus_plus(...)`. (#1396)
+
+* Added new theme elements to control the default headers in `tbl_summary()`. (#1401)
+
+* All examples that previously used `<br>` for line breaks in gt tables have been updated to use `  \n`. Additionally, the `"qjecon"` journal theme has been updated to use the updated line breaker as well. (#1311)
+
+* Now allowing for mixed-class numeric types in `tbl_summary()`, such that `inline_text()` will not throw an error when the pattern argument is specified.
+
+* Added `stats::mood.test()` to `add_p.tbl_summary()`. (#1397)
+
+### New Documentation
+
+* Added a new article illustrating how to place gtsummary tables into Shiny applications. (#1335)
+
+### Bug Fixes
+
+* Updated Lancet journal theme to report p-values with more precision, per the journal's reporting guidelines. (#1442)
+
+* Fix for `as_flex_table()` when the header is blank. (#1406)
+
+* Fix in `tbl_summary()` that now allows for column vectors to be named within a data frame. (#1403)
+
 # gtsummary 1.6.3
 
 * The `as_flex_table()` function now recognizes markdown bold (`**`) and italic (`_`) syntax in the headers and spanning headers. Restrictions apply. See help file for details. Users can no longer place sets of double stars and underscores *without* the text being formatted as markdown syntax. (#1361)

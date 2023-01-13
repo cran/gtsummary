@@ -15,8 +15,7 @@ add_global_p(x, ...)
   keep = FALSE,
   anova_fun = NULL,
   quiet = NULL,
-  ...,
-  terms = NULL
+  ...
 )
 
 \method{add_global_p}{tbl_uvregression}(
@@ -57,8 +56,6 @@ when specified to calculate the global p-values.
 
 \item{quiet}{Logical indicating whether to print messages in console. Default is
 \code{FALSE}}
-
-\item{terms}{DEPRECATED.  Use \verb{include=} argument instead.}
 }
 \description{
 This function uses \code{car::Anova()} to calculate global p-values
@@ -81,7 +78,7 @@ Output from \code{tbl_regression} and \code{tbl_uvregression} objects supported.
 }
 
 \examples{
-\dontshow{if (identical(Sys.getenv("IN_PKGDOWN"), "true") && broom.helpers::.assert_package("car", pkg_search = "gtsummary", boolean = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (broom.helpers::.assert_package("car", pkg_search = "gtsummary", boolean = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 \donttest{
 # Example 1 ----------------------------------
 tbl_lm_global_ex1 <-

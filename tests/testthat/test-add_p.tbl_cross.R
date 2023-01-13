@@ -2,26 +2,26 @@
 skip_on_cran()
 
 test_that("add_p.tbl_cross", {
-  expect_error(
-    trial %>% tbl_cross(response, death) %>% add_p(),
-    NA
+  expect_snapshot(
+    trial %>% tbl_cross(response, death) %>% add_p() %>% render_as_html()
   )
-  expect_error(
-    trial[c("trt", "grade")] %>% tbl_cross() %>% add_p(),
-    NA
+  expect_snapshot(
+    trial[c("trt", "grade")] %>% tbl_cross() %>% add_p() %>% render_as_html()
   )
-  expect_error(
-    trial[c("trt", "grade")] %>% tbl_cross() %>% add_p(source_note = TRUE),
-    NA
+  expect_snapshot(
+    trial[c("trt", "grade")] %>% tbl_cross() %>% add_p(source_note = TRUE) %>% render_as_html()
   )
   expect_error(
     tbl <-
       mtcars %>%
       tbl_cross(gear, carb) %>%
-      add_p(test = "chisq.test",
-            pvalue_fun = ~ifelse(is.na(.), NA, format(., digits = 2, scientific = TRUE))),
+      add_p(
+        test = "chisq.test",
+        pvalue_fun = ~ ifelse(is.na(.), NA, format(., digits = 2, scientific = TRUE))
+      ),
     NA
   )
+  expect_snapshot(tbl %>% render_as_html())
   expect_equal(
     tbl %>%
       as_tibble(col_labels = FALSE) %>%
@@ -42,16 +42,18 @@ test_that("add_p.tbl_cross", {
       after = rev(trial$response)
     )
 
-  expect_error({
-    theme_gtsummary_language("pt")
-    tbl_pt <-
-      df %>%
-      tbl_cross() %>%
-      add_p(test = "mcnemar.test.wide", test.args = list(correct = FALSE))
-    reset_gtsummary_theme()
-  },
-  NA
+  expect_error(
+    {
+      theme_gtsummary_language("pt")
+      tbl_pt <-
+        df %>%
+        tbl_cross() %>%
+        add_p(test = "mcnemar.test.wide", test.args = list(correct = FALSE))
+      reset_gtsummary_theme()
+    },
+    NA
   )
+  expect_snapshot(tbl_pt %>% render_as_html())
   expect_equal(
     tbl_pt$table_styling$footnote %>%
       dplyr::filter(column == "p.value") %>%
@@ -59,21 +61,24 @@ test_that("add_p.tbl_cross", {
     "Teste de McNemar"
   )
 
-  expect_error({
-    theme_gtsummary_language("pt")
-    tbl_pt <-
-      df %>%
-      tbl_cross() %>%
-      add_p(test = "mcnemar.test.wide", test.args = list(correct = FALSE),
-            source_note = TRUE)
-    reset_gtsummary_theme()
-  },
-  NA
+  expect_error(
+    {
+      theme_gtsummary_language("pt")
+      tbl_pt <-
+        df %>%
+        tbl_cross() %>%
+        add_p(
+          test = "mcnemar.test.wide", test.args = list(correct = FALSE),
+          source_note = TRUE
+        )
+      reset_gtsummary_theme()
+    },
+    NA
   )
+  expect_snapshot(tbl_pt %>% render_as_html())
   expect_equal(
     tbl_pt$table_styling$source_note,
     "Teste de McNemar, ",
     ignore_attr = TRUE
   )
-
 })

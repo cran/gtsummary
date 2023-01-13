@@ -11,7 +11,7 @@ library(gtsummary)
 tbl_regression_ex <-
   lm(age ~ grade + marker, trial) %>%
   tbl_regression() %>%
-  bold_p(t = 0.5) 
+  bold_p(t = 0.5)
 
 tbl_summary_ex <-
   trial %>%
@@ -37,14 +37,14 @@ tibble::tribble(
   gt::gt() %>%
   gt::fmt_markdown(columns = everything()) %>%
   gt::tab_options(
-            table.font.size = "small",
-            data_row.padding = gt::px(1),
-            summary_row.padding = gt::px(1),
-            grand_summary_row.padding = gt::px(1),
-            footnotes.padding = gt::px(1),
-            source_notes.padding = gt::px(1),
-            row_group.padding = gt::px(1)
-          )
+    table.font.size = "small",
+    data_row.padding = gt::px(1),
+    summary_row.padding = gt::px(1),
+    grand_summary_row.padding = gt::px(1),
+    footnotes.padding = gt::px(1),
+    source_notes.padding = gt::px(1),
+    row_group.padding = gt::px(1)
+  )
 
 ## ---- echo=FALSE--------------------------------------------------------------
 tibble::tribble(
@@ -56,14 +56,14 @@ tibble::tribble(
   gt::gt() %>%
   gt::fmt_markdown(columns = everything()) %>%
   gt::tab_options(
-            table.font.size = "small",
-            data_row.padding = gt::px(1),
-            summary_row.padding = gt::px(1),
-            grand_summary_row.padding = gt::px(1),
-            footnotes.padding = gt::px(1),
-            source_notes.padding = gt::px(1),
-            row_group.padding = gt::px(1)
-          )
+    table.font.size = "small",
+    data_row.padding = gt::px(1),
+    summary_row.padding = gt::px(1),
+    grand_summary_row.padding = gt::px(1),
+    footnotes.padding = gt::px(1),
+    source_notes.padding = gt::px(1),
+    row_group.padding = gt::px(1)
+  )
 
 ## ---- echo=FALSE--------------------------------------------------------------
 tibble::tribble(
@@ -75,14 +75,14 @@ tibble::tribble(
   gt::gt() %>%
   gt::fmt_markdown(columns = everything()) %>%
   gt::tab_options(
-            table.font.size = "small",
-            data_row.padding = gt::px(1),
-            summary_row.padding = gt::px(1),
-            grand_summary_row.padding = gt::px(1),
-            footnotes.padding = gt::px(1),
-            source_notes.padding = gt::px(1),
-            row_group.padding = gt::px(1)
-          )
+    table.font.size = "small",
+    data_row.padding = gt::px(1),
+    summary_row.padding = gt::px(1),
+    grand_summary_row.padding = gt::px(1),
+    footnotes.padding = gt::px(1),
+    source_notes.padding = gt::px(1),
+    row_group.padding = gt::px(1)
+  )
 
 ## ---- echo=FALSE--------------------------------------------------------------
 tibble::tribble(
@@ -91,18 +91,18 @@ tibble::tribble(
   "rows", "expression selecting rows in `.$table_body`",
   "format_type", "one of `c('bold', 'italic', 'indent')`",
   "undo_text_format", "logical indicating where the formatting indicated should be undone/removed."
-)%>%
+) %>%
   gt::gt() %>%
   gt::fmt_markdown(columns = everything()) %>%
   gt::tab_options(
-            table.font.size = "small",
-            data_row.padding = gt::px(1),
-            summary_row.padding = gt::px(1),
-            grand_summary_row.padding = gt::px(1),
-            footnotes.padding = gt::px(1),
-            source_notes.padding = gt::px(1),
-            row_group.padding = gt::px(1)
-          )
+    table.font.size = "small",
+    data_row.padding = gt::px(1),
+    summary_row.padding = gt::px(1),
+    grand_summary_row.padding = gt::px(1),
+    footnotes.padding = gt::px(1),
+    source_notes.padding = gt::px(1),
+    row_group.padding = gt::px(1)
+  )
 
 ## ---- echo=FALSE--------------------------------------------------------------
 tibble::tribble(
@@ -114,14 +114,14 @@ tibble::tribble(
   gt::gt() %>%
   gt::fmt_markdown(columns = everything()) %>%
   gt::tab_options(
-            table.font.size = "small",
-            data_row.padding = gt::px(1),
-            summary_row.padding = gt::px(1),
-            grand_summary_row.padding = gt::px(1),
-            footnotes.padding = gt::px(1),
-            source_notes.padding = gt::px(1),
-            row_group.padding = gt::px(1)
-          )
+    table.font.size = "small",
+    data_row.padding = gt::px(1),
+    summary_row.padding = gt::px(1),
+    grand_summary_row.padding = gt::px(1),
+    footnotes.padding = gt::px(1),
+    source_notes.padding = gt::px(1),
+    row_group.padding = gt::px(1)
+  )
 
 ## ---- echo=FALSE--------------------------------------------------------------
 tibble::tribble(
@@ -133,14 +133,14 @@ tibble::tribble(
   gt::gt() %>%
   gt::fmt_markdown(columns = everything()) %>%
   gt::tab_options(
-            table.font.size = "small",
-            data_row.padding = gt::px(1),
-            summary_row.padding = gt::px(1),
-            grand_summary_row.padding = gt::px(1),
-            footnotes.padding = gt::px(1),
-            source_notes.padding = gt::px(1),
-            row_group.padding = gt::px(1)
-          )
+    table.font.size = "small",
+    data_row.padding = gt::px(1),
+    summary_row.padding = gt::px(1),
+    grand_summary_row.padding = gt::px(1),
+    footnotes.padding = gt::px(1),
+    source_notes.padding = gt::px(1),
+    row_group.padding = gt::px(1)
+  )
 
 ## -----------------------------------------------------------------------------
 tbl_regression_ex$table_styling
@@ -171,16 +171,16 @@ tibble::tribble(
   "`col_name`", "The column name the statistics appear under in `.$table_body`, e.g. `'stat_0'`, `'stat_1'`",
   "`variable_levels`", "This column appears if and only if the variable being summarized has multiple levels. The column is equal to the variable's levels.",
   "`<statistics>`", "Primarily, the tibble stores the summary statistics for each variable. For example, when the mean is requested in `tbl_summary()`, there will be a column called `'mean'`."
-)%>%
+) %>%
   gt::gt() %>%
   gt::fmt_markdown(columns = everything()) %>%
   gt::tab_options(
-            table.font.size = "small",
-            data_row.padding = gt::px(1),
-            summary_row.padding = gt::px(1),
-            grand_summary_row.padding = gt::px(1),
-            footnotes.padding = gt::px(1),
-            source_notes.padding = gt::px(1),
-            row_group.padding = gt::px(1)
-          )
+    table.font.size = "small",
+    data_row.padding = gt::px(1),
+    summary_row.padding = gt::px(1),
+    grand_summary_row.padding = gt::px(1),
+    footnotes.padding = gt::px(1),
+    source_notes.padding = gt::px(1),
+    row_group.padding = gt::px(1)
+  )
 

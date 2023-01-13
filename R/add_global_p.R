@@ -20,7 +20,6 @@
 #' quoted or unquoted variable names. Default is `everything()`
 #' @param quiet Logical indicating whether to print messages in console. Default is
 #' `FALSE`
-#' @param terms DEPRECATED.  Use `include=` argument instead.
 #' @param type Type argument passed to `car::Anova(type=)`. Default is `"III"`
 #' @param ... Additional arguments to be passed to `car::Anova`,
 #' `aod::wald.test()` or `anova_fun` (if specified)
@@ -28,7 +27,7 @@
 #' @export
 #' @seealso Review [list, formula, and selector syntax][syntax] used throughout gtsummary
 #'
-#' @examplesIf identical(Sys.getenv("IN_PKGDOWN"), "true") && broom.helpers::.assert_package("car", pkg_search = "gtsummary", boolean = TRUE)
+#' @examplesIf broom.helpers::.assert_package("car", pkg_search = "gtsummary", boolean = TRUE)
 #' \donttest{
 #' # Example 1 ----------------------------------
 #' tbl_lm_global_ex1 <-
@@ -76,15 +75,8 @@ add_global_p.tbl_regression <- function(x,
                                         keep = FALSE,
                                         anova_fun = NULL,
                                         quiet = NULL,
-                                        ..., terms = NULL) {
+                                        ...) {
   updated_call_list <- c(x$call_list, list(add_global_p = match.call()))
-  # deprecated arguments -------------------------------------------------------
-  if (!is.null(terms)) {
-    lifecycle::deprecate_stop(
-      "1.2.5", "gtsummary::add_global_p.tbl_regression(terms = )",
-      "add_global_p.tbl_regression(include = )"
-    )
-  }
 
   # setting defaults -----------------------------------------------------------
   quiet <- quiet %||% get_theme_element("pkgwide-lgl:quiet") %||% FALSE
@@ -153,7 +145,7 @@ add_global_p.tbl_regression <- function(x,
       x$table_body %>%
       mutate(
         p.value = if_else(.data$variable %in% !!include & .data$row_type == "level",
-                          NA_real_, .data$p.value
+          NA_real_, .data$p.value
         )
       )
   }
@@ -186,12 +178,18 @@ add_global_p.tbl_uvregression <- function(x, type = NULL, include = everything()
       x$tbls[include],
       function(tbl, tbl_name) {
         # return empty tibble if variable not included
-        if (!tbl_name %in% include) return(tibble(variable = character(0L),
-                                                  row_type = character(0L),
-                                                  p.value_global = numeric(0L)))
+        if (!tbl_name %in% include) {
+          return(tibble(
+            variable = character(0L),
+            row_type = character(0L),
+            p.value_global = numeric(0L)
+          ))
+        }
         car_Anova <-
-          .run_anova(x = tbl[["model_obj"]], type = type,
-                     anova_fun = anova_fun, variable = tbl_name, ...)
+          .run_anova(
+            x = tbl[["model_obj"]], type = type,
+            anova_fun = anova_fun, variable = tbl_name, ...
+          )
 
         car_Anova %>%
           mutate(
@@ -249,7 +247,7 @@ add_global_p.tbl_uvregression <- function(x, type = NULL, include = everything()
       x$table_body %>%
       mutate(
         p.value = if_else(.data$variable %in% !!include & .data$row_type == "level",
-                          NA_real_, .data$p.value
+          NA_real_, .data$p.value
         )
       )
   }
@@ -260,7 +258,9 @@ add_global_p.tbl_uvregression <- function(x, type = NULL, include = everything()
 
 tidy_car_anova <- function(x, type, tbl, ...) {
   car::Anova(mod = x, type = type, ...) %>%
-    {suppressWarnings(broom::tidy(.))}
+    {
+      suppressWarnings(broom::tidy(.))
+    }
 }
 
 # this function runs anova_fun if specified.
@@ -279,7 +279,7 @@ tidy_car_anova <- function(x, type, tbl, ...) {
             "There was an error running {.code anova_fun()} for {.val {variable}}",
             "There was an error running {.code anova_fun()}"
           ) %>%
-          cli::cli_alert_danger()
+            cli::cli_alert_danger()
           stop(e)
         }
       )
@@ -297,8 +297,10 @@ tidy_car_anova <- function(x, type, tbl, ...) {
         "There was an error running {.code car::Anova()} for {.val {variable}}, ",
         "There was an error running {.code car::Anova()}, "
       ) %>%
-        paste0("likely due to this model type not being supported. ",
-               "The results displayed are based on {.code add_global_p(anova_fun = gtsummary::tidy_wald_test)}") %>%
+        paste0(
+          "likely due to this model type not being supported. ",
+          "The results displayed are based on {.code add_global_p(anova_fun = gtsummary::tidy_wald_test)}"
+        ) %>%
         cli::cli_alert_danger()
 
       tryCatch(

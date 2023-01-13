@@ -9,12 +9,15 @@ test_that("modify_column_merge() works", {
       ),
     NA
   )
+  expect_snapshot(tbl %>% render_as_html())
 
   expect_equal(
     as_tibble(tbl, col_labels = FALSE) %>%
       dplyr::pull(estimate),
-    c("0.00 (-0.01, 0.01)", NA, NA,
-      "-0.38 (-0.69, -0.07)", "-0.12 (-0.43, 0.19)")
+    c(
+      "0.00 (-0.01, 0.01)", NA, NA,
+      "-0.38 (-0.69, -0.07)", "-0.12 (-0.43, 0.19)"
+    )
   )
 
   expect_error(

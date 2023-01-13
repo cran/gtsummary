@@ -24,22 +24,8 @@
 #' as_tibble(tbl, col_labels = FALSE)
 #' }
 as_tibble.gtsummary <- function(x, include = everything(), col_labels = TRUE,
-                                return_calls = FALSE, exclude = NULL,
-                                fmt_missing = FALSE, ...) {
+                                return_calls = FALSE, fmt_missing = FALSE, ...) {
   check_dots_empty(error = function(e) inform(c(e$message, e$body)))
-  # DEPRECATION notes ----------------------------------------------------------
-  if (!rlang::quo_is_null(rlang::enquo(exclude))) {
-    lifecycle::deprecate_stop(
-      "1.2.5",
-      "gtsummary::as_tibble(exclude = )",
-      "as_tibble(include = )",
-      details = paste0(
-        "The `include` argument accepts quoted and unquoted expressions similar\n",
-        "to `dplyr::select()`. To exclude commands, use the minus sign.\n",
-        "For example, `include = -cols_hide`"
-      )
-    )
-  }
 
   # running pre-conversion function, if present --------------------------------
   x <- do.call(get_theme_element("pkgwide-fun:pre_conversion", default = identity), list(x))
@@ -49,9 +35,11 @@ as_tibble.gtsummary <- function(x, include = everything(), col_labels = TRUE,
 
   # creating list of calls to get formatted tibble -----------------------------
   tibble_calls <-
-    table_styling_to_tibble_calls(x = x,
-                                  col_labels = col_labels,
-                                  fmt_missing = fmt_missing)
+    table_styling_to_tibble_calls(
+      x = x,
+      col_labels = col_labels,
+      fmt_missing = fmt_missing
+    )
 
   # converting to character vector ---------------------------------------------
   include <-
@@ -89,8 +77,9 @@ table_styling_to_tibble_calls <- function(x, col_labels = TRUE, fmt_missing = FA
       list(
         expr(group_by(.data$groupname_col)),
         expr(mutate(groupname_col = ifelse(dplyr::row_number() == 1,
-                                           as.character(.data$groupname_col),
-                                           NA_character_))),
+          as.character(.data$groupname_col),
+          NA_character_
+        ))),
         expr(ungroup())
       )
   }
@@ -162,7 +151,7 @@ table_styling_to_tibble_calls <- function(x, col_labels = TRUE, fmt_missing = FA
     tibble_calls[["fmt_missing"]] <-
       map(
         seq_len(nrow(x$table_styling$fmt_missing)),
-        ~expr(
+        ~ expr(
           ifelse(
             dplyr::row_number() %in% !!x$table_styling$fmt_missing$row_numbers[[.x]] & is.na(!!sym(x$table_styling$fmt_missing$column[.x])),
             !!x$table_styling$fmt_missing$symbol[.x],
@@ -171,10 +160,11 @@ table_styling_to_tibble_calls <- function(x, col_labels = TRUE, fmt_missing = FA
         )
       ) %>%
       rlang::set_names(x$table_styling$fmt_missing$column) %>%
-      {expr(dplyr::mutate(!!!.))} %>%
+      {
+        expr(dplyr::mutate(!!!.))
+      } %>%
       list()
-  }
-  else {
+  } else {
     tibble_calls[["fmt_missing"]] <- list()
   }
 
