@@ -47,12 +47,13 @@ style_number <- function(x, digits = 0, big.mark = NULL, decimal.mark = NULL,
       }
     )
   ret[is.na(x)] <- NA_character_
-  names(ret) <- names(x)
+  attributes(ret) <- attributes(unclass(x))
 
   ret
 }
 
 # this function assures that 5s are rounded up (and not to even, the default in `round()`)
+# code taken from https://github.com/sfirke/janitor/blob/main/R/round_half_up.R
 round2 <- function(x, digits = 0) {
-  round(x + .Machine$double.eps * sign(x), digits = digits)
+  trunc(abs(x) * 10 ^ digits + 0.5 + sqrt(.Machine$double.eps)) / 10 ^ digits * sign(as.numeric(x))
 }

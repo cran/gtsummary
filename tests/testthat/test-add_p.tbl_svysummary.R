@@ -7,14 +7,14 @@ d <- survey::svydesign(~1, data = as.data.frame(Titanic), weights = ~Freq)
 
 test_that("add_p creates output without error/warning", {
   expect_snapshot(
-    tbl_svysummary(strial, by = grade) %>% add_p() %>% render_as_html()
+    tbl_svysummary(strial, by = grade) %>% add_p() %>% as.data.frame()
   )
 
   expect_snapshot(
     strial %>%
       tbl_svysummary(by = trt) %>%
       add_p() %>%
-      render_as_html()
+      as.data.frame()
   )
 
   expect_warning(
@@ -47,14 +47,14 @@ test_that("add_p creates output without error/warning with continuous2", {
   expect_snapshot(
     tbl_svysummary(strial, by = grade, type = all_continuous() ~ "continuous2") %>%
       add_p() %>%
-      render_as_html()
+      as.data.frame()
   )
 
   expect_snapshot(
     strial %>%
       tbl_svysummary(by = trt, type = all_continuous() ~ "continuous2") %>%
       add_p() %>%
-      render_as_html()
+      as.data.frame()
   )
 
   expect_warning(
@@ -104,6 +104,7 @@ test_that("add_p creates errors with bad args", {
 
 
 test_that("add_p works well", {
+  skip_if_not(broom.helpers::.assert_package("flextable", pkg_search = "gtsummary", boolean = TRUE))
   expect_error(
     tbl1 <-
       tbl_svysummary(strial, by = response) %>%
@@ -116,7 +117,7 @@ test_that("add_p works well", {
       )),
     NA
   )
-  expect_snapshot(tbl1 %>% render_as_html())
+  expect_snapshot(tbl1 %>% as.data.frame())
 
   expect_equal(
     dplyr::filter(tbl1$meta_data, variable == "age")$p.value,
@@ -161,7 +162,7 @@ test_that("add_p works well", {
       )),
     NA
   )
-  expect_snapshot(tbl2 %>% render_as_html())
+  expect_snapshot(tbl2 %>% as.data.frame())
   expect_error(as_flex_table(tbl2), NA)
 
   expect_equal(

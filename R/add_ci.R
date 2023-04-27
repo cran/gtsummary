@@ -262,13 +262,13 @@ add_ci.tbl_summary <- function(x,
   if (inherits(x, "tbl_summary")) {
     single_ci_fn <- single_ci
   }
-  if (inherits(x, "tbl_svysummary")) {
+  else if (inherits(x, "tbl_svysummary")) {
     single_ci_fn <- single_ci_svy
   }
   x <-
     x %>%
     add_stat(
-      fns = everything() ~ purrr::partial(single_ci_fn,
+      fns = all_of(include) ~ purrr::partial(single_ci_fn,
         method = method,
         conf.level = conf.level,
         statistic = statistic,
@@ -276,7 +276,7 @@ add_ci.tbl_summary <- function(x,
         summary_type = summary_type,
         df = df
       ),
-      location = list(everything() ~ "label", all_categorical(FALSE) ~ "level")
+      location = list(all_of(include) ~ "label", all_categorical(FALSE) ~ "level")
     ) %>%
     # moving the CI cols to after the original stat cols (when `by=` variable present)
     # also renaming CI columns
@@ -580,10 +580,21 @@ single_ci_svy <- function(variable, by, tbl, method, conf.level,
     summary_type[[variable]] %in% c("categorical", "dichotomous")) {
     svyprop_method <- stringr::str_sub(method[[variable]], start = 9L)
     if (svyprop_method == "") svyprop_method <- "logit"
+
+    md <-
+        tbl$meta_data %>%
+        filter(.data$variable %in% .env$variable) %>%
+        purrr::pluck("df_stats", 1)
+    if (!"variable_levels" %in% names(md)) # if dichotomous
+      md <- md %>%
+        dplyr::mutate(variable_levels =
+                        tbl$meta_data %>%
+                        filter(.data$variable %in% .env$variable) %>%
+                        purrr::pluck("dichotomous_value", 1)
+                      )
+
     df_single_ci <-
-      tbl$meta_data %>%
-      filter(.data$variable %in% .env$variable) %>%
-      purrr::pluck("df_stats", 1) %>%
+      md %>%
       dplyr::rowwise() %>%
       mutate(
         ci = calculate_svyprop_ci(
@@ -682,17 +693,35 @@ calculate_svymedian_ci <- function(variable, by, level, tbl, method,
 
 calculate_svyprop_ci <- function(variable, variable_levels, by, level, tbl,
                                  method, statistic, conf.level, style_fun, df) {
+  percent <- tbl$inputs$percent
+
   if (is.null(by) || is.na(level)) {
     design <- tbl$inputs$data
-  } else {
+    design$variables[["..binary..svyciprop.."]] <-
+      design$variables[[variable]] == variable_levels
+  } else if (percent == "column") {
     design <- subset(
       tbl$inputs$data,
       tbl$inputs$data$variables[[by]] == level
     )
+    design$variables[["..binary..svyciprop.."]] <-
+      design$variables[[variable]] == variable_levels
+  } else if (percent == "row") {
+    design <- subset(
+      tbl$inputs$data,
+      tbl$inputs$data$variables[[variable]] == variable_levels
+    )
+    design$variables[["..binary..svyciprop.."]] <-
+      design$variables[[by]] == level
+  } else {
+    design <- subset(
+      tbl$inputs$data,
+      !is.na(tbl$inputs$data$variables[[variable]])
+    )
+    design$variables[["..binary..svyciprop.."]] <-
+      design$variables[[by]] == level &
+      design$variables[[variable]] == variable_levels
   }
-
-  design$variables[["..binary..svyciprop.."]] <-
-    design$variables[[variable]] == variable_levels
 
   df_ci <-
     survey::svyciprop(

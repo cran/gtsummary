@@ -543,8 +543,10 @@ stat_label_match <- function(stat_display, iqr = TRUE, range = TRUE) {
       "{N_miss}", "N missing",
       "{N_nonmiss}", "N",
       "{N_obs}", "No. obs.",
+      "{mean.std.error}", "SE",
       "{p.std.error}%", "SE(%)",
       "{p.std.error}", "SE(%)",
+      "{deff}", "Design effect",
       "{N_unweighted}", "N (unweighted)",
       "{n_unweighted}", "n (unweighted)",
       "{N_obs_unweighted}", "Total N (unweighted)",
@@ -801,13 +803,12 @@ summarize_continuous <- function(data, variable, by, stat_display, summary_type)
   # adding stat_display to the data frame
   if (summary_type == "continuous2") {
     return <-
-      left_join(
+      dplyr::cross_join(
         df_stats,
         tibble(
           variable_levels = map_chr(stat_display, ~ stat_label_match(.x) %>% unlist()),
           stat_display = stat_display
-        ),
-        by = character()
+        )
       ) %>%
       select(any_of(c("by", "variable", "variable_levels", "stat_display")), everything())
   } else {

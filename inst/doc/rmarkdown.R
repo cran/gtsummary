@@ -26,7 +26,7 @@ gt_markdown_key <-
       "Missing indentation, footnotes, spanning headers",
       "No formatted output",
       "Output not supported",
-      "Under development: missing indentation (RTF) or irregular headers (Word)"
+      "Under development, missing indentation"
     )
   ) %>%
   gt() %>%
@@ -68,8 +68,8 @@ list(
   purrr::cross_df() %>%
   dplyr::mutate(
     rating = dplyr::case_when(
-      printer == "gt" & output %in% c("HTML", "PDF") ~ 1, # good output
-      printer == "gt" & output %in% c("RTF", "Word") ~ 5, # under construction
+      printer == "gt" & output %in% c("HTML", "Word", "PDF") ~ 1, # good output
+      printer == "gt" & output %in% c("RTF") ~ 5, # under construction
       printer == "kable" ~ 2, # ok output
       printer == "flextable" & output != "RTF" ~ 1, # good output
       printer == "flextable" & output == "RTF" ~ 4, # not supported
@@ -106,7 +106,7 @@ list(
     )
   ) %>%
   gt() %>%
-  cols_move_to_start(columns = c(link, fns)) %>%
+  cols_move_to_start(columns = c(link, fns, HTML, Word, PDF, RTF)) %>%
   cols_hide(columns = c(printer)) %>%
   cols_label(
     link = md("**Print Engine**"),

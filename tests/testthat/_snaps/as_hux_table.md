@@ -13,7 +13,7 @@
                          Marker Level (ng/mL)     0.64 (0.22, 1.39)  
                          Unknown                         10          
                          T Stage                                     
-                         T1                           53 (26%)       
+                         T1                           53 (27%)       
                          T2                           54 (27%)       
                          T3                           43 (22%)       
                          T4                           50 (25%)       
@@ -45,6 +45,23 @@
                           ────────────────────────────────────────
                             n (%); Median (IQR)                   
                             test footnote                         
+      
+      Column names: label, stat_0
+
+---
+
+    Code
+      tbl
+    Output
+                                Characteristic    N = 5,000   
+                              ────────────────────────────────
+                                age              47 (38, 57)  
+                                Unknown              275      
+                                trt                           
+                                Drug A           2,450 (49%)  
+                                Drug B           2,550 (51%)  
+                              ────────────────────────────────
+                                Median (IQR); n (%)           
       
       Column names: label, stat_0
 

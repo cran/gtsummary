@@ -22,11 +22,11 @@ test_that("tbl_svysummary creates output without error/warning (no by var)", {
 
 test_that("tbl_svysummary creates output without error/warning (with by var)", {
   statistics <- list(
-    all_continuous() ~ "{median} {mean} {sd} {var} {min} {max} {sum} {p25} {p42} {p75} {p89} {mean.std.error}",
-    all_categorical() ~ "{n} {N} {p} | {n_unweighted} {N_unweighted} {p_unweighted}"
+    all_continuous() ~ "{median} {mean} {sd} {var} {min} {max} {sum} {p25} {p42} {p75} {p89} {mean.std.error} {deff}",
+    all_categorical() ~ "{n} {N} {p} | {n_unweighted} {N_unweighted} {p_unweighted} {p.std.error} {deff}"
   )
   expect_snapshot(
-    tbl_svysummary(dc_light, by = both, statistic = statistics) %>% render_as_html()
+    tbl_svysummary(dc_light, by = both, statistic = statistics) %>% as_tibble()
   )
   expect_warning(
     tbl_svysummary(dc_light, by = both, statistic = statistics),
@@ -37,7 +37,7 @@ test_that("tbl_svysummary creates output without error/warning (with by var)", {
 test_that("tbl_svysummary allows for named list input", {
   expect_snapshot(
     tbl_svysummary(d, by = Survived, label = list(Class = "New Class", Sex = "New Sex")) %>%
-      render_as_html()
+      as.data.frame()
   )
   expect_warning(
     tbl_svysummary(d, by = Survived, label = list(Class = "New Class", Sex = "New Sex")),
@@ -60,7 +60,7 @@ test_that("tbl_svysummary throws errors/messages with bad 'sort = ' specificatio
 test_that("tbl_svysummary value argument works properly", {
   expect_snapshot(
     tbl_svysummary(d, value = "Class" ~ "1st") %>%
-      render_as_html()
+      as.data.frame()
   )
 })
 
@@ -69,11 +69,11 @@ test_that("tbl_svysummary works in character inputs for `by=`", {
 
   expect_snapshot(
     tbl_svysummary(d, by = all_of(my_by_variable)) %>%
-      render_as_html()
+      as.data.frame()
   )
   expect_snapshot(
     tbl_svysummary(d, by = "Survived") %>%
-      render_as_html()
+      as.data.frame()
   )
   expect_snapshot(
     purrr::map(
@@ -167,7 +167,7 @@ test_that("tbl_svysummary-testing tidyselect parsing", {
       ),
     NA
   )
-  expect_snapshot(big_test %>% render_as_html())
+  expect_snapshot(big_test %>% as.data.frame())
 
   # checking missing
   expect_equal(
@@ -291,14 +291,14 @@ test_that("tbl_svysummary-all_categorical() use with `type=`", {
 
 test_that("tbl_svysummary-difftime does not cause error", {
   expect_snapshot(
-    dplyr::storms %>%
+    df_dplyr_storms %>%
       dplyr::mutate(
         date = ISOdate(year, month, day),
         date_diff = difftime(dplyr::lag(date, 5), date, units = "days")
       ) %>%
       survey::svydesign(data = ., ids = ~1, weights = ~1) %>%
       tbl_svysummary() %>%
-      render_as_html()
+      as_tibble()
   )
 })
 
@@ -319,18 +319,18 @@ test_that("tbl_svysummary-all missing data does not cause error", {
     all_missing_no_by <- tbl_svysummary(design_missing, include = -my_by_var),
     NA
   )
-  expect_snapshot(all_missing_no_by %>% render_as_html())
+  expect_snapshot(all_missing_no_by %>% as.data.frame())
 
   expect_error(
     all_missing_by <- tbl_svysummary(design_missing, by = my_by_var),
     NA
   )
-  expect_snapshot(all_missing_by %>% render_as_html())
+  expect_snapshot(all_missing_by %>% as.data.frame())
 
   # making categorical, variables that cannot be summarized as categorical
   expect_snapshot(
     tbl_svysummary(design_missing, by = my_by_var, type = c(int, dbl) ~ "categorical") %>%
-      render_as_html()
+      as.data.frame()
   )
 
   expect_equal(
@@ -379,7 +379,7 @@ test_that("tbl_svysummary-all missing data does not cause error", {
   expect_error(
     missing_fct_by <-
       trial %>%
-      mutate(response2 = factor(response) %>% forcats::fct_explicit_na()) %>%
+      mutate(response2 = factor(response) %>% forcats::fct_na_value_to_level(level = "(Missing)")) %>%
       filter(!is.na(response)) %>%
       survey::svydesign(data = ., ids = ~1, weights = ~1) %>%
       tbl_svysummary(by = response2),
@@ -399,7 +399,7 @@ test_that("tbl_svysummary-no error when *data* with single column passed", {
       as.data.frame() %>%
       survey::svydesign(data = ., ids = ~1, weights = ~1) %>%
       tbl_svysummary(label = trt ~ "TREATMENT GROUP") %>%
-      render_as_html()
+      as.data.frame()
   )
 })
 
@@ -409,7 +409,7 @@ test_that("tbl_svysummary-no error when by variable is ordered factor", {
       dplyr::mutate(grade = as.ordered(grade)) %>%
       survey::svydesign(data = ., ids = ~1, weights = ~1) %>%
       tbl_svysummary(by = grade) %>%
-      render_as_html()
+      as.data.frame()
   )
 })
 
@@ -500,7 +500,8 @@ test_that("tbl_svysummary-calculates unweighted N with continuous variables and 
       dplyr::group_by(Sex) %>%
       dplyr::count() %>%
       dplyr::pull(n) %>%
-      dplyr::first()
+      dplyr::first(),
+    ignore_attr = TRUE
   )
 })
 
@@ -518,7 +519,7 @@ test_that("tbl_summary(digits=) tests with fn inputs", {
       ),
     NA
   )
-  expect_snapshot(tbl_digits %>% render_as_html())
+  expect_snapshot(tbl_digits %>% as.data.frame())
 
   # checking the display is correct
   expect_equal(
@@ -543,7 +544,7 @@ test_that("tbl_svysummary() works with date and date/time", {
     tbl1 <- df_date %>% tbl_svysummary(),
     NA
   )
-  expect_snapshot(tbl1 %>% render_as_html())
+  expect_snapshot(tbl1 %>% as.data.frame())
 
   expect_equal(
     tbl1 %>% as_tibble() %>% select(last_col()) %>% dplyr::pull(),
@@ -555,7 +556,7 @@ test_that("tbl_svysummary() works with date and date/time", {
     tbl1 <- df_date %>% tbl_svysummary(type = everything() ~ "continuous", digits = everything() ~ month_year, include = -group),
     NA
   )
-  expect_snapshot(tbl1 %>% render_as_html())
+  expect_snapshot(tbl1 %>% as.data.frame())
 
   expect_equal(
     tbl1 %>% as_tibble() %>% select(last_col()) %>% dplyr::pull(),
@@ -577,7 +578,7 @@ test_that("tbl_svysummary() works with date and date/time", {
       ),
     NA
   )
-  expect_snapshot(tbl1 %>% render_as_html())
+  expect_snapshot(tbl1 %>% as.data.frame())
 
   expect_error(
     tbl2 <- df_date %>% tbl_svysummary(by = group),
@@ -615,7 +616,7 @@ test_that("tbl_svysummary() works with date and date/time", {
     ) %>%
       as_tibble(col_labels = FALSE) %>%
       dplyr::pull(),
-    c(NA, "44%", "56%")
+    c(NA, "44%", "57%")
   )
 })
 
@@ -623,7 +624,7 @@ test_that("tbl_svysummary() works with 0/1 variables", {
   expect_snapshot(
     survey::svydesign(data = trial, ids = ~1, weights = ~1) %>%
       tbl_svysummary(include = response) %>%
-      render_as_html()
+      as.data.frame()
   )
 })
 
@@ -635,7 +636,7 @@ test_that("tbl_svysummary() works with a factor having only one levem", {
     res <- d %>% tbl_svysummary(),
     NA
   )
-  expect_snapshot(res %>% render_as_html())
+  expect_snapshot(res %>% as.data.frame())
 
   expect_equal(
     res$table_body$stat_0,

@@ -81,10 +81,11 @@
 #'   tbl_regression(exponentiate = TRUE)
 #'
 #' # Example 3 ----------------------------------
+#' # round all estimates to 3 decimal places
 #' suppressMessages(library(lme4))
 #' tbl_regression_ex3 <-
-#'   glmer(am ~ hp + (1 | gear), mtcars, family = binomial) %>%
-#'   tbl_regression(exponentiate = TRUE)
+#'   lmer(hp ~ am + (1 | gear), data = mtcars) %>%
+#'   tbl_regression(estimate_fun = function(x) style_number(x, digits = 3))
 #' }
 #' @section Example Output:
 #' \if{html}{Example 1}
@@ -245,16 +246,18 @@ tbl_regression.default <- function(x, label = NULL, exponentiate = FALSE,
     )
 
   # adding the Ns to the `x$table_styling$header`
-  x$table_styling$header <-
-    x[c("N", "n", "N_event")] %>%
-    purrr::compact() %>%
-    as_tibble() %>%
-    dplyr::rename_with(.fn = ~ vec_paste0("modify_stat_", .), .cols = everything()) %>%
-    full_join(
-      x$table_styling$header,
-      by = character()
-    ) %>%
-    dplyr::relocate(starts_with("modify_stat_"), .after = last_col())
+  if (!rlang::is_empty(x[c("N", "n", "N_event")] %>% purrr::compact())) {
+    x$table_styling$header <-
+      x[c("N", "n", "N_event")] %>%
+      purrr::compact() %>%
+      as_tibble() %>%
+      dplyr::rename_with(.fn = ~ vec_paste0("modify_stat_", .), .cols = everything()) %>%
+      dplyr::cross_join(
+        x$table_styling$header
+      ) %>%
+      dplyr::relocate(starts_with("modify_stat_"), .after = last_col())
+  }
+
 
   # running any additional mods ------------------------------------------------
   x <-
