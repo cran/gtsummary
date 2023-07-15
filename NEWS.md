@@ -1,3 +1,21 @@
+# gtsummary 1.7.2
+
+* Removed messaging about the former auto-removal of the `tbl_summary(group)` variable from the table: a change that occurred 3+ years ago in gtsummary v1.3.1
+
+* Fix in `as_flex_table()` where source notes were not accurately rendered. (#1520)
+
+* Fix in column order when `add_ci()` is run after `add_overall(last=TRUE)`. Previously, the overall columns were placed in front. (#1525)
+
+* Line breaks (i.e. `\n`) are now removed from column headers and table cells when `as_kable()` is called. (#1526)
+
+* Fix in `as_gt()` where columns with common spanning headers were gathered. Corrected with `gt::tab_spanner(gather = FALSE)`. (#1527)
+
+* Fix in `remove_row_type()` where header rows for `continuous2` type variables was not removed when requested. (#1507)
+
+* Fix where some default `add_p.tbl_summary()` categorical tests were chi-squared when it should have been Fisher's exact test. This misclassification occurred in some cases when there was a large differential in the missing pattern for one of the variables in the cross table. (#1513)
+
+* Fix in `add_overall(col_label=)` where specified label was not always placed.  (#1505)
+
 # gtsummary 1.7.1
 
 ### New Functions

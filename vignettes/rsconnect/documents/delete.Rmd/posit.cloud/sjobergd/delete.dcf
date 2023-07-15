@@ -1,0 +1,13 @@
+name: delete
+title: delete
+username:
+account: sjobergd
+server: posit.cloud
+hostUrl: https://api.shinyapps.io/v1
+appId: 9456942
+bundleId: 7457220
+url: https://posit.cloud/content/6207811
+when: 1689347758.78129
+lastSyncTime: 1689347758.7813
+asMultiple: FALSE
+asStatic: FALSE
