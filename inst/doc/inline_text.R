@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   warning = FALSE,
@@ -16,7 +16,7 @@ gt_compact_fun <- function(x) {
   )
 }
 
-## ---- echo = FALSE, results = 'asis'------------------------------------------
+## ----echo = FALSE, results = 'asis'-------------------------------------------
 # we do NOT want the vignette to build on CRAN...it's taking too long
 if (!identical(Sys.getenv("IN_PKGDOWN"), "true") &&
   !tolower(as.list(Sys.info())$user) %in% c("sjobergd", "currym", "whitingk", "whiting")) {
@@ -50,8 +50,8 @@ m1 <- glm(response ~ age + stage, trial, family = binomial(link = "logit"))
 tbl_m1 <- tbl_regression(m1, exponentiate = TRUE)
 tbl_m1
 
-## ---- echo = FALSE------------------------------------------------------------
-tibble::tribble(
+## ----echo = FALSE-------------------------------------------------------------
+dplyr::tribble(
   ~Parameter,       ~Description,
   "`{estimate}`",   "primary estimate (e.g. model coefficient, odds ratio)",
   "`{conf.low}`",   "lower limit of confidence interval",

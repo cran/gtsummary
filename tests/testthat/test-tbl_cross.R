@@ -1,225 +1,111 @@
 skip_on_cran()
 
-test_that("tbl_cross- throws error if both `col` and `row` are not specified", {
-  expect_error(
-    tbl_cross(trial, col = trt),
-    NULL
-  )
-  expect_error(
-    tbl_cross(trial, row = trt),
-    NULL
-  )
+trial2 <- rbind(
+  NA, # For missing stats
+  trial[, c(1, 4)] # Useful for not specifying row and col
+)
+
+# tbl_cross(data) --------------------------------------------------------------
+test_that("tbl_cross(data) works", {
+  expect_snapshot(tbl_cross(trial2) |> as.data.frame()) # First and second cols
 })
 
-test_that("tbl_cross- works if no `col` or `row` specified", {
+test_that("tbl_cross(data) errors properly", {
+  # Errors thrown when bad data argument passed
+  expect_snapshot(error = TRUE, tbl_cross())
+  expect_snapshot(error = TRUE, tbl_cross(data = letters))
+  expect_snapshot(error = TRUE, tbl_cross(data = dplyr::tibble()))
+  expect_snapshot(error = TRUE, tbl_cross(data = data.frame()))
+})
+
+# tbl_cross(row, col) ----------------------------------------------------------
+test_that("tbl_cross(row, col) works", {
+  expect_snapshot(tbl_cross(trial, row = trt, col = grade) |> as.data.frame())
+})
+
+test_that("tbl_cross(row, col) errors properly", {
+  # Errors thrown when bad row or col argument passed
+  expect_snapshot(error = TRUE, tbl_cross(trial, row = trt))
+  expect_snapshot(error = TRUE, tbl_cross(trial |> mutate("..total.." = 1), row = "..total..", col = trt))
+  expect_snapshot(error = TRUE, tbl_cross(trial, col = trt))
+  expect_snapshot(error = TRUE, tbl_cross(trial, row = trt, col = 1))
+  expect_snapshot(error = TRUE, tbl_cross(trial, row = NULL, col = grade))
+})
+
+# tbl_cross(label) ----------------------------------------------------------
+test_that("tbl_cross(label) works", {
+  expect_silent(
+    out <- tbl_cross(
+      trial2,
+      label = list(trt = "TRT", stage = "STAGE")
+    )
+  )
+  expect_identical(out$table_body$var_label[1], "TRT")
+  expect_identical(unique(out$table_styling$header$spanning_header)[2], "STAGE")
+})
+
+test_that("tbl_cross(label) errors properly", {
+  # Errors thrown when bad label argument passed
   expect_snapshot(
-    tbl_cross(trial, col = trt, row = response) %>% as.data.frame()
+    error = TRUE,
+    tbl_cross(trial2, label = list(trt = letters))
   )
-})
 
-
-test_that("tbl_cross- works in character inputs for `col` and `row", {
-  col_variable <- "trt"
-  row_variable <- "response"
   expect_snapshot(
-    tbl_cross(trial,
-      col = all_of(col_variable),
-      row = all_of(row_variable)
-    ) %>%
-      as.data.frame()
+    error = TRUE,
+    tbl_cross(trial2, label = letters)
   )
-})
 
-test_that("tbl_cross- creates output without error with continuous args", {
   expect_snapshot(
-    tbl_cross(mtcars, row = gear, col = am) %>%
-      as.data.frame()
+    error = TRUE,
+    tbl_cross(trial2, label = TRUE)
   )
-})
 
-
-test_that("tbl_cross- returns errors with bad inputs", {
-  expect_error(
-    tbl_cross(tibble::tibble()),
-    NULL
-  )
-  expect_error(
-    tbl_cross(tibble::tibble(t = integer())),
-    NULL
-  )
-  expect_error(
-    tbl_cross(trial, col = THIS_IS_NOT_A_VARIABLE),
-    NULL
-  )
-})
-
-# Labels Argument ------------------------------------------------------------
-test_that("tbl_cross- labels work", {
   expect_snapshot(
-    tbl_cross(mtcars, row = am, col = cyl, label = list(
-      am = "AM LABEL",
-      cyl = "New cyl"
-    )) %>%
-      as.data.frame()
-  )
-  expect_snapshot(
-    tbl_cross(mtcars,
-      row = am, col = cyl,
-      label = vars(am) ~ "AM LABEL"
-    ) %>%
-      as.data.frame()
+    error = TRUE,
+    tbl_cross(trial2, label = list(trt = NA))
   )
 })
 
-# Stats and Percent Argument ---------------------------------------------------
-test_that("tbl_cross- statistics argument works", {
-  expect_snapshot(
-    tbl_cross(trial, statistic = "{p}") %>% as.data.frame()
-  )
-  expect_snapshot(
-    tbl_cross(trial, percent = "cell") %>% as.data.frame()
-  )
-})
+# tbl_cross(statistic) ---------------------------------------------------------
+all_stats <- c("p", "n", "N", "N_miss", "N_nonmiss", "p_miss", "p_nonmiss") |>
+  sapply(function(var) sprintf("%s={%s}", var, var)) |>
+  paste(collapse = " | ")
 
-test_that("tbl_cross- passing percent without stat works and produces %", {
-  expect_snapshot(
-    tbl_cross(trial, percent = "cell") %>% as.data.frame()
-  )
-  x <- tbl_cross(trial, percent = "cell")
-  expect_snapshot(x %>% as.data.frame())
-  expect_equal(
-    sum(str_detect(x$table_body$stat_1, "%"), na.rm = TRUE) > 1,
-    TRUE
-  )
-})
-
-# Missing Argument -------------------------------------------------------------
-test_that("tbl_cross- test 'no' missing throws message", {
-  expect_message(
-    x <- tbl_cross(trial,
-      row = trt,
-      col = response,
-      missing = "no"
-    ),
-    NULL
-  )
-})
-
-test_that("tbl_cross- test no missing omits all NAs", {
-  x <- tbl_cross(trial,
-    row = trt,
-    col = response,
-    missing = "no"
-  )
-  expect_snapshot(x %>% as.data.frame())
-  expect_equal(
-    "Unknown" %in% x$table_body$label,
-    FALSE
-  )
-})
-
-test_that("tbl_cross- test ifany missing returns Unknown when missing", {
-  x <- tbl_cross(trial,
-    row = response,
-    col = trt,
-    missing = "ifany"
-  )
-  expect_snapshot(x %>% as.data.frame())
-  expect_equal(
-    "Unknown" %in% x$table_body$label,
-    TRUE
-  )
-})
-
-
-test_that("tbl_cross- test 'always' missing returns Unknown even when none", {
-  x <- tbl_cross(trial,
-    row = trt,
-    col = grade,
-    missing = "always"
-  )
-  expect_snapshot(x %>% as.data.frame())
-  expect_equal(
-    "Unknown" %in% x$table_body$label,
-    TRUE
-  )
-})
-
-
-test_that("tbl_cross- works with grouped data (it ungroups it first)", {
-  expect_snapshot(
-    trial %>%
-      dplyr::group_by(response) %>%
-      tbl_cross(death, trt) %>%
-      as.data.frame()
-  )
-})
-
-# Test Dichotomous -> Categorical  -------------------------------------------
-test_that("tbl_cross- test 'no' missing throws message", {
-  data <- data.frame(
-    X = rep(c("Yes", "No"), 3),
-    Y = rep(c("Yes", "No"), each = 3)
-  )
-
-  table <- data %>% tbl_cross(row = X, col = Y)
-  expect_snapshot(table %>% as.data.frame())
-
-  type <- table$meta_data %>%
-    filter(variable == "X") %>%
-    pull(summary_type)
-
-  expect_equal(type, "categorical")
-})
-
-# Margin Argument  -------------------------------------------
-test_that("tbl_cross- test NULL margin argument", {
-  margins <- tbl_cross(trial,
-    row = trt,
-    col = response
-  )
-  expect_snapshot(margins %>% as.data.frame())
-
-  no_margins <- tbl_cross(trial,
-    row = trt,
-    col = response,
-    margin = NULL
-  )
-  expect_snapshot(no_margins %>% as.data.frame())
-
-  # test row margins ------
-  expect_equal(
-    "..total.." %in% margins$table_body$variable,
-    TRUE
+test_that("tbl_cross(statistic) works", {
+  expect_silent(
+    out <- tbl_cross(trial2,
+              statistic = all_stats)
   )
   expect_equal(
-    "..total.." %in% no_margins$table_body$variable,
-    FALSE
-  )
-
-  # test col margins ------
-  expect_equal(
-    "stat_0" %in% names(margins$table_body),
-    TRUE
-  )
-  expect_equal(
-    "stat_0" %in% names(no_margins$table_body),
-    FALSE
+    out$table_body$stat_0[4],
+    "p=0.5 | n=1 | N=201 | N_miss=0 | N_nonmiss=201 | p_miss=0 | p_nonmiss=100" # n = 1 is unknown (missing)
   )
 })
 
-# digits Argument  -------------------------------------------
-test_that("tbl_cross-digits argument", {
-  expect_equal(
-    tbl_cross(
-      trial,
-      response,
-      stage,
-      statistic = "{n} ({p}%)",
-      digits = c(0, 2)
-    ) %>%
-      as_tibble(col_labels = FALSE) %>%
-      dplyr::pull(stat_1),
-    c(NA, "34 (17.00%)", "18 (9.00%)", "1 (0.50%)", "53 (26.50%)")
-  )
+# tbl_cross(margin) ------------------------------------------------------------
+test_that("tbl_cross(margin) works", {
+  expect_snapshot(tbl_cross(trial2, margin = "column") |> as.data.frame())
+})
+
+test_that("tbl_cross(margin) errors properly", {
+  expect_snapshot(error = TRUE, tbl_cross(trial2, margin = "columsadasn"))
+  expect_snapshot(error = TRUE, tbl_cross(trial2, margin = 1))
+})
+
+# tbl_cross(percent) -----------------------------------------------------------
+test_that("tbl_cross(percent) works", {
+  expect_silent(out <- tbl_cross(trial2, percent = "row"))
+  expect_true(all(grepl(out$table_body$stat_0[-1], pattern = "\\(100\\%\\)")))
+
+  expect_silent(out <- tbl_cross(trial2, percent = "cell"))
+  expect_true(grepl(out$table_body$stat_0[5], pattern = "\\(100\\%\\)"))
+
+  expect_silent(out <- tbl_cross(trial2, percent = "column"))
+  expect_true(all(grepl(out$table_body[5, -seq(5)] |> unlist(use.names = FALSE), pattern = "\\(100\\%\\)")))
+})
+
+test_that("tbl_cross(percent) errors properly", {
+  expect_snapshot(error = TRUE, tbl_cross(trial2, percent = "columsadasn"))
+  expect_snapshot(error = TRUE, tbl_cross(trial2, percent = 1))
 })

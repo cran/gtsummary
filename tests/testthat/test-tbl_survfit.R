@@ -1,199 +1,203 @@
 skip_on_cran()
-skip_if_not(broom.helpers::.assert_package("car", pkg_search = "gtsummary", boolean = TRUE))
-skip_if_not(broom.helpers::.assert_package("survival", pkg_search = "gtsummary", boolean = TRUE))
 
-test_that("no errors/warnings with stratified variable", {
-  s1 <- survival::survfit(survival::Surv(ttdeath, death) ~ trt, trial)
-  s1.1 <- survival::survfit(survival::Surv(trial$ttdeath, trial$death) ~ trial$trt)
-  expect_snapshot(
-    tbl_survfit(
-      s1,
-      times = c(12, 24)
-    ) %>%
-      as.data.frame()
-  )
-
-  expect_snapshot(
-    tbl_survfit(
-      s1.1,
-      times = c(12, 24)
-    ) %>%
-      as.data.frame()
-  )
-  expect_snapshot(
-    tbl_survfit(
-      s1,
-      times = c(12, 24),
-      reverse = TRUE
-    ) %>%
-      as.data.frame()
-  )
-  expect_warning(
-    tbl_survfit(
-      s1,
-      times = c(12, 24)
-    ),
-    NA
-  )
-  expect_snapshot(
-    tbl_survfit(
-      s1,
-      probs = c(0.2, 0.4),
-      estimate_fun = partial(style_sigfig, digits = 4)
-    ) %>%
-      as.data.frame()
-  )
-  expect_warning(
-    tbl_survfit(
-      s1,
-      probs = c(0.2, 0.4),
-      estimate_fun = partial(style_sigfig, digits = 4)
-    ),
-    NA
+test_that("tbl_survfit(time) works", {
+  expect_silent(
+    trial |>
+      tbl_survfit(
+        include = trt,
+        y = "Surv(ttdeath, death)",
+        times = 12
+      )
   )
 })
 
-test_that("no errors/warnings with no stratified variable", {
-  s2 <- survival::survfit(survival::Surv(ttdeath, death) ~ 1, trial)
-  s2.1 <- survival::survfit(survival::Surv(trial$ttdeath, trial$death) ~ 1)
-  expect_snapshot(
-    tbl_survfit(
-      s2,
-      times = c(12, 24)
-    ) %>%
-      as.data.frame()
-  )
-  expect_snapshot(
-    tbl_survfit(
-      s2.1,
-      times = c(12, 24)
-    ) %>%
-      as.data.frame()
-  )
-  expect_warning(
-    tbl_survfit(
-      s2,
-      times = c(12, 24)
-    ),
-    NA
-  )
-  expect_snapshot(
-    tbl_survfit(
-      s2,
-      probs = c(0.2, 0.4),
-      estimate_fun = partial(style_sigfig, digits = 4)
-    ) %>%
-      as.data.frame()
-  )
-  expect_warning(
-    tbl_survfit(
-      s2,
-      probs = c(0.2, 0.4),
-      estimate_fun = partial(style_sigfig, digits = 4)
-    ),
-    NA
-  )
-
-  # expecting errors/messaging
-  expect_message(
-    tbl_survfit(
-      s2,
-      probs = c(0.2, 0.4),
-      reverse = TRUE,
-      estimate_fun = partial(style_sigfig, digits = 4)
-    ),
-    "*"
-  )
-
-  expect_error(
-    tbl_survfit(
-      s2,
-      probs = c(0.2, 0.4),
-      statistic = style_percent,
-      estimate_fun = partial(style_sigfig, digits = 4)
-    ),
-    "*"
-  )
-
-  expect_error(
-    tbl_survfit(
-      s2,
-      probs = c(0.2, 0.4),
-      times = c(12, 24),
-      estimate_fun = partial(style_sigfig, digits = 4)
-    ),
-    "*"
-  )
-
-  expect_error(
-    tbl <- tbl_survfit(trial, y = survival::Surv(ttdeath, death), include = c(grade, trt), times = 10),
-    NA
-  )
-  expect_snapshot(tbl %>% as.data.frame())
-
-  expect_message(
-    tbl_survfit(survival::survfit(survival::Surv(ttdeath, death) ~ grade + trt, trial), times = 10),
-    "*"
+test_that("tbl_survfit(probs) works", {
+  expect_silent(
+    trial |>
+      tbl_survfit(
+        include = trt,
+        y = "Surv(ttdeath, death)",
+        probs = 0.5
+      )
   )
 })
 
+test_that("Using both times and probs errors correctly", {
+  expect_error(
+    trial |>
+      tbl_survfit(
+        include = trt,
+        y = "Surv(ttdeath, death)",
+        times = 12,
+        probs = 0.5
+      ),
+    regexp = "Specify one and only one of arguments `times` and `probs`."
+  )
+})
 
-
-# Competing Events Example --------
-
-test_that("no errors/warnings with competing events", {
-  # adding a competing event for death (cancer vs other causes)
-  trial2 <- trial %>%
-    dplyr::mutate(
-      death_cr = dplyr::case_when(
-        death == 0 ~ "censor",
-        dplyr::row_number() %% 2 == 0L ~ "death from cancer",
-        TRUE ~ "death other causes"
-      ) %>% factor()
+test_that("Double check results with ard_survival_survfit", {
+  check_res <- function(x) {
+    y <- tbl_survfit(
+      trial,
+      include = trt,
+      y = "Surv(ttdeath, death)",
+      times = 12,
+      statistic = paste0("{", x, "}")
     )
-  cr_1 <- survival::survfit(survival::Surv(ttdeath, death_cr) ~ 1, data = trial2)
-  cr_2 <- survival::survfit(survival::Surv(ttdeath, death_cr) ~ grade, data = trial2)
+    return(y)
+  }
 
-  expect_snapshot(
-    tbl_survfit(cr_1, times = c(12, 24)) %>% as.data.frame()
-  )
-  expect_error(
-    summod2 <- tbl_survfit(cr_2, times = c(12, 24), label = ~"Tumor Grade"), NA
-  )
-  expect_snapshot(summod2 %>% as.data.frame())
+  check_comp <- function(x) {
+    compare = survival::survfit(survival::Surv(ttdeath, death) ~ trt, trial) |>
+      cardx::ard_survival_survfit(times = 12) %>%
+      as.data.frame |>
+      dplyr::filter(stat_name == x) |>
+      dplyr::pull(stat) |>
+      unlist()
+    return(compare)
+  }
 
-  # output is identical in tbl_survfit and summary
-  summod <- summary(cr_2, times = c(12, 24))
-  outcome_index <- which(summod$states %in% "death from cancer")
 
-  summod1b <- data.frame(
-    strata = summod$strata, Time = summod$time,
-    cancerdeath = summod$pstate[, outcome_index]
+  expect_equal(
+    check_res("estimate")$table_body$stat_1,
+    c(NA, paste0(round(check_comp("estimate")*100), "%"))
   )
 
   expect_equal(
-    summod1b$cancerdeath,
-    summod2$meta_data$df_stats[[1]]$estimate,
-    ignore_attr = TRUE
+    check_res("conf.low")$table_body$stat_1,
+    c(NA, paste0(round(check_comp("conf.low")*100), "%"))
+  )
+
+  expect_equal(
+    check_res("conf.high")$table_body$stat_1,
+    c(NA, paste0(round(check_comp("conf.high")*100), "%"))
   )
 })
 
-test_that("Factor ordering preserved", {
-  trial2 <- mutate(trial,
-    trt = ifelse(trt == "Drug A", 1, 0),
-    trt = factor(trt, levels = c(0, 1), labels = c("Drug B", "Drug A"))
-  )
-  mod1 <- survival::survfit(survival::Surv(ttdeath, death) ~ trt, trial2)
-
-  tbl1 <- tbl_survfit(mod1, times = 12)
-  tbl2 <- tbl_survfit(mod1, probs = 0.2)
-
-  expect_equal(
-    tbl1$table_body$label,
-    c("trt", "Drug B", "Drug A")
+test_that("tbl_survfit(statistic) works", {
+  expect_silent(
+    tbl <- trial |>
+      tbl_survfit(
+        include = trt,
+        y = "Surv(ttdeath, death)",
+        times = 12,
+        statistic = "{estimate} [{conf.low} - {conf.high}]"
+      )
   )
   expect_equal(
-    tbl2$table_body$label,
-    c("trt", "Drug B", "Drug A")
+    tbl$table_body$stat_1,
+    c(NA, "91% [85% - 97%]", "86% [80% - 93%]")
+  )
+})
+
+test_that("tbl_survfit(label) works", {
+  expect_silent(
+    tbl1 <- trial |>
+      tbl_survfit(
+        include = c(trt, grade),
+        y = "Surv(ttdeath, death)",
+        times = 12,
+        label = list(trt = "TREATMENT", grade = "GRADE")
+      )
+  )
+  expect_equal(
+    tbl1$table_body |> dplyr::filter(row_type == "label") |> dplyr::pull(label),
+    c(trt = "TREATMENT", grade = "GRADE")
+  )
+})
+
+test_that("tbl_survfit(label_header) works", {
+  expect_silent(
+    tbl2 <- trial |>
+      tbl_survfit(
+        include = c(trt, grade),
+        y = "Surv(ttdeath, death)",
+        times = 12,
+        label_header = "Time ({time})"
+      )
+  )
+  expect_equal(
+    tbl2$table_styling$header |> dplyr::filter(column == "stat_1") |> dplyr::pull(label),
+    "Time (12)"
+  )
+})
+
+
+test_that("tbl_survfit(estimate_fun) works", {
+  test_perc <- function(x) {
+    y <- paste0(round(x, 2)*100, "%%")
+  }
+
+  expect_silent(
+    tbl3 <- trial |>
+      tbl_survfit(
+        include = trt,
+        y = "Surv(ttdeath, death)",
+        times = 12,
+        estimate_fun = test_perc
+      )
+  )
+  expect_equal(
+    tbl3$table_body$stat_1,
+    c(NA, "91%% (85%%, 97%%)", "86%% (80%%, 93%%)")
+  )
+})
+
+test_that("tbl_survfit(missing) works", {
+  expect_silent(
+    tbl4 <- trial |>
+      tbl_survfit(
+        include = trt,
+        y = "Surv(ttdeath, death)",
+        probs = 0.5,
+        missing = "???"
+      )
+  )
+  expect_equal(
+    tbl4$table_body$stat_1,
+    c(NA, "24 (21, ???)", "21 (18, ???)")
+  )
+})
+
+test_that("tbl_survfit(type) works", {
+  expect_silent(
+    tbl5 <- trial |>
+      tbl_survfit(
+        include = trt,
+        y = "Surv(ttdeath, death)",
+        time = 12,
+        type = "risk"
+      )
+  )
+  expect_equal(
+    tbl5$table_body$stat_1,
+    c(NA, "9.2% (3.3%, 15%)", "14% (6.8%, 20%)")
+  )
+
+  expect_silent(
+    tbl6 <- trial |>
+      tbl_survfit(
+        include = trt,
+        y = "Surv(ttdeath, death)",
+        time = 12,
+        type = "cumhaz"
+      )
+  )
+  expect_equal(
+    tbl6$table_body$stat_1,
+    c(NA, "9.6% (3.3%, 16%)", "15% (7.0%, 23%)")
+  )
+})
+
+test_that("tbl_survfit(type with prob) errors properly", {
+  expect_error(
+    trial |>
+      tbl_survfit(
+        include = trt,
+        y = "Surv(ttdeath, death)",
+        prob = 0.5,
+        type = "risk"
+      ),
+    regexp = "Cannot use `type` argument when `probs` argument specifed."
   )
 })

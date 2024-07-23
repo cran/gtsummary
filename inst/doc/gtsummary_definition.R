@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   warning = FALSE,
@@ -21,8 +21,8 @@ tbl_summary_ex <-
 ## -----------------------------------------------------------------------------
 tbl_summary_ex$table_body
 
-## ---- echo=FALSE--------------------------------------------------------------
-tibble::tribble(
+## ----echo=FALSE---------------------------------------------------------------
+dplyr::tribble(
   ~Column, ~Description,
   "column", "Column name from `.$table_body`",
   "hide", "Logical indicating whether the column is hidden in the output. This column is also scoped in `modify_header()` (and friends) to be used in a selecting environment",
@@ -46,8 +46,8 @@ tibble::tribble(
     row_group.padding = gt::px(1)
   )
 
-## ---- echo=FALSE--------------------------------------------------------------
-tibble::tribble(
+## ----echo=FALSE---------------------------------------------------------------
+dplyr::tribble(
   ~Column, ~Description,
   "column", "Column name from `.$table_body`",
   "rows", "expression selecting rows in `.$table_body`, `NA` indicates to add footnote to header",
@@ -65,8 +65,8 @@ tibble::tribble(
     row_group.padding = gt::px(1)
   )
 
-## ---- echo=FALSE--------------------------------------------------------------
-tibble::tribble(
+## ----echo=FALSE---------------------------------------------------------------
+dplyr::tribble(
   ~Column, ~Description,
   "column", "Column name from `.$table_body`",
   "rows", "expression selecting rows in `.$table_body`",
@@ -84,8 +84,8 @@ tibble::tribble(
     row_group.padding = gt::px(1)
   )
 
-## ---- echo=FALSE--------------------------------------------------------------
-tibble::tribble(
+## ----echo=FALSE---------------------------------------------------------------
+dplyr::tribble(
   ~Column, ~Description,
   "column", "Column name from `.$table_body`",
   "rows", "expression selecting rows in `.$table_body`",
@@ -104,8 +104,8 @@ tibble::tribble(
     row_group.padding = gt::px(1)
   )
 
-## ---- echo=FALSE--------------------------------------------------------------
-tibble::tribble(
+## ----echo=FALSE---------------------------------------------------------------
+dplyr::tribble(
   ~Column, ~Description,
   "column", "Column name from `.$table_body`",
   "rows", "expression selecting rows in `.$table_body`",
@@ -123,8 +123,8 @@ tibble::tribble(
     row_group.padding = gt::px(1)
   )
 
-## ---- echo=FALSE--------------------------------------------------------------
-tibble::tribble(
+## ----echo=FALSE---------------------------------------------------------------
+dplyr::tribble(
   ~Column, ~Description,
   "column", "Column name from `.$table_body`",
   "rows", "expression selecting rows in `.$table_body`",
@@ -147,10 +147,10 @@ tbl_regression_ex$table_styling
 
 ## -----------------------------------------------------------------------------
 tbl_regression_ex %>%
-  purrr::pluck("table_body") %>%
+  getElement("table_body") %>%
   select(variable, row_type, label)
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  print.gtsummary <- function(x) {
 #    get_theme_element("pkgwide-str:print_engine") %>%
 #      switch(
@@ -163,24 +163,6 @@ tbl_regression_ex %>%
 #      print()
 #  }
 
-## ---- echo = FALSE------------------------------------------------------------
-tibble::tribble(
-  ~Column, ~Description,
-  "`variable`", "String of the variable name",
-  "`label`", "String matching the variable's values in `.$table_body$label`",
-  "`col_name`", "The column name the statistics appear under in `.$table_body`, e.g. `'stat_0'`, `'stat_1'`",
-  "`variable_levels`", "This column appears if and only if the variable being summarized has multiple levels. The column is equal to the variable's levels.",
-  "`<statistics>`", "Primarily, the tibble stores the summary statistics for each variable. For example, when the mean is requested in `tbl_summary()`, there will be a column called `'mean'`."
-) %>%
-  gt::gt() %>%
-  gt::fmt_markdown(columns = everything()) %>%
-  gt::tab_options(
-    table.font.size = "small",
-    data_row.padding = gt::px(1),
-    summary_row.padding = gt::px(1),
-    grand_summary_row.padding = gt::px(1),
-    footnotes.padding = gt::px(1),
-    source_notes.padding = gt::px(1),
-    row_group.padding = gt::px(1)
-  )
+## -----------------------------------------------------------------------------
+tbl_summary_ex$cards[["tbl_summary"]]
 

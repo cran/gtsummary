@@ -1,48 +1,42 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   warning = FALSE,
   comment = "#>"
 )
 
-## ---- message=FALSE-----------------------------------------------------------
+## ----message=FALSE------------------------------------------------------------
 library(gtsummary)
-library(gt)
-library(dplyr)
 
-trial %>%
-  select(trt, age, grade) %>%
-  tbl_summary(by = trt) %>%
+trial |> 
+  tbl_summary(by = trt, include = c(age, grade)) |> 
   add_p()
 
-## ---- message=TRUE------------------------------------------------------------
+## ----message=TRUE-------------------------------------------------------------
 theme_gtsummary_journal(journal = "jama")
 
-## ---- message=FALSE, echo=FALSE-----------------------------------------------
-trial %>%
-  select(trt, age, grade) %>%
-  tbl_summary(by = trt) %>%
+## ----message=FALSE, echo=FALSE------------------------------------------------
+trial |> 
+  tbl_summary(by = trt, include = c(age, grade)) |> 
   add_p()
 
-## ---- message=TRUE------------------------------------------------------------
+## ----message=TRUE-------------------------------------------------------------
 theme_gtsummary_journal(journal = "jama")
 theme_gtsummary_compact()
 
-## ---- message=FALSE, echo=FALSE-----------------------------------------------
-trial %>%
-  select(trt, age, grade) %>%
-  tbl_summary(by = trt) %>%
+## ----message=FALSE, echo=FALSE------------------------------------------------
+trial |> 
+  tbl_summary(by = trt, include = c(age, grade)) |> 
   add_p()
 
-## ---- message=FALSE, echo = FALSE---------------------------------------------
+## ----message=FALSE, echo = FALSE----------------------------------------------
 set_gtsummary_theme(theme_gtsummary_journal(journal = "jama"))
 set_gtsummary_theme(theme_gtsummary_compact())
 set_gtsummary_theme(theme_gtsummary_language("es"))
 
-## ---- message=FALSE, echo=FALSE-----------------------------------------------
-trial %>%
-  select(trt, age, grade) %>%
-  tbl_summary(by = trt) %>%
+## ----message=FALSE, echo=FALSE------------------------------------------------
+trial |> 
+  tbl_summary(by = trt, include = c(age, grade)) |> 
   add_p()
 
 ## -----------------------------------------------------------------------------
@@ -52,25 +46,26 @@ reset_gtsummary_theme()
 my_theme <-
   list(
     # round large p-values to two places
-    "pkgwide-fn:pvalue_fun" = function(x) style_pvalue(x, digits = 2),
-    "pkgwide-fn:prependpvalue_fun" = function(x) style_pvalue(x, digits = 2, prepend_p = TRUE),
-    # report median (IQR) and n (percent) as default stats in `tbl_summary()`
-    "tbl_summary-str:continuous_stat" = "{median} ({p25} - {p75})",
-    "tbl_summary-str:categorical_stat" = "{n} ({p})"
+    "pkgwide-fn:pvalue_fun" = label_style_pvalue(digits = 2),
+    "pkgwide-fn:prependpvalue_fun" = label_style_pvalue(digits = 2, prepend_p = TRUE),
+    # report median (Q1 - Q2) and n (percent) as default stats in `tbl_summary()`
+    "tbl_summary-arg:statistic" = list(all_continuous() ~ "{median} ({p25} - {p75})",
+                                       all_categorical() ~ "{n} ({p})")
   )
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 #  set_gtsummary_theme(my_theme)
 
-## ---- echo=FALSE--------------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 gtsummary:::df_theme_elements %>%
-  dplyr::filter(argument == FALSE) %>%
-  dplyr::select(-argument) %>%
+  dplyr::filter(argument == FALSE, deprecated == FALSE) %>%
+  dplyr::select(-argument, -deprecated) %>%
   dplyr::mutate(
     name = ifelse(!is.na(name), glue::glue("`{name}`"), NA_character_),
     example = ifelse(!is.na(example), glue::glue("`{example}`"), NA_character_)
   ) %>%
   dplyr::group_by(fn) %>%
+  dplyr::arrange(dplyr::desc(fn == "Package-wide")) %>%
   gt::gt() %>%
   gt::cols_align(columns = everything(), align = "left") %>%
   gt::cols_label(
@@ -85,18 +80,18 @@ gtsummary:::df_theme_elements %>%
     row_group.padding = gt::px(1)
   )
 
-## ---- echo=FALSE--------------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 gtsummary:::df_theme_elements %>%
-  filter(argument == TRUE) %>%
-  select(fn, name) %>%
-  group_by(fn) %>%
-  mutate(arg_list = paste0("`", name, "`", collapse = ", ")) %>%
-  select(fn, arg_list) %>%
-  distinct() %>%
-  gt() %>%
-  cols_label(arg_list = "Theme Element") %>%
-  fmt_markdown(columns = c(arg_list)) %>%
-  tab_options(
+  dplyr::filter(argument == TRUE, deprecated == FALSE) %>%
+  dplyr::select(fn, name) %>%
+  dplyr::group_by(fn) %>%
+  dplyr::mutate(arg_list = paste0("`", name, "`", collapse = ", ")) %>%
+  dplyr::select(fn, arg_list) %>%
+  dplyr::distinct() %>%
+  gt::gt() %>%
+  gt::cols_label(arg_list = "Theme Element") %>%
+  gt::fmt_markdown(columns = c(arg_list)) %>%
+  gt::tab_options(
     table.font.size = "small",
     data_row.padding = gt::px(1),
     row_group.padding = gt::px(1)

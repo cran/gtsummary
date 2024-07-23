@@ -1,6 +1,5 @@
 skip_on_cran()
 
-
 test_that("tbl_custom_summary() basics", {
   mean_age <- function(data, ...) {
     dplyr::tibble(mean_age = mean(data$age, na.rm = TRUE))
@@ -8,50 +7,51 @@ test_that("tbl_custom_summary() basics", {
 
   expect_error(
     tbl1 <-
-      trial %>%
+      trial |>
       tbl_custom_summary(
         include = c("grade", "response", "marker"),
         by = "trt",
         stat_fns = ~mean_age,
         statistic = ~"{mean_age}",
         digits = ~1
-      ) %>%
-      add_overall(last = TRUE) %>%
-      modify_footnote(all_stat_cols() ~ "Mean age") %>%
-      modify_column_unhide(everything()) %>%
-      as_tibble(col_labels = FALSE),
+      ) |>
+      add_overall(last = TRUE) |>
+      modify_footnote(all_stat_cols() ~ "Mean age") |>
+      modify_column_unhide(everything()) |>
+      as.data.frame(col_labels = FALSE),
     NA
   )
   expect_snapshot(tbl1)
 
   expect_equal(
-    tbl1 %>%
-      dplyr::filter(variable == "grade", row_type == "level") %>%
+    tbl1 |>
+      dplyr::filter(variable == "grade", row_type == "level") |>
       select(all_stat_cols(F)),
-    trial %>%
+    trial |>
       select(age, grade, trt) %>%
-      dplyr::filter(complete.cases(.)) %>%
-      dplyr::group_by(trt, grade) %>%
-      dplyr::summarise(mean_age = mean(age), .groups = "drop") %>%
-      tidyr::pivot_wider(id_cols = grade, names_from = trt, values_from = mean_age) %>%
-      select(-1) %>%
-      purrr::set_names(c("stat_1", "stat_2")) %>%
-      dplyr::mutate_all(~ style_number(., 1))
+      dplyr::filter(complete.cases(.)) |>
+      dplyr::group_by(trt, grade) |>
+      dplyr::summarise(mean_age = mean(age), .groups = "drop") |>
+      tidyr::pivot_wider(id_cols = grade, names_from = trt, values_from = mean_age) |>
+      select(-1) |>
+      set_names(c("stat_1", "stat_2")) |>
+      dplyr::mutate_all(~ style_number(., 1)) |>
+      as.data.frame()
   )
 
   expect_equal(
-    tbl1 %>%
-      dplyr::filter(variable == "response", row_type == "label") %>%
-      dplyr::select(all_stat_cols(F)) %>%
-      unlist() %>%
+    tbl1 |>
+      dplyr::filter(variable == "response", row_type == "label") |>
+      dplyr::select(all_stat_cols(F)) |>
+      unlist() |>
       unname(),
-    trial %>%
+    trial |>
       dplyr::select(age, response, trt) %>%
-      dplyr::filter(complete.cases(.)) %>%
-      dplyr::group_by(trt, response) %>%
-      dplyr::summarise(mean_age = mean(age), .groups = "drop") %>%
-      dplyr::filter(response == 1) %>%
-      dplyr::pull(mean_age) %>%
+      dplyr::filter(complete.cases(.)) |>
+      dplyr::group_by(trt, response) |>
+      dplyr::summarise(mean_age = mean(age), .groups = "drop") |>
+      dplyr::filter(response == 1) |>
+      dplyr::pull(mean_age) |>
       style_number(digits = 1)
   )
 
@@ -74,7 +74,7 @@ test_that("tbl_custom_summary() basics", {
 
   expect_error(
     tbl <-
-      trial %>%
+      trial |>
       tbl_custom_summary(
         include = c("grade", "stage"),
         by = "trt",
@@ -84,12 +84,12 @@ test_that("tbl_custom_summary() basics", {
         overall_row = TRUE,
         overall_row_last = TRUE,
         overall_row_label = "All grades & stages"
-      ) %>%
-      add_overall() %>%
-      add_n() %>%
-      bold_labels() %>%
-      italicize_levels() %>%
-      as_tibble(col_labels = FALSE),
+      ) |>
+      add_overall() |>
+      add_n() |>
+      bold_labels() |>
+      italicize_levels() |>
+      as.data.frame(col_labels = FALSE),
     NA
   )
   expect_snapshot(tbl)
@@ -125,14 +125,14 @@ test_that("tbl_custom_summary() basics", {
   }
 
   expect_error(
-    tbl <- trial %>%
+    tbl <- trial |>
       tbl_custom_summary(
         include = c("marker", "ttdeath"),
         by = "trt",
         stat_fns = everything() ~ mean_ci,
         statistic = everything() ~ "{mean} [{conf.low}; {conf.high}]"
-      ) %>%
-      as_tibble(col_labels = FALSE),
+      ) |>
+      as.data.frame(col_labels = FALSE),
     NA
   )
   expect_snapshot(tbl)
@@ -142,7 +142,7 @@ test_that("tbl_custom_summary() basics", {
   )
 
   expect_error(
-    trial %>%
+    trial |>
       tbl_custom_summary(
         include = c("marker", "ttdeath"),
         by = "trt",
@@ -153,19 +153,17 @@ test_that("tbl_custom_summary() basics", {
 })
 
 test_that("tbl_custom_summary() manage factor levels with no observation", {
-  skip_on_cran()
-
   expect_error(
-    tbl <- trial %>%
-      mutate(grade = forcats::fct_expand(grade, "IV")) %>%
+    tbl <- trial |>
+      mutate(grade = factor(grade, levels = union(levels(grade), "IV"))) |>
       tbl_custom_summary(
         include = "grade",
         by = "trt",
-        stat_fns = everything() ~ continuous_summary("age"),
+        stat_fns = everything() ~ \(data, ...) list(median = median(data[["age"]], na.rm = TRUE)),
         statistic = everything() ~ "{median}",
         overall_row = TRUE
-      ) %>%
-      as_tibble(col_labels = FALSE),
+      ) |>
+      as.data.frame(col_labels = FALSE),
     NA
   )
   expect_snapshot(tbl)
@@ -181,15 +179,15 @@ test_that("tbl_custom_summary() helpers work as expected", {
 
   # ratio_summary
   expect_error(
-    tbl <- trial %>%
+    tbl <- trial |>
       tbl_custom_summary(
         include = c("stage"),
         by = "trt",
         stat_fns = everything() ~ ratio_summary("response", "ttdeath"),
         statistic = everything() ~ "{ratio} [{conf.low}; {conf.high}] ({num}/{denom})",
         digits = everything() ~ c(3, 2, 2, 0, 0)
-      ) %>%
-      as_tibble(col_labels = FALSE),
+      ) |>
+      as.data.frame(col_labels = FALSE),
     NA
   )
   expect_snapshot(tbl)
@@ -202,24 +200,10 @@ test_that("tbl_custom_summary() helpers work as expected", {
     )
   )
 
-  # continuous_summary
-  expect_error(
-    tbl <- trial %>%
-      tbl_custom_summary(
-        include = c("grade"),
-        by = "trt",
-        stat_fns = everything() ~ continuous_summary("age"),
-        statistic = everything() ~ "{median} [{p25}-{p75}]"
-      ) %>%
-      as_tibble(col_labels = FALSE),
-    NA
-  )
-  expect_snapshot(tbl)
-
   # proportion_summary
   expect_error(
-    tbl <- Titanic %>%
-      as.data.frame() %>%
+    tbl <- Titanic |>
+      as.data.frame() |>
       tbl_custom_summary(
         include = c("Age", "Class"),
         by = "Sex",
@@ -228,8 +212,8 @@ test_that("tbl_custom_summary() helpers work as expected", {
         digits = everything() ~ list(function(x) {
           style_percent(x, digits = 1)
         }, 0, 0, style_percent, style_percent)
-      ) %>%
-      as_tibble(col_labels = FALSE),
+      ) |>
+      as.data.frame(col_labels = FALSE),
     NA
   )
   expect_snapshot(tbl)
@@ -245,7 +229,7 @@ test_that("tbl_custom_summary() helpers work as expected", {
 })
 
 
-test_that("character summaries do not cause error", {
+test_that("character/date summaries do not cause error", {
   diff_to_great_mean <- function(data, full_data, ...) {
     mean <- mean(data$marker, na.rm = TRUE)
     great_mean <- mean(full_data$marker, na.rm = TRUE)
@@ -255,13 +239,13 @@ test_that("character summaries do not cause error", {
       great_mean = great_mean,
       diff = diff,
       level = ifelse(diff > 0, "high", "low"),
-      date = Sys.Date()
+      date = as.Date("2016-06-15")
     )
   }
 
   expect_error(
     tbl <-
-      trial %>%
+      trial |>
       tbl_custom_summary(
         include = c("stage"),
         by = "trt",
@@ -270,26 +254,26 @@ test_that("character summaries do not cause error", {
       ),
     NA
   )
-  # expect_snapshot(tbl %>% as_tibble()) # not sure why this is failing on older R versions
+  expect_snapshot(tbl |> as.data.frame())
 
   # by variable can be named "variable"
   expect_equal(
-    trial %>%
-      select(age, variable = trt) %>%
+    trial |>
+      select(age, variable = trt) |>
       tbl_custom_summary(
         by = "variable",
-        stat_fns = ~ continuous_summary("age"),
+        stat_fns = ~ \(data, ...) dplyr::tibble(mean = mean(data[["age"]], na.rm = TRUE), sd = sd(data[["age"]], na.rm = TRUE)),
         statistic = ~"{mean} ({sd})"
-      ) %>%
-      as_tibble(),
-    trial %>%
-      select(age, trt) %>%
+      ) |>
+      as.data.frame(),
+    trial |>
+      select(age, trt) |>
       tbl_custom_summary(
         by = "trt",
-        stat_fns = ~ continuous_summary("age"),
+        stat_fns = ~ \(data, ...) dplyr::tibble(mean = mean(data[["age"]], na.rm = TRUE), sd = sd(data[["age"]], na.rm = TRUE)),
         statistic = ~"{mean} ({sd})"
-      ) %>%
-      as_tibble()
+      ) |>
+      as.data.frame()
   )
 })
 
@@ -307,9 +291,41 @@ test_that("full_data contains all observations including missing values", {
       stat_fns = ~fn,
       statistic = ~"{Nobs}/{Ntot}",
       include = age
-    ) %>%
-    as_tibble()
+    ) |>
+    as.data.frame()
 
   expect_snapshot(res)
   expect_equal(res[[2]][1], "189/200")
+})
+
+test_that("character statistic get default fmt_fn, as.character()", {
+  diff_to_great_mean <- function(data, full_data, ...) {
+    mean <- mean(data$marker, na.rm = TRUE)
+    great_mean <- mean(full_data$marker, na.rm = TRUE)
+    diff <- mean - great_mean
+    dplyr::tibble(
+      mean = mean,
+      great_mean = great_mean,
+      diff = diff,
+      level = ifelse(diff > 0, "high", "low")
+    )
+  }
+
+  expect_equal(
+    trial |>
+      tbl_custom_summary(
+        include = c("grade", "stage"),
+        by = "trt",
+        stat_fns = ~diff_to_great_mean,
+        statistic = ~"{mean} ({level}, diff: {diff})",
+        digits = ~list(level = as.character),
+        overall_row = TRUE
+      ) |>
+      getElement("cards") |>
+      getElement(1L) |>
+      dplyr::filter(stat_name %in% "level") |>
+      dplyr::pull(fmt_fn) |>
+      unique(),
+    list(as.character)
+  )
 })

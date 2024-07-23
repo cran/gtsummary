@@ -1,645 +1,590 @@
 skip_on_cran()
-skip_if_not(broom.helpers::.assert_package("survey", pkg_search = "gtsummary", boolean = TRUE))
+skip_if_not(is_pkg_installed("survey", reference_pkg = "gtsummary"))
 
-d <- survey::svydesign(~1, data = as.data.frame(Titanic), weights = ~Freq)
-data(api, package = "survey")
-dc_light <- survey::svydesign(id = ~dnum, weights = ~pw, data = apiclus1, fpc = ~fpc, variables = ~ stype + growth + both)
+svy_titanic <- survey::svydesign(~1, data = as.data.frame(Titanic), weights = ~Freq)
+df_titanic <- as.data.frame(Titanic) |> tidyr::uncount(weights = Freq)
+svy_mtcars <- survey::svydesign(~1, data = mtcars, weights = ~1)
+svy_trial <- survey::svydesign(~1, data = trial, weights = ~1)
 
-test_that("tbl_svysummary creates output without error/warning (no by var)", {
-  expect_snapshot(
-    purrr::map(
-      list(d, dc_light),
-      ~ tbl_svysummary(.x, sort = list(all_categorical() ~ "frequency")) %>%
-        as_tibble()
+
+# tbl_svysummary(data) ---------------------------------------------------------
+test_that("tbl_svysummary(data)", {
+  # creates table when data frame is passed
+  expect_snapshot(tbl_svysummary(data = svy_titanic) |> as.data.frame())
+  expect_snapshot(tbl_svysummary(data = svy_mtcars) |> as.data.frame())
+})
+
+
+test_that("tbl_svysummary(data) errors properly", {
+  # errors thrown when bad data argument passed
+  expect_snapshot(error = TRUE, tbl_svysummary())
+  expect_snapshot(error = TRUE, tbl_svysummary(data = letters))
+  expect_snapshot(error = TRUE, tbl_svysummary(data = dplyr::tibble()))
+})
+
+# tbl_svysummary(by) -----------------------------------------------------------
+test_that("tbl_svysummary(by)", {
+  expect_snapshot(tbl_svysummary(data = svy_mtcars, by = am) |> as.data.frame())
+  expect_snapshot(tbl_svysummary(data = svy_titanic, by = Survived) |> as.data.frame())
+})
+
+test_that("tbl_svysummary(by) errors properly", {
+  # errors thrown when bad data argument passed
+  expect_snapshot(error = TRUE, tbl_svysummary(svy_mtcars, by = c("mpg", "am")))
+})
+
+# tbl_svysummary(label) --------------------------------------------------------
+test_that("tbl_svysummary(label)", {
+  expect_silent(
+    tbl <- tbl_svysummary(
+      svy_mtcars,
+      by = am,
+      label = list(mpg = "New mpg", cyl = "New cyl"),
+      include = c(mpg, cyl)
     )
   )
-  expect_warning(
-    purrr::map(list(d, dc_light), ~ tbl_svysummary(.x)),
-    NA
+  expect_snapshot(as.data.frame(tbl))
+
+  expect_equal(
+    tbl$table_body |>
+      dplyr::filter(row_type %in% "label") |>
+      dplyr::pull(label),
+    c("New mpg", "New cyl")
   )
 })
 
-
-test_that("tbl_svysummary creates output without error/warning (with by var)", {
-  statistics <- list(
-    all_continuous() ~ "{median} {mean} {sd} {var} {min} {max} {sum} {p25} {p42} {p75} {p89} {mean.std.error} {deff}",
-    all_categorical() ~ "{n} {N} {p} | {n_unweighted} {N_unweighted} {p_unweighted} {p.std.error} {deff}"
-  )
+test_that("tbl_svysummary(label) errors properly", {
   expect_snapshot(
-    tbl_svysummary(dc_light, by = both, statistic = statistics) %>% as_tibble()
+    error = TRUE,
+    tbl_svysummary(svy_trial, include = age, label = list(age = letters))
   )
-  expect_warning(
-    tbl_svysummary(dc_light, by = both, statistic = statistics),
-    NA
-  )
-})
-
-test_that("tbl_svysummary allows for named list input", {
-  expect_snapshot(
-    tbl_svysummary(d, by = Survived, label = list(Class = "New Class", Sex = "New Sex")) %>%
-      as.data.frame()
-  )
-  expect_warning(
-    tbl_svysummary(d, by = Survived, label = list(Class = "New Class", Sex = "New Sex")),
-    NA
-  )
-})
-
-
-test_that("tbl_svysummary throws errors/messages with bad 'sort = ' specifications", {
-  expect_error(
-    tbl_svysummary(d, sort = list(all_categorical() ~ c("frequency", "two"))),
-    NULL
-  )
-  expect_error(
-    tbl_svysummary(d, sort = list(all_categorical() ~ "freq5555uency")),
-    NULL
-  )
-})
-
-test_that("tbl_svysummary value argument works properly", {
-  expect_snapshot(
-    tbl_svysummary(d, value = "Class" ~ "1st") %>%
-      as.data.frame()
-  )
-})
-
-test_that("tbl_svysummary works in character inputs for `by=`", {
-  my_by_variable <- "Survived"
 
   expect_snapshot(
-    tbl_svysummary(d, by = all_of(my_by_variable)) %>%
-      as.data.frame()
-  )
-  expect_snapshot(
-    tbl_svysummary(d, by = "Survived") %>%
-      as.data.frame()
-  )
-  expect_snapshot(
-    purrr::map(
-      c("Survived", "Class", "Sex", "Age"),
-      ~ tbl_svysummary(d, by = all_of(.x)) %>% as_tibble()
-    )
+    error = TRUE,
+    tbl_svysummary(svy_trial, include = age, label = letters)
   )
 })
 
-
-test_that("tbl_svysummary returns errors with bad inputs", {
-  expect_error(
-    tbl_svysummary(survey::svydesign(ids = ~1, data = tibble(), weights = ~1)),
-    NULL
-  )
-  expect_error(
-    tbl_svysummary(survey::svydesign(ids = ~1, data = tibble(t = integer()), weights = ~1)),
-    NULL
-  )
-  expect_error(
-    tbl_svysummary(trial),
-    NULL
-  )
-  expect_error(
-    tbl_svysummary(d, by = THIS_IS_NOT_A_VARIABLE),
-    NULL
-  )
-  d$variables$Survived[5:8] <- NA
-  expect_message(
-    tbl_svysummary(d, by = Survived), # should get message about missing data
-    NULL
-  )
-  expect_error(
-    tbl_svysummary(d, type = Survived),
-    NULL
-  )
-  expect_error(
-    tbl_svysummary(d, value = "0"),
-    NULL
-  )
-  expect_error(
-    tbl_svysummary(d, label = "Age"),
-    NULL
-  )
-  expect_error(
-    tbl_svysummary(d, statistic = "{mean}"),
-    NULL
-  )
-  expect_error(
-    tbl_svysummary(d, digits = 0),
-    NULL
-  )
-  expect_error(
-    tbl_svysummary(d, sort = list("Class" ~ "frequ55555ency")),
-    NULL
-  )
-  expect_error(
-    tbl_svysummary(d, by = c("Class", "Survived")),
-    NULL
-  )
-
-  expect_error(
-    tbl_svysummary(d, statistic = everything() ~ "{mean}"),
-    NULL
-  )
-})
-
-
-test_that("tbl_svysummary-testing tidyselect parsing", {
-  trial2 <- trial
-  trial2$`bad trt` <- trial2$trt
-  trial2$`bad grade` <- trial2$grade
-
-  expect_error(
-    big_test <-
+# tbl_svysummary(statistic) ----------------------------------------------------
+test_that("tbl_svysummary(statistic)", {
+  # categorical summary
+  expect_equal(
+    svy_trial |>
       tbl_svysummary(
-        data = survey::svydesign(ids = ~1, data = trial2, weights = ~1),
-        by = `bad trt`,
-        type = vars(response, death) ~ "categorical",
-        statistic = list(
-          all_continuous() ~ "{min} {max}",
-          c("grade", "stage") ~ "{n}"
-        ),
-        label = list(
-          age ~ "Patient Age", vars(stage) ~ "Patient Stage",
-          vars(`bad grade`) ~ "Crazy Grade"
-        ),
-        digits = list(vars(age) ~ c(2, 3), marker ~ c(2, 3)),
-        value = list(`bad grade` = "III", "stage" = "T1"),
+        include = response,
+        statistic =
+          response ~ "n={n} | N={N} | p={p} | N_obs={N_obs} | N_miss={N_miss} | N_nonmiss={N_nonmiss} | p_miss={p_miss} | p_nonmiss={p_nonmiss} | p.std.error={p.std.error} | deff={deff} | n_unweighted={n_unweighted} | N_unweighted={N_unweighted} | p_unweighted={p_unweighted}",
         missing = "no"
+      ) |>
+      as.data.frame(col_labels = FALSE) |>
+      dplyr::pull(stat_0),
+    "n=61 | N=193 | p=32 | N_obs=200 | N_miss=7 | N_nonmiss=193 | p_miss=3.5 | p_nonmiss=97 | p.std.error=0.0 | deff=Inf | n_unweighted=61 | N_unweighted=193 | p_unweighted=31.6"
+  )
+
+  # continuous summary when there is no "continuous" stats (just missingness stats)
+  expect_equal(
+    {
+      svy_trial |>
+        tbl_svysummary(
+          include = age,
+          statistic =
+            age ~ "N_obs={N_obs} | N_miss={N_miss} | N_nonmiss={N_nonmiss} | p_miss={p_miss} | p_nonmiss={p_nonmiss}",
+          missing = "no"
+        ) |>
+        as.data.frame(col_labels = FALSE) |>
+        dplyr::pull(stat_0)
+    },
+    "N_obs=200 | N_miss=11 | N_nonmiss=189 | p_miss=5.5 | p_nonmiss=95"
+  )
+
+  # continuous summary
+  expect_equal(
+      svy_trial |>
+        tbl_svysummary(
+          include = age,
+          statistic =
+            list(age = "mean={mean} | N_obs={N_obs} | N_miss={N_miss} | N_nonmiss={N_nonmiss} | p_miss={p_miss} | p_nonmiss={p_nonmiss}"),
+          missing = "no"
+        ) |>
+        as.data.frame(col_labels = FALSE) |>
+        dplyr::pull(stat_0),
+    "mean=47 | N_obs=200 | N_miss=11 | N_nonmiss=189 | p_miss=5.5 | p_nonmiss=95"
+  )
+})
+
+test_that("tbl_svysummary(statistic) errors properly", {
+  expect_snapshot(
+    error = TRUE,
+    tbl_svysummary(
+      svy_trial,
+      include = response,
+      statistic = ~"{n} ({not_a_statistic})"
+    )
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    tbl_svysummary(
+      svy_trial,
+      include = age,
+      statistic = ~"({not_a_summary_statistic})"
+    )
+  )
+})
+
+test_that("tbl_svysummary(statistic,type) errors", {
+  # we get a nice message for a continuous variable with stat as a character vector
+  expect_snapshot(
+    error = TRUE,
+    tbl_svysummary(
+      svy_trial,
+      include = age,
+      statistic = ~c("{mean}", "{sd}")
+    )
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    tbl_svysummary(
+      svy_trial,
+      include = grade,
+      statistic = ~c("{mean}", "{sd}")
+    )
+  )
+})
+
+# tbl_svysummary(digit) --------------------------------------------------------
+test_that("tbl_svysummary(digit)", {
+  expect_error(
+    tbl <- tbl_svysummary(
+      svy_trial,
+      include = c(age, response, marker, ttdeath),
+      digits = list(
+        # using named list to change 2 of the 3 statistics
+        age = list(median = 4, p25 = \(x) style_number(x, digits = 2)),
+        # using a vector of integers
+        response = c(0, 3),
+        # using a single integer that will apply to all stats
+        marker = 0,
+        # passing a single function that will apply to all stats
+        ttdeath = list(\(x) style_number(x, digits = 2))
       ),
+      missing = "no"
+    ) |>
+      modify_column_unhide(variable) |>
+      as.data.frame(col_labels = FALSE),
     NA
   )
-  expect_snapshot(big_test %>% as.data.frame())
 
-  # checking missing
+  # check the correct stats
   expect_equal(
-    big_test$table_body %>%
-      dplyr::filter(.data$row_type %in% c("missing")) %>%
-      nrow(),
-    0
+    tbl |>
+      dplyr::filter(variable == "age") |>
+      dplyr::pull(stat_0),
+    "47.0000 (38.00, 57)"
   )
 
-  # checking value
   expect_equal(
-    big_test$meta_data %>%
-      dplyr::filter(.data$variable %in% c("bad grade", "stage")) %>%
-      dplyr::pull(.data$summary_type) %>%
-      unique(),
+    tbl |>
+      dplyr::filter(variable == "response") |>
+      dplyr::pull(stat_0),
+    "61 (31.606%)"
+  )
+
+  expect_equal(
+    tbl |>
+      dplyr::filter(variable == "marker") |>
+      dplyr::pull(stat_0),
+    "1 (0, 1)"
+  )
+
+  expect_equal(
+    tbl |>
+      dplyr::filter(variable == "ttdeath") |>
+      dplyr::pull(stat_0),
+    "22.40 (15.77, 24.00)"
+  )
+})
+
+test_that("tbl_svysummary(digit) errors properly", {
+  expect_error(
+    tbl_svysummary(
+      svy_trial,
+      include = age,
+      digits = list(
+        age = list(
+          median = letters, # this is not a function!
+          p25 = \(x) style_number(x, digits = 2)
+        )
+      ),
+      missing = "no"
+    ),
+    "*"
+  )
+})
+
+# tbl_svysummary(type) ---------------------------------------------------------
+test_that("tbl_svysummary(type)", {
+  expect_snapshot(
+    tbl_svysummary(
+      svy_trial,
+      include = c(age, marker, response, stage),
+      type = list(age = "continuous", marker = "continuous2", response = "dichotomous", state = "categorical"),
+      missing = "no"
+    ) |>
+      getElement("table_body") |>
+      dplyr::select(variable, var_type, row_type, label)
+  )
+
+  # can use the default type to select variables to change the summary type
+  expect_equal(
+    tbl_svysummary(
+      svy_trial,
+      type = list(all_continuous() ~ "continuous2", all_dichotomous() ~ "continuous"),
+      include = c(age, marker, response),
+      missing = "no"
+    ) |>
+      getElement("inputs") |>
+      getElement("type"),
+    list(age = "continuous2", marker = "continuous2", response = "continuous")
+  )
+
+  # yes/no variables default to dichotomous
+  expect_equal(
+    data.frame(yn = c("no", "yes", "yes")) |>
+      survey::svydesign(~1, data = _, weights = ~1) |>
+      tbl_svysummary() |>
+      getElement("inputs") |>
+      getElement("value") |>
+      getElement("yn"),
+    "yes"
+  )
+  expect_equal(
+    data.frame(
+      yn = c("no", "yes", "yes") |> factor()
+    ) |>
+      survey::svydesign(~1, data = _, weights = ~1) |>
+      tbl_svysummary() |>
+      getElement("inputs") |>
+      getElement("value") |>
+      getElement("yn"),
+    "yes"
+  )
+  expect_equal(
+    data.frame(
+      yn = c("no", "yes", "yes") |> factor(levels = c("yes", "no"))
+    ) |>
+      survey::svydesign(~1, data = _, weights = ~1) |>
+      tbl_svysummary() |>
+      getElement("inputs") |>
+      getElement("value") |>
+      getElement("yn"),
+    "yes"
+  )
+  expect_equal(
+    data.frame(
+      yn = c("no", "no", "no") |> factor(levels = c("no", "yes"))
+    ) |>
+      survey::svydesign(~1, data = _, weights = ~1) |>
+      tbl_svysummary() |>
+      getElement("inputs") |>
+      getElement("value") |>
+      getElement("yn"),
+    "yes"
+  )
+
+  # a yes or no only character defaults to categorical
+  expect_equal(
+    data.frame(yn = c("yes", "yes")) |>
+      survey::svydesign(~1, data = _, weights = ~1) |>
+      tbl_svysummary() |>
+      getElement("inputs") |>
+      getElement("type") |>
+      getElement("yn"),
+    "categorical"
+  )
+  expect_equal(
+    data.frame(yn = c("no", "no")) |>
+      survey::svydesign(~1, data = _, weights = ~1) |>
+      tbl_svysummary() |>
+      getElement("inputs") |>
+      getElement("type") |>
+      getElement("yn"),
+    "categorical"
+  )
+  expect_equal(
+    data.frame(yn = c("nO", "yEs", "yEs")) |>
+      survey::svydesign(~1, data = _, weights = ~1) |>
+      tbl_svysummary() |>
+      getElement("inputs") |>
+      getElement("value") |>
+      getElement("yn"),
+    "yEs"
+  )
+
+  # a zero or one only numeric defaults to categorical
+  expect_equal(
+    data.frame(yn = c(0, 0)) |>
+      survey::svydesign(~1, data = _, weights = ~1) |>
+      tbl_svysummary() |>
+      getElement("inputs") |>
+      getElement("type") |>
+      getElement("yn"),
+    "categorical"
+  )
+  expect_equal(
+    data.frame(yn = c(1, 1)) |>
+      survey::svydesign(~1, data = _, weights = ~1) |>
+      tbl_svysummary() |>
+      getElement("inputs") |>
+      getElement("type") |>
+      getElement("yn"),
+    "categorical"
+  )
+})
+
+test_that("tbl_svysummary(type) proper errors/messages", {
+  # grade cannot be summarized continuously, and we'll see reports in the console
+  expect_snapshot(
+    tbl <- tbl_svysummary(
+      svy_trial,
+      include = grade,
+      type = grade ~ "continuous",
+      statistic = ~ "{min}"
+    )
+  )
+  expect_equal(tbl$table_body$stat_0, "NA")
+
+  # unobserved levels cannot be summarized for a dichotomous summary
+  expect_snapshot(
+    error = TRUE,
+    tbl_svysummary(
+      svy_trial,
+      include = grade,
+      type = grade ~ "dichotomous",
+      value = grade ~ "IV"
+    )
+  )
+
+  # error when no clear dichotomous value present
+  expect_snapshot(
+    error = TRUE,
+    tbl_svysummary(
+      svy_trial,
+      include = grade,
+      type = grade ~ "dichotomous"
+    )
+  )
+})
+
+# tbl_svysummary(value) --------------------------------------------------------
+test_that("tbl_svysummary(value)", {
+  # ensure grade is coerced to dichotomous and response defaults to dichotomous
+  expect_error(
+    tbl <- tbl_svysummary(svy_trial, value = "grade" ~ "III", include = c(grade, response)),
+    NA
+  )
+  expect_snapshot(as.data.frame(tbl))
+
+  # check all summary types are assigned to dichotomous
+  expect_equal(
+    tbl$table_body$var_type |> unique(),
     "dichotomous"
   )
 
+  # check we can pass unobserved levels to values
   expect_equal(
-    big_test$meta_data %>%
-      dplyr::filter(.data$variable %in% c("bad grade", "stage")) %>%
-      dplyr::pull(.data$dichotomous_value) %>%
-      purrr::every(purrr::negate(is.null)),
-    TRUE
-  )
-
-  # checking digits
-  expect_equal(
-    big_test$table_body %>%
-      dplyr::filter(.data$variable %in% c("age", "marker")) %>%
-      dplyr::pull(.data$stat_1) %>%
-      stringr::word(1) %>%
-      stringr::word(2, sep = stringr::fixed(".")) %>%
-      nchar() %>%
-      unique(),
-    2
-  )
-
-  expect_equal(
-    big_test$table_body %>%
-      filter(.data$variable %in% c("age", "marker")) %>%
-      dplyr::pull(.data$stat_1) %>%
-      stringr::word(2) %>%
-      stringr::word(2, sep = fixed(".")) %>%
-      nchar() %>%
-      unique(),
-    3
-  )
-
-  # checking label
-  expect_equal(
-    big_test$meta_data %>%
-      dplyr::filter(.data$variable %in% c("age", "stage", "bad grade")) %>%
-      dplyr::pull(.data$var_label),
-    c("Patient Age", "Patient Stage", "Crazy Grade")
-  )
-
-  # checking type
-  expect_equal(
-    big_test$meta_data %>%
-      dplyr::filter(.data$variable %in% c("response", "death")) %>%
-      dplyr::pull(.data$summary_type),
-    c("categorical", "categorical")
-  )
-
-  # checking statistic
-  expect_equal(
-    big_test$meta_data[c("summary_type", "stat_display")] %>%
-      dplyr::filter(.data$summary_type %in% c("continuous")) %>%
-      dplyr::distinct() %>%
-      dplyr::pull(.data$stat_display) %>%
-      unlist(),
-    c("{min} {max}")
-  )
-  expect_equal(
-    big_test$meta_data[c("variable", "stat_display")] %>%
-      dplyr::filter(.data$variable %in% c("grade", "stage")) %>%
-      dplyr::pull(.data$stat_display) %>%
-      unique() %>%
-      unlist(),
-    c("{n}")
-  )
-})
-
-test_that("tbl_svysummary-order of output columns", {
-  expect_equal(
-    trial %>%
+    trial |>
       dplyr::mutate(
-        grade =
-          dplyr::case_when(grade != "III" ~ grade),
-        grade_str =
-          dplyr::case_when(
-            is.na(grade) ~ "Missing Grade",
-            grade == "I" ~ "First Grade",
-            grade == "II" ~ "Second Grade"
-          )
-      ) %>%
-      select(grade, grade_str) %>%
-      survey::svydesign(data = ., ids = ~1, weights = ~1) %>%
-      tbl_svysummary(by = grade_str) %>%
-      purrr::pluck("table_body") %>%
-      names() %>%
-      {
-        .[startsWith(., "stat_")]
-      },
-    paste0("stat_", 1:3)
-  )
-})
-
-test_that("tbl_svysummary-all_categorical() use with `type=`", {
-  # no variables should be dichotomous
-  expect_true(
-    !"dichotomous" %in%
-      (survey::svydesign(data = trial, ids = ~1, weights = ~1) %>%
-        tbl_svysummary(type = all_dichotomous() ~ "categorical") %>%
-        purrr::pluck("meta_data") %>%
-        dplyr::pull(summary_type))
-  )
-})
-
-
-test_that("tbl_svysummary-difftime does not cause error", {
-  expect_snapshot(
-    df_dplyr_storms %>%
-      dplyr::mutate(
-        date = ISOdate(year, month, day),
-        date_diff = difftime(dplyr::lag(date, 5), date, units = "days")
-      ) %>%
-      survey::svydesign(data = ., ids = ~1, weights = ~1) %>%
-      tbl_svysummary() %>%
-      as_tibble()
-  )
-})
-
-
-test_that("tbl_svysummary-all missing data does not cause error", {
-  design_missing <-
-    tibble(
-      my_by_var = c(1, 1, 2, 2),
-      fct = rep(NA, 4) %>% factor(levels = c("lion", "tiger", "bear")),
-      lgl = NA,
-      chr = NA_character_,
-      int = NA_integer_,
-      dbl = NA_real_
-    ) %>%
-    survey::svydesign(data = ., ids = ~1, weights = ~1)
-
-  expect_error(
-    all_missing_no_by <- tbl_svysummary(design_missing, include = -my_by_var),
-    NA
-  )
-  expect_snapshot(all_missing_no_by %>% as.data.frame())
-
-  expect_error(
-    all_missing_by <- tbl_svysummary(design_missing, by = my_by_var),
-    NA
-  )
-  expect_snapshot(all_missing_by %>% as.data.frame())
-
-  # making categorical, variables that cannot be summarized as categorical
-  expect_snapshot(
-    tbl_svysummary(design_missing, by = my_by_var, type = c(int, dbl) ~ "categorical") %>%
-      as.data.frame()
-  )
-
-  expect_equal(
-    all_missing_no_by$table_body %>%
-      filter(variable == "fct", row_type == "level") %>%
-      pull(stat_0),
-    c("0 (NA%)", "0 (NA%)", "0 (NA%)")
-  )
-
-  expect_equal(
-    all_missing_no_by$table_body %>%
-      filter(variable %in% c("lgl", "chr"), row_type == "label") %>%
-      pull(stat_0),
-    c("0 (NA%)", "0 (NA%)")
-  )
-
-  expect_equal(
-    all_missing_no_by$table_body %>%
-      filter(variable %in% c("int", "dbl"), row_type == "label") %>%
-      pull(stat_0),
-    c("NA (NA, NA)", "NA (NA, NA)")
-  )
-
-  expect_equal(
-    all_missing_by$table_body %>%
-      filter(variable == "fct", row_type == "level") %>%
-      select(starts_with("stat_")),
-    tibble(stat_1 = c("0 (NA%)", "0 (NA%)", "0 (NA%)"), stat_2 = stat_1)
-  )
-
-  expect_equal(
-    all_missing_by$table_body %>%
-      filter(variable %in% c("lgl", "chr"), row_type == "label") %>%
-      select(starts_with("stat_")),
-    tibble(stat_1 = c("0 (NA%)", "0 (NA%)"), stat_2 = stat_1)
-  )
-
-  expect_equal(
-    all_missing_by$table_body %>%
-      filter(variable %in% c("int", "dbl"), row_type == "label") %>%
-      select(starts_with("stat_")),
-    tibble(stat_1 = c("NA (NA, NA)", "NA (NA, NA)"), stat_2 = stat_1)
-  )
-
-  # unobserved factor level
-  expect_error(
-    missing_fct_by <-
-      trial %>%
-      mutate(response2 = factor(response) %>% forcats::fct_na_value_to_level(level = "(Missing)")) %>%
-      filter(!is.na(response)) %>%
-      survey::svydesign(data = ., ids = ~1, weights = ~1) %>%
-      tbl_svysummary(by = response2),
-    NA
-  )
-
-  expect_equal(
-    missing_fct_by$table_body %>% select(starts_with("stat_")) %>% names(),
-    c("stat_1", "stat_2", "stat_3")
-  )
-})
-
-
-test_that("tbl_svysummary-no error when *data* with single column passed", {
-  expect_snapshot(
-    trial["trt"] %>%
-      as.data.frame() %>%
-      survey::svydesign(data = ., ids = ~1, weights = ~1) %>%
-      tbl_svysummary(label = trt ~ "TREATMENT GROUP") %>%
-      as.data.frame()
-  )
-})
-
-test_that("tbl_svysummary-no error when by variable is ordered factor", {
-  expect_snapshot(
-    trial %>%
-      dplyr::mutate(grade = as.ordered(grade)) %>%
-      survey::svydesign(data = ., ids = ~1, weights = ~1) %>%
-      tbl_svysummary(by = grade) %>%
-      as.data.frame()
-  )
-})
-
-test_that("tbl_svysummary-provides similar results than tbl_summary for simple weights", {
-  d1 <- survey::svydesign(~1, data = as.data.frame(Titanic), weights = ~Freq)
-  d2 <- as.data.frame(Titanic) %>% tidyr::uncount(Freq)
-
-  # col percentages
-  t1 <- d1 %>% tbl_svysummary(include = c(Class, Sex, Age, Survived))
-  t2 <- d2 %>% tbl_summary(include = c(Class, Sex, Age, Survived))
-  expect_equal(t1$table_body, t2$table_body)
-  expect_equal(
-    t1$table_styling %>% purrr::list_modify(header = NULL),
-    t2$table_styling %>% purrr::list_modify(header = NULL)
-  )
-  expect_equal(
-    t1$table_styling$header %>% select(-contains("unweighted")),
-    t2$table_styling$header %>% select(-contains("unweighted"))
-  )
-
-  # row percentages
-  t1 <- d1 %>%
-    tbl_svysummary(include = c(Class, Sex), by = Survived, percent = "row") %>%
-    add_overall()
-  t2 <- d2 %>%
-    tbl_summary(include = c(Class, Sex), by = Survived, percent = "row") %>%
-    add_overall()
-  expect_equal(t1$table_body, t2$table_body)
-  expect_equal(
-    t1$table_styling %>% purrr::list_modify(header = NULL),
-    t2$table_styling %>% purrr::list_modify(header = NULL)
-  )
-  expect_equal(
-    tmp <- t1$table_styling$header %>% select(-contains("unweighted")),
-    t2$table_styling$header %>% select(all_of(names(tmp))) # order of variables can differ
-  )
-
-  # cell percentages
-  t1 <- d1 %>%
-    tbl_svysummary(include = c(Class, Sex), by = Survived, percent = "cell") %>%
-    add_overall()
-  t2 <- d2 %>%
-    tbl_summary(include = c(Class, Sex), by = Survived, percent = "cell") %>%
-    add_overall()
-  expect_equal(t1$table_body, t2$table_body)
-  expect_equal(
-    t1$table_styling %>% purrr::list_modify(header = NULL),
-    t2$table_styling %>% purrr::list_modify(header = NULL)
-  )
-  expect_equal(
-    tmp <- t1$table_styling$header %>% select(-contains("unweighted")),
-    t2$table_styling$header %>% select(all_of(names(tmp))) # order of variables can differ
-  )
-
-  statistic <- list(all_continuous() ~ "{mean}", all_categorical() ~ "{n} ({p}%)")
-  t1 <- survey::svydesign(~1, data = trial, weights = ~1) %>%
-    tbl_svysummary(by = trt, statistic = statistic)
-  t2 <- trial %>%
-    tbl_summary(by = trt, statistic = statistic)
-  expect_equal(t1$table_body, t2$table_body)
-  expect_equal(
-    t1$table_styling %>% purrr::list_modify(header = NULL),
-    t2$table_styling %>% purrr::list_modify(header = NULL)
-  )
-  expect_equal(
-    t1$table_styling$header %>% select(-contains("unweighted")) %>% select(all_of(names(.) %>% sort())),
-    t2$table_styling$header %>% select(-contains("unweighted")) %>% select(all_of(names(.) %>% sort()))
-  )
-})
-
-test_that("tbl_svysummary-calculates unweighted N with continuous variables and {N_obs_unweighted}", {
-  t1 <-
-    as_tibble(Titanic) %>%
-    mutate(age = round(as.numeric(list(runif(1, min = 5, max = 100))))) %>%
-    dplyr::ungroup() %>%
-    survey::svydesign(data = ., ids = ~1, weights = ~n) %>%
-    tbl_svysummary(
-      by = Sex,
-      include = -n,
-      statistic = list(all_continuous() ~ "{N_obs_unweighted}")
-    )
-
-  expect_equal(
-    t1$meta_data$df_stats[[1]] %>%
-      dplyr::pull("N_obs_unweighted") %>%
-      dplyr::first(),
-    as_tibble(Titanic) %>%
-      dplyr::group_by(Sex) %>%
-      dplyr::count() %>%
-      dplyr::pull(n) %>%
-      dplyr::first(),
-    ignore_attr = TRUE
-  )
-})
-
-
-
-
-test_that("tbl_summary(digits=) tests with fn inputs", {
-  expect_error(
-    tbl_digits <-
-      survey::svydesign(id = ~dnum, weights = ~pw, data = apiclus1, fpc = ~fpc) %>%
+        grade = factor(grade, levels = c("I", "II", "III", "IV")),
+        response = TRUE
+      ) |>
+      survey::svydesign(~1, data = _, weights = ~1) |>
       tbl_svysummary(
-        statistic = all_continuous() ~ "{min} {max}",
-        digits = all_continuous() ~ style_sigfig,
-        include = c(emer)
-      ),
-    NA
-  )
-  expect_snapshot(tbl_digits %>% as.data.frame())
-
-  # checking the display is correct
-  expect_equal(
-    tbl_digits$table_body %>% filter(variable == "emer") %>% pull(stat_0),
-    "0.00 49"
+        include = c(grade, response),
+        value = list(grade = "IV", response = FALSE)
+      ) |>
+      as.data.frame(col_labels = FALSE) |>
+      dplyr::pull(stat_0) |>
+      unique(),
+    "0 (0%)"
   )
 })
 
-
-test_that("tbl_svysummary() works with date and date/time", {
-  df_date <-
-    data.frame(
-      dates = as.Date("2021-02-20") + 1:10,
-      times = as.POSIXct("2021-02-20 20:31:33 EST") + 1:10,
-      group = 1:10 %% 2
-    ) %>%
-    {
-      survey::svydesign(~1, data = ., weights = ~1)
-    }
-
-  expect_error(
-    tbl1 <- df_date %>% tbl_svysummary(),
-    NA
-  )
-  expect_snapshot(tbl1 %>% as.data.frame())
-
-  expect_equal(
-    tbl1 %>% as_tibble() %>% select(last_col()) %>% dplyr::pull(),
-    c("2021-02-21 to 2021-03-02", "2021-02-20 20:31:34 to 2021-02-20 20:31:43", "5 (50%)")
-  )
-
-  month_year <- function(x) format(x, "%B %Y")
-  expect_error(
-    tbl1 <- df_date %>% tbl_svysummary(type = everything() ~ "continuous", digits = everything() ~ month_year, include = -group),
-    NA
-  )
-  expect_snapshot(tbl1 %>% as.data.frame())
-
-  expect_equal(
-    tbl1 %>% as_tibble() %>% select(last_col()) %>% dplyr::pull(),
-    c("February 2021 to March 2021", "February 2021 to February 2021")
-  )
-
-  numeric_to_month_year <- function(x) as.Date(x, origin = "1970-01-01") %>% format("%B %Y")
-  numeric_to_month_year2 <- function(x) as.POSIXct(x, origin = "1970-01-01 00:00:00") %>% format("%B %Y")
-  expect_error(
-    tbl1 <-
-      df_date %>%
-      tbl_svysummary(
-        by = group,
-        type = everything() ~ "continuous",
-        digits = list(
-          dates ~ numeric_to_month_year,
-          times ~ numeric_to_month_year2
-        )
-      ),
-    NA
-  )
-  expect_snapshot(tbl1 %>% as.data.frame())
-
-  expect_error(
-    tbl2 <- df_date %>% tbl_svysummary(by = group),
-    NA
-  )
-
-
-  # checking that formatting the unweighted proportion works
-  data(api, package = "survey")
-  dstrat <-
-    survey::svydesign(
-      id = ~1, strata = ~stype,
-      weights = ~pw, data = apistrat, fpc = ~fpc,
-      variables = apistrat[, c("pcttest", "growth", "awards")]
-    )
-  expect_equal(
-    tbl_svysummary(
-      data = dstrat,
-      include = awards,
-      type = awards ~ "categorical",
-      statistic = all_categorical() ~ "{p_unweighted}%",
-      digits = all_categorical() ~ 2
-    ) %>%
-      as_tibble(col_labels = FALSE) %>%
-      dplyr::pull(),
-    c(NA, "43.50%", "56.50%")
-  )
-
-  expect_equal(
-    tbl_svysummary(
-      data = dstrat,
-      include = awards,
-      type = awards ~ "categorical",
-      statistic = all_categorical() ~ "{p_unweighted}%"
-    ) %>%
-      as_tibble(col_labels = FALSE) %>%
-      dplyr::pull(),
-    c(NA, "44%", "57%")
-  )
-})
-
-test_that("tbl_svysummary() works with 0/1 variables", {
+test_that("tbl_svysummary(value) errors properly", {
+  # passing a value that does not exist
   expect_snapshot(
-    survey::svydesign(data = trial, ids = ~1, weights = ~1) %>%
-      tbl_svysummary(include = response) %>%
+    error = TRUE,
+    tbl_svysummary(svy_trial, value = "grade" ~ "IV", include = c(grade, response))
+  )
+})
+
+# tbl_svysummary(missing) ------------------------------------------------------
+test_that("tbl_svysummary(missing)", {
+  # default is correctly "ifany"
+  expect_equal(
+    tbl_svysummary(
+      svy_trial,
+      include = c(trt, age)
+    ) |>
+      as.data.frame(),
+    tbl <- tbl_svysummary(
+      svy_trial,
+      include = c(trt, age),
+      missing = "ifany"
+    ) |>
       as.data.frame()
   )
+  # age includes an Unknown row, and trt does not
+  expect_equal(tbl[, 1], c("Chemotherapy Treatment", "Drug A", "Drug B", "Age", "Unknown"))
+
+  # all vars have a missing row when requested
+  expect_equal(
+    tbl_svysummary(
+      svy_trial,
+      include = c(trt, age),
+      missing = "always"
+    ) |>
+      getElement("table_body") |>
+      dplyr::filter(row_type %in% "missing") |>
+      nrow(),
+    2L
+  )
+
+  # None of the vars have a missing row when requested
+  expect_equal(
+    tbl_svysummary(
+      svy_trial,
+      include = c(trt, age),
+      missing = "no"
+    ) |>
+      getElement("table_body") |>
+      dplyr::filter(row_type %in% "missing") |>
+      nrow(),
+    0L
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    tbl_svysummary(
+      svy_trial,
+      missing = "NOT AN OPTION"
+    )
+  )
 })
 
-test_that("tbl_svysummary() works with a factor having only one levem", {
-  d <- tibble(fct = factor(c("a", "a", "a", "a", "a"))) %>%
-    survey::svydesign(data = ., ids = ~1, weights = ~1)
-
-  expect_error(
-    res <- d %>% tbl_svysummary(),
-    NA
+# tbl_svysummary(missing_text) -------------------------------------------------
+test_that("tbl_svysummary(missing_text)", {
+  expect_snapshot(
+    tbl_svysummary(
+      svy_trial,
+      include = response,
+      missing_text = "(MISSING)"
+    ) |>
+      as.data.frame(col_label = FALSE)
   )
-  expect_snapshot(res %>% as.data.frame())
 
+  # errors with invalid inputs
+  expect_snapshot(
+    error = TRUE,
+    tbl_svysummary(
+      svy_trial,
+      include = response,
+      missing_text = letters
+    )
+  )
+  expect_snapshot(
+    error = TRUE,
+    tbl_svysummary(
+      svy_trial,
+      include = response,
+      missing_text = 10L
+    )
+  )
+})
+
+# tbl_svysummary(missing_stat) -----------------------------------------------
+test_that("tbl_svysummary(missing_stat)", {
+  # basic reporting works
   expect_equal(
-    res$table_body$stat_0,
-    c(NA, "5 (100%)")
+    tbl_svysummary(
+      svy_trial,
+      include = response,
+      missing_stat = "N = {N_miss}"
+    ) |>
+      as.data.frame(col_labels = FALSE) |>
+      dplyr::pull(stat_0) |>
+      dplyr::last(),
+    "N = 7"
+  )
+
+  # reporting of non-standard stats works as well
+  expect_equal(
+    tbl_svysummary(
+      svy_trial,
+      include = response,
+      missing_stat = "{N_miss}, {N_obs}, {N_nonmiss}, {p_miss}, {p_nonmiss}"
+    ) |>
+      as.data.frame(col_labels = FALSE) |>
+      dplyr::pull(stat_0) |>
+      dplyr::last(),
+    "7, 200, 193, 3.5, 97"
+  )
+
+  # errors with bad inputs
+  expect_snapshot(
+    error = TRUE,
+    tbl_svysummary(svy_trial, include = response, missing_stat = letters)
+  )
+  expect_snapshot(
+    error = TRUE,
+    tbl_svysummary(svy_trial, include = response, missing_stat = 10L)
+  )
+})
+
+# tbl_svysummary(sort) -------------------------------------------------------
+test_that("tbl_svysummary(sort)", {
+  expect_equal(
+    tbl_svysummary(svy_mtcars, sort = all_categorical() ~ "frequency", include = cyl) |>
+      getElement("table_body") |>
+      dplyr::filter(row_type %in% "level") |>
+      dplyr::pull(label),
+    c("8", "4", "6")
+  )
+})
+
+test_that("tbl_svysummary(sort) errors properly", {
+  # proper errors are returned
+  expect_snapshot(
+    error = TRUE,
+    tbl_svysummary(svy_mtcars, sort = list(all_categorical() ~ c("frequency", "two")))
+  )
+  expect_snapshot(
+    error = TRUE,
+    tbl_svysummary(svy_mtcars, sort = list(all_categorical() ~ "freq5555uency"))
+  )
+})
+
+# tbl_svysummary(percent) ----------------------------------------------------
+test_that("tbl_svysummary(percent)", {
+  expect_snapshot(
+    tbl_svysummary(svy_trial, by = trt, include = grade, percent = "column", statistic = ~"{p}%") |>
+      as.data.frame(col_labels = FALSE)
+  )
+
+  expect_snapshot(
+    tbl_svysummary(svy_trial, by = trt, include = grade, percent = "row", statistic = ~"{p}%") |>
+      as.data.frame(col_labels = FALSE)
+  )
+
+  expect_snapshot(
+    tbl_svysummary(svy_trial, by = trt, include = grade, percent = "cell", statistic = ~"{p}%") |>
+      as.data.frame(col_labels = FALSE)
+  )
+
+  # errors with bad input
+  expect_snapshot(
+    error = TRUE,
+    tbl_svysummary(svy_trial, by = trt, include = grade, percent = letters, statistic = ~"{p}%")
   )
 })

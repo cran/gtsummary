@@ -2,16 +2,17 @@
 % Please edit documentation in R/tbl_butcher.R
 \name{tbl_butcher}
 \alias{tbl_butcher}
-\title{Reduce size of gtsummary objects}
+\title{Butcher table}
 \usage{
-tbl_butcher(x, include = NULL)
+tbl_butcher(x, include = c("table_body", "table_styling"))
 }
 \arguments{
-\item{x}{a gtsummary object}
+\item{x}{(\code{gtsummary})\cr
+a gtsummary object}
 
-\item{include}{names of additional elements to retain in the gtsummary
-object. \code{c("table_body", "table_styling")} will always be retained.
-Default is \code{NULL}}
+\item{include}{(\code{character})\cr
+names of additional elements to retain in the gtsummary
+object. \code{c("table_body", "table_styling")} will always be retained.}
 }
 \value{
 a gtsummary object
@@ -28,20 +29,20 @@ the majority of \code{inline_text()} calls will continue to execute
 properly.
 }
 \examples{
-\donttest{
+\dontshow{if (identical(Sys.getenv("NOT_CRAN"), "true") || identical(Sys.getenv("IN_PKGDOWN"), "true")) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 tbl_large <-
-  trial \%>\%
+  trial |>
   tbl_uvregression(
     y = age,
     method = lm
   )
 
 tbl_butchered <-
-  tbl_large \%>\%
+  tbl_large |>
   tbl_butcher()
 
 # size comparison
-object.size(tbl_large) \%>\% format(units = "Mb")
-object.size(tbl_butchered) \%>\% format(units = "Mb")
-}
+object.size(tbl_large) |> format(units = "Mb")
+object.size(tbl_butchered)|> format(units = "Mb")
+\dontshow{\}) # examplesIf}
 }

@@ -1,76 +1,124 @@
-skip_on_cran()
-skip_if_not(broom.helpers::.assert_package("lme4", pkg_search = "gtsummary", boolean = TRUE))
-
-test_that("add_glance_source_note: no errors/warnings with standard use", {
-  tbl1 <-
-    lm(age ~ marker + grade, trial) %>%
-    tbl_regression(pvalue_fun = purrr::partial(style_pvalue, digits = 3))
-  tbl2 <-
-    lme4::lmer(age ~ marker + (1 | grade), trial) %>%
-    tbl_regression()
-
-  expect_error(
-    res <-
-      tbl1 %>%
-      add_glance_source_note(
-        label = list(df ~ "Degrees of Freedom", sigma ~ "\U03C3"),
-        fmt_fun = df ~ style_number,
-        include = c(r.squared, AIC, sigma, df, nobs)
-      ),
-    NA
-  )
-  expect_snapshot(res %>% as.data.frame())
-
-  expect_error(
-    tbl_glance <-
-      tbl1 %>%
-      add_glance_table(
-        label = list(df ~ "Degrees of Freedom", sigma ~ "\U03C3"),
-        fmt_fun = df ~ style_number,
-        include = c(r.squared, AIC, sigma, df, nobs, p.value)
-      ),
-    NA
-  )
-  expect_snapshot(tbl_glance %>% as.data.frame())
-
+# add_glance_source_note() -----------------------------------------------------
+test_that("add_glance_source_note(x)", {
   expect_equal(
-    tbl_glance %>%
-      modify_column_unhide(everything()) %>%
-      as_tibble(col_labels = FALSE) %>%
-      filter(row_type == "glance_statistic") %>%
-      pull(estimate),
-    c("0.005", "1,473", "14.6", "3", "179", "0.832")
+    lm(age ~ trt, trial) |>
+      tbl_regression() |>
+      add_glance_source_note() |>
+      getElement("table_styling") |>
+      getElement("source_note"),
+    "R² = 0.000; Adjusted R² = -0.005; Sigma = 14.3; Statistic = 0.044; p-value = 0.8; df = 1; Log-likelihood = -771; AIC = 1,547; BIC = 1,557; Deviance = 38,499; Residual df = 187; No. Obs. = 189",
+    ignore_attr = TRUE
   )
-
-  expect_error(
-    res <-
-      tbl2 %>%
-      add_glance_source_note(
-        glance_fun = broom.mixed::glance
-      ),
-    NA
-  )
-  expect_snapshot(res %>% as.data.frame())
-
-  expect_error(
-    res <-
-      tbl1 %>%
-      add_glance_table(
-        label = list(df ~ "Degrees of Freedom", sigma ~ "\U03C3"),
-        fmt_fun = df ~ style_number,
-        include = c(r.squared, AIC, sigma, df)
-      ),
-    NA
-  )
-  expect_snapshot(res %>% as.data.frame())
-
-  expect_error(
-    res <-
-      tbl2 %>%
-      add_glance_table(
-        glance_fun = broom.mixed::glance
-      ),
-    NA
-  )
-  expect_snapshot(res %>% as.data.frame())
 })
+
+test_that("add_glance_source_note(include,label)", {
+  expect_equal(
+    lm(age ~ trt, trial) |>
+      tbl_regression() |>
+      add_glance_source_note(include = r.squared, label = r.squared ~ "R * R") |>
+      getElement("table_styling") |>
+      getElement("source_note"),
+    "R * R = 0.000",
+    ignore_attr = TRUE
+  )
+})
+
+test_that("add_glance_source_note(fmt_fn)", {
+  expect_equal(
+    lm(age ~ trt, trial) |>
+      tbl_regression() |>
+      add_glance_source_note(fmt_fun = ~label_style_sigfig(digits = 5), include = 1:3) |>
+      getElement("table_styling") |>
+      getElement("source_note"),
+    "R² = 0.00024; Adjusted R² = -0.00511; Sigma = 14.348",
+    ignore_attr = TRUE
+  )
+})
+
+test_that("add_glance_source_note(glance_fun)", {
+  expect_equal(
+    lm(age ~ trt, trial) |>
+      tbl_regression() |>
+      add_glance_source_note(glance_fun = \(x, ...) broom::glance(x, ...) |> dplyr::select(1:3)) |>
+      getElement("table_styling") |>
+      getElement("source_note"),
+    lm(age ~ trt, trial) |>
+      tbl_regression() |>
+      add_glance_source_note(include = 1:3) |>
+      getElement("table_styling") |>
+      getElement("source_note")
+  )
+})
+
+test_that("add_glance_source_note(text_interpret)", {
+  expect_equal(
+    lm(age ~ trt, trial) |>
+      tbl_regression() |>
+      add_glance_source_note(text_interpret = "html") |>
+      getElement("table_styling") |>
+      getElement("source_note") |>
+      attr("text_interpret"),
+    "html"
+  )
+})
+
+test_that("add_glance_source_note(sep1,sep2)", {
+  expect_equal(
+    lm(age ~ trt, trial) |>
+      tbl_regression() |>
+      add_glance_source_note(include = 1:3, sep1 = "==", sep2 = " | ") |>
+      getElement("table_styling") |>
+      getElement("source_note") ,
+    "R²==0.000 | Adjusted R²==-0.005 | Sigma==14.3",
+    ignore_attr = TRUE
+  )
+})
+
+
+# add_glance_table() -----------------------------------------------------------
+test_that("add_glance_table(x)", {
+  expect_snapshot(
+    lm(age ~ trt, trial) |>
+      tbl_regression() |>
+      add_glance_table() |>
+      as.data.frame()
+  )
+})
+
+test_that("add_glance_table(include,label)", {
+  expect_equal(
+    lm(age ~ trt, trial) |>
+      tbl_regression() |>
+      add_glance_table(include = r.squared, label = r.squared ~ "R * R") |>
+      getElement("table_body") |>
+      getElement("label") |>
+      getElement(4L),
+    "R * R"
+  )
+})
+
+test_that("add_glance_table(fmt_fn)", {
+  expect_equal(
+    lm(age ~ trt, trial) |>
+      tbl_regression() |>
+      add_glance_table(fmt_fun = ~label_style_sigfig(digits = 5), include = 1:3) |>
+      as.data.frame(col_labels = FALSE) |>
+      getElement("estimate") %>%
+      `[`(4:6),
+    c("0.00024", "-0.00511", "14.348")
+  )
+})
+
+test_that("add_glance_table(glance_fun)", {
+  expect_equal(
+    lm(age ~ trt, trial) |>
+      tbl_regression() |>
+      add_glance_table(glance_fun = \(x, ...) broom::glance(x, ...) |> dplyr::select(1:3)) |>
+      as.data.frame(),
+    lm(age ~ trt, trial) |>
+      tbl_regression() |>
+      add_glance_table(include = 1:3) |>
+      as.data.frame()
+  )
+})
+

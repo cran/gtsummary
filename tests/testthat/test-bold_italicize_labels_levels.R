@@ -1,86 +1,187 @@
-skip_on_cran()
+tbl <- tbl_summary(trial, include = age)
 
-tbl <- trial %>%
-  tbl_summary(by = trt) %>%
-  add_p() %>%
-  add_q()
-
-
-tbl_cross_ex <- trial %>%
-  tbl_cross(row = trt, col = response)
-
-tbl_uv_ex1 <-
-  tbl_uvregression(
-    trial[c("response", "age", "grade")],
-    method = glm,
-    y = response,
-    method.args = list(family = binomial),
-    exponentiate = TRUE
-  )
-
-
-test_that("tab_style: bold and italicize", {
-  expect_snapshot(
-    tbl %>%
-      bold_labels() %>%
-      bold_levels() %>%
-      italicize_labels() %>%
-      italicize_levels() %>%
-      bold_p() %>%
-      bold_p(q = TRUE, t = 0.2) %>%
-      as.data.frame()
-  )
-
-  expect_snapshot(
-    tbl_cross_ex %>%
-      bold_labels() %>%
-      bold_levels() %>%
-      italicize_labels() %>%
-      italicize_levels() %>%
-      as.data.frame()
-  )
-
-  expect_snapshot(
-    tbl_uv_ex1 %>%
-      bold_labels() %>%
-      bold_levels() %>%
-      italicize_labels() %>%
-      italicize_levels() %>%
-      as.data.frame()
-  )
-
-  expect_warning(
-    tbl %>%
-      bold_labels() %>%
-      bold_levels() %>%
-      italicize_labels() %>%
-      italicize_levels() %>%
-      bold_p() %>%
-      bold_p(q = TRUE, t = 0.2),
-    NA
+test_that("bold_labels() works", {
+  expect_equal(
+    bold_labels(tbl) |>
+      getElement("table_styling") |>
+      getElement("text_format") |>
+      dplyr::filter(format_type == "bold") |>
+      getElement("rows") |>
+      getElement(1L) |>
+      quo_get_expr(),
+    expr(.data$row_type == "label")
   )
 })
 
+test_that("bold_levels() works", {
+  expect_equal(
+    bold_levels(tbl) |>
+      getElement("table_styling") |>
+      getElement("text_format") |>
+      dplyr::filter(format_type == "bold") |>
+      getElement("rows") |>
+      getElement(1L) |>
+      quo_get_expr(),
+    expr(.data$row_type != "label")
+  )
+})
 
-test_that("error when non-gtsummary object passed", {
-  expect_error(
-    mtcars %>%
+test_that("italicize_labels() works", {
+  expect_equal(
+    italicize_labels(tbl) |>
+      getElement("table_styling") |>
+      getElement("text_format") |>
+      dplyr::filter(format_type == "italic") |>
+      getElement("rows") |>
+      getElement(1L) |>
+      quo_get_expr(),
+    expr(.data$row_type == "label")
+  )
+})
+
+test_that("italicize_levels() works", {
+  expect_equal(
+    italicize_levels(tbl) |>
+      getElement("table_styling") |>
+      getElement("text_format") |>
+      dplyr::filter(format_type == "italic") |>
+      getElement("rows") |>
+      getElement(1L) |>
+      quo_get_expr(),
+    expr(.data$row_type != "label")
+  )
+})
+
+test_that("bold_italicize_labels_levels messaging", {
+  expect_message(
+    testing <- tbl |>
+      modify_table_body(~.x |> dplyr::select(-row_type)) |>
       bold_labels(),
-    NULL
+    "cannot be used in this context."
   )
-  expect_error(
-    mtcars %>%
+
+  expect_message(
+    testing <- tbl |>
+      modify_table_body(~.x |> dplyr::select(-row_type)) |>
       bold_levels(),
-    NULL
+    "cannot be used in this context."
   )
-  expect_error(
-    mtcars %>%
+
+  expect_message(
+    testing <- tbl |>
+      modify_table_body(~.x |> dplyr::select(-row_type)) |>
       italicize_labels(),
-    NULL
+    "cannot be used in this context."
   )
-  expect_error(
-    mtcars %>%
+
+  expect_message(
+    testing <- tbl |>
+      modify_table_body(~.x |> dplyr::select(-row_type)) |>
       italicize_levels(),
-    NULL
+    "cannot be used in this context."
+  )
+})
+
+# tbl_cross styling ------------------------------------------------------------
+
+test_that("bold_labels.tbl_cross()", {
+  tbl <-
+    tbl_cross(trial, grade, stage) |>
+    bold_labels()
+
+  expect_equal(
+    tbl |>
+      as.data.frame() |>
+      getElement(1L),
+    c("__Grade__", "I", "II", "III", "__Total__")
+  )
+  expect_equal(
+    tbl |>
+      getElement("table_styling") |>
+      getElement("header") |>
+      dplyr::filter(column == "stat_0") |>
+      dplyr::pull(label),
+    "**Total**"
+  )
+  expect_equal(
+    tbl |>
+      getElement("table_styling") |>
+      getElement("header") |>
+      dplyr::filter(startsWith(column, "stat_"), column != "stat_0") |>
+      dplyr::pull(spanning_header) |>
+      unique(),
+    "**T Stage**"
+  )
+})
+
+test_that("bold_levels.tbl_cross()", {
+  tbl <-
+    tbl_cross(trial, grade, stage) |>
+    bold_levels()
+
+  expect_equal(
+    tbl |>
+      as.data.frame() |>
+      getElement(1L),
+    c("Grade", "__I__", "__II__", "__III__", "Total")
+  )
+  expect_equal(
+    tbl |>
+      getElement("table_styling") |>
+      getElement("header") |>
+      dplyr::filter(startsWith(column, "stat_"), column != "stat_0") |>
+      dplyr::pull(label),
+    c("**T1**", "**T2**", "**T3**", "**T4**")
+  )
+})
+
+test_that("italicize_labels.tbl_cross()", {
+  tbl <-
+    tbl_cross(trial, grade, stage) |>
+    italicize_labels()
+
+  expect_equal(
+    tbl |>
+      as.data.frame() |>
+      getElement(1L),
+    c("_Grade_", "I", "II", "III", "_Total_")
+  )
+  expect_equal(
+    tbl |>
+      getElement("table_styling") |>
+      getElement("header") |>
+      dplyr::filter(column == "stat_0") |>
+      dplyr::pull(label),
+    "*Total*"
+  )
+  expect_equal(
+    tbl |>
+      getElement("table_styling") |>
+      getElement("header") |>
+      dplyr::filter(startsWith(column, "stat_"), column != "stat_0") |>
+      dplyr::pull(spanning_header) |>
+      unique(),
+    "*T Stage*"
+  )
+})
+
+test_that("italicize_levels.tbl_cross()", {
+  tbl <-
+    tbl_cross(trial, grade, stage) |>
+    italicize_levels()
+
+  expect_equal(
+    tbl |>
+      as.data.frame() |>
+      getElement(1L),
+    c("Grade", "_I_", "_II_", "_III_", "Total")
+  )
+  expect_equal(
+    tbl |>
+      getElement("table_styling") |>
+      getElement("header") |>
+      dplyr::filter(startsWith(column, "stat_"), column != "stat_0") |>
+      dplyr::pull(label),
+    c("*T1*", "*T2*", "*T3*", "*T4*")
   )
 })

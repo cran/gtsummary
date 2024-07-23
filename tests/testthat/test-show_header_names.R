@@ -1,8 +1,8 @@
-skip_on_cran()
+skip_on_os("windows")
 
-test_that("show_header_names works", {
-  expect_error(
-    trial %>% select(age) %>% tbl_summary() %>% show_header_names(quiet = TRUE),
-    NA
+test_that("show_header_names() works", {
+  expect_snapshot(
+    tbl_summary(trial, include = age, by = trt, missing = "no") |>
+      show_header_names()
   )
 })

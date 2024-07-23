@@ -1,47 +1,71 @@
-skip_on_cran()
-skip_if_not(broom.helpers::.assert_package("flextable", pkg_search = "gtsummary", boolean = TRUE))
-skip_if_not(broom.helpers::.assert_package("huxtable", pkg_search = "gtsummary", boolean = TRUE))
-skip_if_not(broom.helpers::.assert_package("kableExtra", pkg_search = "gtsummary", boolean = TRUE))
-
-
-test_that("no errors/warnings with all output types", {
-  tbl <- trial %>%
-    select(age) %>%
-    tbl_summary() %>%
-    modify_caption("test caption")
-
-  expect_snapshot(tbl %>% as.data.frame())
-  expect_error(tbl %>% as_gt(), NA)
-  expect_error(tbl %>% as_flex_table(), NA)
-  expect_error(tbl %>% as_hux_table(), NA)
-  expect_error(tbl %>% as_kable(), NA)
-  expect_error(tbl %>% as_kable_extra(), NA)
-  expect_error(tbl %>% as_tibble(), NA)
-
-  tbl2 <- trial %>%
-    select(age) %>%
-    tbl_summary() %>%
-    modify_caption("test caption", text_interpret = "html")
-  expect_snapshot(tbl2 %>% as.data.frame())
-
-  tbl_reg <- lm(mpg ~ hp, mtcars) %>% tbl_regression()
-  expect_error(modify_caption(trial), "*")
-  expect_error(tbl_reg %>% modify_caption(letters), "*")
+test_that("modify_caption(caption) works", {
   expect_equal(
-    tbl_reg %>% modify_caption("{N}") %>% purrr::pluck("table_styling", "caption"),
-    "32",
-    ignore_attr = TRUE
+    tbl_summary(trial, include = marker) |>
+      modify_caption("**Adding a caption** N = {N}", text_interpret = "html") |>
+      getElement("table_styling") |>
+      getElement("caption"),
+    "**Adding a caption** N = 200" |>
+      structure(text_interpret = "html")
   )
+})
 
-  expect_error(
-    tbl_with_caption <-
-      trial %>%
-      select(age) %>%
-      tbl_summary() %>%
-      modify_table_body(~ rename(.x, label2 = label)) %>%
-      modify_column_unhide(label2) %>%
-      modify_caption("captions are great"),
-    NA
+test_that("modify_caption() works with tbl_svysummary()", {
+  skip_if_not(is_pkg_installed(c("survey", "cardx"), reference_pkg = "gtsummary"))
+
+  expect_equal(
+    survey::svydesign(~1, data = as.data.frame(Titanic), weights = ~Freq) |>
+      tbl_svysummary(by = Survived, percent = "row", include = c(Class, Age))|>
+      add_overall() |>
+      modify_caption("**Adding a caption** N = {N}", text_interpret = "html") |>
+      getElement("table_styling") |>
+      getElement("caption"),
+    "**Adding a caption** N = 2201" |>
+      structure(text_interpret = "html")
   )
-  expect_snapshot(tbl_with_caption %>% as.data.frame())
+})
+
+test_that("modify_caption() works with tbl_continuous()", {
+  expect_equal(tbl_continuous(data = trial, variable = age, by = trt, include = grade)|>
+                 add_overall() |>
+                 modify_caption("**Adding a caption** N = {N}", text_interpret = "html") |>
+                 getElement("table_styling") |>
+                 getElement("caption"),
+               "**Adding a caption** N = 200" |>
+                 structure(text_interpret = "html")
+  )
+})
+
+
+test_that("modify_caption() works with tbl_cross()", {
+  expect_equal(tbl_cross(data = trial, row = trt, col = response) |>
+                 modify_caption("**Adding a caption** N = {N}", text_interpret = "html") |>
+                 getElement("table_styling") |>
+                 getElement("caption"),
+               "**Adding a caption** N = 200" |>
+                 structure(text_interpret = "html")
+  )
+})
+
+test_that("modify_caption() works with tbl_regression()", {
+  skip_if_not(is_pkg_installed("broom.helpers", reference_pkg = "gtsummary"))
+
+  expect_equal(glm(response ~ age + grade, trial, family = binomial()) |>
+                 tbl_regression(exponentiate = TRUE) |>
+                 modify_caption("**Adding a caption** N = {N} (Event N = {N_event})", text_interpret = "html") |>
+                 getElement("table_styling") |>
+                 getElement("caption"),
+               "**Adding a caption** N = 183 (Event N = 58)" |>
+                 structure(text_interpret = "html")
+  )
+})
+
+test_that("modify_caption() works with tbl_uvregression()", {
+  expect_equal(tbl_uvregression(trial, method = glm, y = response, method.args = list(family = binomial),
+                                exponentiate = TRUE, include = c("age", "grade")) |>
+                 modify_caption("**Adding a caption**", text_interpret = "html") |>
+                 getElement("table_styling") |>
+                 getElement("caption"),
+               "**Adding a caption**" |>
+                 structure(text_interpret = "html")
+  )
 })

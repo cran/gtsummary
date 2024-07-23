@@ -2,34 +2,13 @@
 % Please edit documentation in R/deprecated.R
 \name{deprecated}
 \alias{deprecated}
-\alias{as_flextable}
-\alias{all_numeric}
-\alias{all_character}
-\alias{all_integer}
-\alias{all_double}
-\alias{all_logical}
-\alias{all_factor}
 \alias{modify_cols_merge}
 \title{Deprecated functions}
 \usage{
-as_flextable(...)
-
-all_numeric()
-
-all_character()
-
-all_integer()
-
-all_double()
-
-all_logical()
-
-all_factor()
-
 modify_cols_merge(...)
 }
 \description{
-\lifecycle{deprecated}
+\lifecycle{deprecated}\cr
 Some functions have been deprecated and are no longer being actively
 supported.
 }
