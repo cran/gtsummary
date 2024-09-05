@@ -116,7 +116,7 @@ add_stat_label.tbl_summary <- function(x, location = c("row", "column"), label =
   imap(
     label[intersect(names(label), x$inputs$type |> discard(~.x == "continuous2") |> names())],
     function(.x, .y) {
-      if (!is_string(.x)) {
+      if (length(.x) > 1L || !(is_string(.x) || is.na(.x))) {
         cli::cli_abort(
           "Elements of the {.arg label} argument for variable {.val {.y}} must be a string of length 1.",
           all = get_cli_abort_call()
@@ -244,7 +244,7 @@ add_stat_label.tbl_svysummary <- add_stat_label.tbl_summary
               expr(glue::glue(gsub("\\{(p|p_miss|p_nonmiss|p_unweighted)\\}%", "{\\1}", x = sub_statistic))),
               cards::get_ard_statistics(
                 x$cards[[1]] |>
-                  dplyr::filter(.data$variable %in% variable) |>
+                  dplyr::filter(.data$variable %in% .env$variable) |>
                   dplyr::distinct(.data$stat_name, .data$stat_label),
                 .column = "stat_label"
               )

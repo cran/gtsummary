@@ -80,6 +80,7 @@ NULL
 #' @name tbl_uvregression
 tbl_uvregression <- function(data, ...) {
   check_not_missing(data)
+  check_pkg_installed("cardx", reference_pkg = "gtsummary")
   UseMethod("tbl_uvregression")
 }
 
@@ -300,14 +301,14 @@ is_quo_empty <- function(x) {
       if (!is_empty(tbl_i[["error"]])) {
         cli::cli_abort(
           c("There was an {cli::col_red('error')} running {.fun tbl_regression} for variable {.val {variable}}. See message below.",
-            "x" = tbl_i[["error"]]),
+            "x" = "{tbl_i[['error']]}"),
           call = get_cli_abort_call()
         )
       }
       if (!is_empty(tbl_i[["warning"]])) {
         cli::cli_inform(
           c("There was a {cli::col_yellow('warning')} running {.fun tbl_regression} for variable {.val {variable}}. See message below.",
-            "!" = tbl_i[["warning"]])
+            "!" = "{tbl_i[['warning']]}")
         )
       }
 
@@ -328,14 +329,14 @@ is_quo_empty <- function(x) {
       if (!is_empty(model_i[["error"]])) {
         cli::cli_abort(
           c("There was an {cli::col_red('error')} constructing the model for variable {.val {variable}}. See message below.",
-            "x" = model_i[["error"]]),
+            "x" = "{model_i[['error']]}"),
           call = get_cli_abort_call()
         )
       }
       if (!is_empty(model_i[["warning"]])) {
         cli::cli_inform(
           c("There was a {cli::col_yellow('warning')} constructing the model for variable {.val {variable}}. See message below.",
-            "!" = model_i[["warning"]])
+            "!" = "{model_i[['warning']]}")
         )
       }
 
@@ -354,15 +355,15 @@ is_quo_empty <- function(x) {
           cards::eval_capture_conditions(
             glue(
               formula,
-              .envir = list(y = ifelse(is_empty(y), variable, y),
-                            x = ifelse(is_empty(x), variable, x))
+              .envir = list(y = ifelse(is_empty(y), cardx::bt(variable), y),
+                            x = ifelse(is_empty(x), cardx::bt(variable), x))
             ) |>
               stats::as.formula()
           )
         if (!is_empty(formula_i[["error"]])) {
           cli::cli_abort(
             c("There was an error constructing the formula for variable {.val {variable}}. See message below.",
-              "x" = formula_i[["error"]]),
+              "x" = "{formula_i[['error']]}"),
             call = get_cli_abort_call()
           )
         }

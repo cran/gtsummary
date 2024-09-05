@@ -1,3 +1,37 @@
+# gtsummary 2.0.2
+
+Updates to address regressions in the v2.0.0 release:
+
+  * The default `add_glance_*(glance_fun)` function fixed for `mice` models with class `'mira'`. (#1912)
+  * We can again report unweighted statistics in the headers of `tbl_svysummary()` tables. (#1911)
+  * `tbl_uvregression()` properly handles variables specified in the `include` argument with non-syntactic names. (#1932)
+  * `NA` values can again be specified in `add_stat_label(label)` to suppress a statistic label from being placed. (#1937)
+  * Corrected bug in `tbl_cross()` where the `digits` argument was not always being passed accurately to `tbl_summary()`. (#1943)
+  
+### Other updates
+
+* The Themes and Inline Text vignettes have been converted to articles (that is, they are no longer bundled with the package, but are still available on the website).
+
+* The total N is now returned with `.$cards` using the `cards::ard_total_n()` function for the calculation.
+
+* The default headers for `tbl_ard_*()` functions no longer include counts, as these are not required data to be passed along in the ARD input.
+
+* The summary statistics of the `'by'` variable are no longer required in the ARD for functions `tbl_ard_summary()` and `tbl_ard_continuous()`. When the tabulation summary statistics are passed, they are available to place in the header dynamically. (#1860)
+
+* The `tbl_ard_wide_summary()` function no longer requires the results from `cards::ard_attributes()` to create tables. (#1873)
+
+* Added the `label` argument to functions `tbl_ard_summary()`, `tbl_ard_wide_summary()`, and `tbl_ard_continuous()`. (#1850)
+
+* The `add_glance*(glance_fun)` argument's default value has been updated to an S3 generic, allowing bespoke handling for some regression classes. (#1822)
+
+* Added `add_overall.tbl_ard_summary()` S3 method. (#1848)
+
+* Added function `tbl_likert()` for summarizing ordered categorical (or Likert scales) data as well as the associated `add_n.tbl_likert()` S3 method. (#1660)
+
+* Fix where error or warning condition messages containing curly brace pairs could not be printed.
+
+* Updated the `show_header_names()` output to include the values that may be dynamically placed in the headers. Additionally, the `include_example` and `quiet` arguments have been deprecated. (#1696)
+
 # gtsummary 2.0.1
 
 Updates to address regressions in the v2.0.0 release:

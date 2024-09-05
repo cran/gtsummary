@@ -25,8 +25,8 @@
       as.data.frame(tbl2)
     Output
             **Characteristic** **N** **log(HR)**  **95% CI** **p-value**
-      1                    Age   189        0.01  0.01, 0.01      <0.001
-      2 Chemotherapy Treatment   200        <NA>        <NA>        <NA>
+      1                    Age   183        0.01  0.01, 0.01      <0.001
+      2 Chemotherapy Treatment   193        <NA>        <NA>        <NA>
       3                 Drug A  <NA>        <NA>        <NA>        <NA>
       4                 Drug B  <NA>        0.29 -0.12, 0.70         0.2
 
@@ -47,6 +47,24 @@
           **Characteristic** **N** **HR** **95% CI** **p-value**
       1                  Age   189   1.01 0.99, 1.02         0.3
       2 Marker Level (ng/mL)   190   0.91 0.72, 1.15         0.4
+
+---
+
+    Code
+      as.data.frame(tbl_uvregression(dplyr::select(mtcars, `M P G` = mpg, hp), y = hp,
+      method = lm))
+    Output
+        **Characteristic** **N** **Beta** **95% CI** **p-value**
+      1              M P G    32     -8.8  -12, -6.2      <0.001
+
+---
+
+    Code
+      as.data.frame(tbl_uvregression(dplyr::select(mtcars, `M P G` = mpg, hp), x = hp,
+      method = lm))
+    Output
+        **Outcome** **N** **Beta**   **95% CI** **p-value**
+      1       M P G    32    -0.07 -0.09, -0.05      <0.001
 
 # tbl_uvregression(tidy_fun)
 
