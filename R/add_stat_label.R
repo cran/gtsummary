@@ -155,13 +155,13 @@ add_stat_label.tbl_summary <- function(x, location = c("row", "column"), label =
           dplyr::mutate(
             row_type = "missing",
             stat_label =
-              glue::glue(
-                x$inputs$missing_stat,
-                .envir = list(N_obs = "N",
-                              N_miss = "n",
-                              N_nonmiss = "N - n",
-                              p_miss = "p",
-                              p_nonmiss = "1 - p")
+              glue::glue_data(
+                .x = list(N_obs = "N",
+                          N_miss = "n",
+                          N_nonmiss = "N - n",
+                          p_miss = "p",
+                          p_nonmiss = "1 - p"),
+                x$inputs$missing_stat
               )
           )
       )
@@ -232,6 +232,10 @@ add_stat_label.tbl_summary <- function(x, location = c("row", "column"), label =
 #' @export
 #' @rdname add_stat_label
 add_stat_label.tbl_svysummary <- add_stat_label.tbl_summary
+
+#' @export
+#' @rdname add_stat_label
+add_stat_label.tbl_ard_summary <- add_stat_label.tbl_summary
 
 .add_stat_label_default_label_arg <- function(x, statistic) {
   statistic |>

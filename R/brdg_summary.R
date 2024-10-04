@@ -239,11 +239,11 @@ pier_summary_categorical <- function(cards,
                       str_statistic_pre_glue,
                       function(str_to_glue) {
                         stat <-
-                          glue::glue(
-                            str_to_glue,
-                            .envir =
+                          glue::glue_data(
+                            .x =
                               cards::get_ard_statistics(df_variable_level_stats, .column = "stat_fmt") |>
-                              c(lst_variable_stats)
+                              c(lst_variable_stats),
+                            str_to_glue
                           ) |>
                           as.character()
                       }
@@ -345,9 +345,9 @@ pier_summary_continuous2 <- function(cards,
               statistic[[.y$variable[1]]],
               function(str_to_glue) {
                 stat <-
-                  glue::glue(
-                    str_to_glue,
-                    .envir = cards::get_ard_statistics(.x, .column = "stat_fmt")
+                  glue::glue_data(
+                    .x = cards::get_ard_statistics(.x, .column = "stat_fmt"),
+                    str_to_glue
                   ) |>
                   as.character()
               }
@@ -358,9 +358,9 @@ pier_summary_continuous2 <- function(cards,
               statistic[[.y$variable[1]]],
               function(str_to_glue) {
                 label <-
-                  glue::glue(
-                    str_to_glue,
-                    .envir = cards::get_ard_statistics(.x, .column = "stat_label")
+                  glue::glue_data(
+                    .x = cards::get_ard_statistics(.x, .column = "stat_label"),
+                    str_to_glue
                   ) |>
                   as.character()
               }
@@ -453,9 +453,9 @@ pier_summary_continuous <- function(cards,
         dplyr::mutate(
           .data = .y,
           stat =
-            glue::glue(
-              statistic[[.data$variable[1]]],
-              .envir = cards::get_ard_statistics(.x, .column = "stat_fmt")
+            glue::glue_data(
+              .x = cards::get_ard_statistics(.x, .column = "stat_fmt"),
+              statistic[[.data$variable[1]]]
             ) |>
             as.character()
         )
@@ -540,7 +540,7 @@ pier_summary_missing_row <- function(cards,
     )
 }
 
-.add_table_styling_stats <- function(x, cards, by) {
+.add_table_styling_stats <- function(x, cards, by, hierarchical = FALSE) {
   if (is_empty(by)) {
     x$table_styling$header$modify_stat_level <- translate_string("Overall")
 
@@ -574,6 +574,7 @@ pier_summary_missing_row <- function(cards,
         .data$variable %in% .env$by,
         .data$stat_name %in% c("N", "n", "p", "N_unweighted", "n_unweighted", "p_unweighted")
       )
+    by_gps <- paste0("group", seq_along(by), c("", "_level"))
 
     # if no tabulation of the 'by' variable provided, just return the 'by' levels
     if (nrow(df_by_stats) == 0L) {
@@ -592,7 +593,7 @@ pier_summary_missing_row <- function(cards,
         dplyr::select(cards::all_ard_variables(), "stat_name", "stat") |>
         dplyr::left_join(
           cards |>
-            dplyr::select(cards::all_ard_groups(), "gts_column") |>
+            dplyr::select(if (hierarchical) by_gps else cards::all_ard_groups(), "gts_column") |>
             dplyr::filter(!is.na(.data$gts_column)) |>
             dplyr::distinct() |>
             dplyr::rename(variable = "group1", variable_level = "group1_level"),

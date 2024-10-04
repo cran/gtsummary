@@ -16,7 +16,7 @@ test_that("tbl_ard_continuous(cards)", {
       as.data.frame()
   )
 
-  # no error when no tablulation of the 'by' data is passed
+  # no error when no tabulation of the 'by' data is passed
   expect_snapshot(
     cards::ard_continuous(trial, by = c(trt, grade), variables = age) |>
       tbl_ard_continuous(by = trt, variable = age, include = grade) |>
@@ -85,5 +85,76 @@ test_that("tbl_ard_continuous(statistic) error messaging", {
     error = TRUE,
     cards::ard_continuous(trial, by = grade, variables = age) |>
       tbl_ard_continuous(variable = "age", include = "grade", statistic = everything() ~ c("{mean}", "{median}"))
+  )
+})
+
+test_that("tbl_ard_continuous(value)", {
+  # checking results without by variable
+  expect_equal(
+    cards::ard_continuous(trial, by = grade, variables = age) |>
+      tbl_ard_continuous(variable = "age", include = "grade", value = grade ~ "I") |>
+      as.data.frame() %>%
+      `[`(1, 2),
+    tbl_summary(
+      trial |> dplyr::filter(grade == "I"),
+      include = age,
+      digits = ~1
+    ) |>
+      as.data.frame() %>%
+      `[`(1, 2)
+  )
+
+  # checking results with by variable
+  expect_equal(
+    cards::ard_continuous(trial, by = c(trt, grade), variables = age) |>
+      tbl_ard_continuous(by = "trt", variable = "age", include = "grade", value = grade ~ "I") |>
+      as.data.frame() %>%
+      `[`(1, 2),
+    tbl_summary(
+      trial |> dplyr::filter(grade == "I", trt == "Drug A"),
+      include = age,
+      digits = ~1
+    ) |>
+      as.data.frame() %>%
+      `[`(1, 2)
+  )
+})
+
+
+test_that("tbl_ard_continuous(value) messaging", {
+  # specified a level that does not exist
+  expect_snapshot(
+    error = TRUE,
+    cards::ard_continuous(trial, by = c(trt, grade), variables = age) |>
+      tbl_ard_continuous(by = "trt", variable = "age", include = "grade", value = grade ~ "XXXXXXX")
+  )
+
+  # specified a value that is not a single unit in length
+  expect_snapshot(
+    error = TRUE,
+    cards::ard_continuous(trial, by = c(trt, grade), variables = age) |>
+      tbl_ard_continuous(by = "trt", variable = "age", include = "grade", value = grade ~ letters)
+  )
+})
+
+test_that("tbl_ard_continuous() existing 'gts_column'", {
+  # test there is no error when passing an ARD with an existing 'gts_column'
+  tbl <-
+    tbl_continuous(
+      data = trial,
+      variable = age,
+      by = trt,
+      include = grade
+    )
+  expect_equal(
+    tbl_ard_continuous(
+      cards = tbl$cards[[1]],
+      variable = age,
+      by = trt,
+      include = grade
+    ) |>
+      modify_header(all_stat_cols() ~ "**{level}**  \nN = {n}") |>
+      as.data.frame(),
+    as.data.frame(tbl)
   )
 })

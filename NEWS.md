@@ -1,3 +1,37 @@
+# gtsummary 2.0.3
+
+### New Features and Functions
+
+* Added function `tbl_hierarchical()`, `tbl_hierarchical_count()`, `tbl_ard_hierarchical()`, `brdg_hierarchical()`, and `pier_summary_hierarchical()`. Consider these functions as a preview. We will be making changes without the full deprecation cycle in the coming releases. (#1872) 
+
+* Adding the `style_*(prefix, suffix)` and  `label_style_*(prefix, suffix)` for adding a string before or after the formatted results. These arguments have not been added to the p-value formatting functions. (#1690)
+
+* Added argument `tbl_ard_summary(overall)`. When `TRUE`, the ARD is parsed into primary ARD and the Overall ARD and we run `tbl_ard_summary() |> add_overall()`. (#1940)
+
+* Added `add_stat_label.tbl_ard_summary()` method. (#1969)
+
+### Other Updates
+
+* Headers in {gt} tables being exported to PDF do not support the `\n` line breaker. Previously, line breakers were stripped from the header in the `print.gtsummary()` S3 method. But this did not apply to users utilizing `as_gt()` to further customize their tables. As a result, the line breaking strip has been migrated to `as_gt()`. (#1960)
+
+* Migrated the `tbl_survfit.list(conf.level)` up to `tbl_survfit.data.frame(conf.level)` where the confidence level is passed to `survival::survfit()`.
+
+* Update in `tbl_ard_summary()` to better handle non-standard ARDs (i.e. not our typical continuous or categorical summaries) by assigning them a default summary type. (#1991)
+
+* Made the `oneway.test()` available in `add_p.tbl_continuous()`. (#1970)
+
+* Removed the deprecated `'aov'` test from the `tests.R` file listing available tests. (#1970)
+
+* Removed documentation for the `add_overall.tbl_ard_summary(digits)` argument, which was never meant to be a part of this function. (#1975)
+
+### Bug Fixes
+
+* Bug fix in `add_overall.tbl_custom_summary()` due to extraneous argument being passed to `tbl_custom_summary()`. (#2027)
+
+* Bug fix in `add_p.tbl_survfit()` when the original call included `tbl_survfit(type)` specification. (#2002)
+
+* Removed the `"tbl_summary-arg:statistic"` theme that was incorrectly added to `tbl_continuous()`.
+
 # gtsummary 2.0.2
 
 Updates to address regressions in the v2.0.0 release:
@@ -122,7 +156,7 @@ Updates to address regressions in the v2.0.0 release:
 
 * Added `pkgdown_print.gtsummary()` method that is only registered when the pkgdown package is loaded. This enables printing of gtsummary tables on the pkgdown site in the Examples section. (#1771)
 
-* The package now uses updated `survey::svyquantile()` function to calculate quatiles, which was introduced in survey v4.1
+* The package now uses updated `survey::svyquantile()` function to calculate quantiles, which was introduced in survey v4.1
 
 ### Bug fixes
 
@@ -154,7 +188,7 @@ Updates to address regressions in the v2.0.0 release:
      
 * Arguments `modify_header(update)`, `modify_footnote(update)`, `modify_spanning_header(update)`, and `modify_fmt_fun(update)` have been deprecated. Use dynamic dots instead, e.g. `modify_header(...)`, which has been the preferred method for passing updates for a few years.
 
-* Function `continuous_summary()` has been deprecated immediately. Apologies for the inconvenience of the immeidate deprecation. The way the function originally worked is not compatible with the updated internal structures. In most cases, users can use the `tbl_continuous()` function instead.
+* Function `continuous_summary()` has been deprecated immediately. Apologies for the inconvenience of the immediate deprecation. The way the function originally worked is not compatible with the updated internal structures. In most cases, users can use the `tbl_continuous()` function instead.
 
 * Arguments `add_stat(fmt_fun, header, footnote, new_col_name)` have been deprecated since v1.4.0 (2021-04-13). They have now been fully removed from the package.
 
