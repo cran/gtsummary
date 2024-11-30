@@ -142,6 +142,26 @@ dplyr::tribble(
     row_group.padding = gt::px(1)
   )
 
+## ----echo=FALSE---------------------------------------------------------------
+dplyr::tribble(
+  ~Column, ~Description,
+  "id", "ID of the source note",
+  "sounrce_note", "string containing the source note", 
+  "text_interpret", "the {gt} function that is used to interpret the source note, `gt::md()` or `gt::html()`",
+  "remove", "logical indicating whether the source note should be removed from the table"
+) %>%
+  gt::gt() %>%
+  gt::fmt_markdown(columns = everything()) %>%
+  gt::tab_options(
+    table.font.size = "small",
+    data_row.padding = gt::px(1),
+    summary_row.padding = gt::px(1),
+    grand_summary_row.padding = gt::px(1),
+    footnotes.padding = gt::px(1),
+    source_notes.padding = gt::px(1),
+    row_group.padding = gt::px(1)
+  )
+
 ## -----------------------------------------------------------------------------
 tbl_regression_ex$table_styling
 
@@ -151,17 +171,17 @@ tbl_regression_ex %>%
   select(variable, row_type, label)
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  print.gtsummary <- function(x) {
-#    get_theme_element("pkgwide-str:print_engine") %>%
-#      switch(
-#        "gt" = as_gt(x),
-#        "flextable" = as_flex_table(x),
-#        "huxtable" = as_hux_table(x),
-#        "kable_extra" = as_kable_extra(x),
-#        "kable" = as_kable(x)
-#      ) %>%
-#      print()
-#  }
+# print.gtsummary <- function(x) {
+#   get_theme_element("pkgwide-str:print_engine") %>%
+#     switch(
+#       "gt" = as_gt(x),
+#       "flextable" = as_flex_table(x),
+#       "huxtable" = as_hux_table(x),
+#       "kable_extra" = as_kable_extra(x),
+#       "kable" = as_kable(x)
+#     ) %>%
+#     print()
+# }
 
 ## -----------------------------------------------------------------------------
 tbl_summary_ex$cards[["tbl_summary"]]

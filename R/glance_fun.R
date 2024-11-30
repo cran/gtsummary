@@ -12,7 +12,7 @@
 #' @name glance_fun_s3
 #' @keywords internal
 #'
-#' @examples
+#' @examplesIf (identical(Sys.getenv("NOT_CRAN"), "true") || identical(Sys.getenv("IN_PKGDOWN"), "true")) && gtsummary:::is_pkg_installed("cardx")
 #' mod <- lm(age ~ trt, trial)
 #'
 #' glance_fun_s3(mod)
@@ -27,7 +27,7 @@ glance_fun_s3 <- function(x, ...) {
 #' @name glance_fun_s3
 #' @export
 glance_fun_s3.default <- function(x, ...) {
-  check_pkg_installed("broom", reference_pkg = "gtsummary")
+  check_pkg_installed("broom")
   check_dots_empty()
   broom::glance
 }
@@ -35,7 +35,7 @@ glance_fun_s3.default <- function(x, ...) {
 #' @name glance_fun_s3
 #' @export
 glance_fun_s3.mira <- function(x, ...) {
-  check_pkg_installed(c("broom",  "mice"), reference_pkg = "gtsummary")
+  check_pkg_installed(c("broom",  "mice"))
   check_dots_empty()
-  \(x) broom::glance(mice::pool(x))
+  \(x) suppressWarnings(broom::glance(mice::pool(x)))
 }
