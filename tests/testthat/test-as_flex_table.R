@@ -172,10 +172,29 @@ test_that("as_flex_table passes table header labels correctly", {
   # spanning header placed correctly
   vis_cols <- which(!my_spanning_tbl$table_styling$header$hide)
   expect_equal(
-    my_spanning_tbl$table_styling$header |>
+    my_spanning_tbl$table_styling$spanning_header |>
       dplyr::filter(!is.na(spanning_header)) |>
       dplyr::pull(column),
     which(nchar(apply(ft_spanning_tbl$header$content$data, c(1, 2), \(x) x[[1]]$txt[1])[1, ]) > 1) |> names()
+  )
+
+  # checking the placement of a second spanning header
+  expect_silent(
+    tbl2 <-
+      my_spanning_tbl |>
+      modify_spanning_header(all_stat_cols() ~ "**Tumor Grade**", level = 2) |>
+      as_flex_table()
+  )
+
+  expect_equal(
+    tbl2$header$dataset,
+    data.frame(
+      stringsAsFactors = FALSE,
+      label = c(" ", " ", "label"),
+      stat_1 = c("**Tumor Grade**", "**Testing**", "stat_1"),
+      stat_2 = c("**Tumor Grade**", " ", "stat_2"),
+      stat_3 = c("**Tumor Grade**", "**Testing**", "stat_3")
+    )
   )
 })
 
@@ -222,9 +241,9 @@ test_that("as_flex_table passes table column alignment correctly", {
   )
 })
 
-test_that("as_flex_table passes table footnotes & footnote abbreviations correctly", {
+test_that("as_flex_table passes table footnotes & abbreviations correctly", {
   tbl_fn <- my_tbl_summary |>
-    modify_table_styling(columns = label, footnote = "test footnote", rows = variable == "age")
+    modify_footnote_body(columns = label, footnote = "test footnote", rows = variable == "age")
   ft_tbl_fn <- tbl_fn |> as_flex_table()
 
   # footnote
@@ -234,12 +253,16 @@ test_that("as_flex_table passes table footnotes & footnote abbreviations correct
   expect_equal(nrow(ft_tbl_fn$footer$content$data), 2) # correct number of footnotes
   expect_equal(c(fn1[1], fn2[1]), c("1", "2")) # correct ordering
   expect_equal(
-    tbl_fn$table_styling$footnote$footnote, # correct labels
-    c(fn1[2], fn2[2])
+    tbl_fn$table_styling$footnote_header$footnote, # correct labels
+    fn1[2]
+  )
+  expect_equal(
+    tbl_fn$table_styling$footnote_body$footnote, # correct labels
+    fn2[2]
   )
 
   tbl_fa <- tbl_fn |>
-    modify_footnote(stat_0 = "N = number of observations", abbreviation = TRUE)
+    modify_abbreviation("N = number of observations")
   ft_tbl_fa <- tbl_fa |> as_flex_table()
 
   # footnote_abbrev
@@ -248,18 +271,12 @@ test_that("as_flex_table passes table footnotes & footnote abbreviations correct
   fn3 <- ft_tbl_fa$footer$content$data[3, ]$label$txt
 
   expect_equal(nrow(ft_tbl_fa$footer$content$data), 3) # correct number of footnotes
-  expect_equal(c(fn1[1], fn2[1], fn3[1]), c("1", "2", "3")) # correct ordering
-  expect_equal(
-    c("n (%); Median (Q1, Q3)", "N = number of observations", "test footnote"), # correct labels
-    c(fn1[2], fn2[2], fn3[2])
-  )
+  expect_equal(c(fn1[1], fn2[1], fn3[1]), c("1", "2", "Abbreviation: N = number of observations")) # correct ordering and label for abbreviation is correct
 
   # customized footnotes
   tbl <- my_tbl_summary |>
-    modify_footnote(
-      all_stat_cols() ~ "replace old footnote",
-      label = "another new footnote"
-    )
+    modify_footnote_header("replace old footnote", columns = all_stat_cols()) |>
+    modify_footnote_header("another new footnote", columns = label)
   ft_tbl <- tbl |> as_flex_table()
 
   fn1 <- ft_tbl$footer$content$data[1, ]$label$txt
@@ -271,13 +288,51 @@ test_that("as_flex_table passes table footnotes & footnote abbreviations correct
     c(fn1[2], fn2[2]), # correct labels
     c("another new footnote", "replace old footnote")
   )
+
+  # footnotes in spanning headers
+  expect_equal(
+    my_spanning_tbl |>
+      modify_footnote_spanning_header(
+        footnote = "spanning footnote",
+        columns = stat_1
+      ) |>
+      as_flex_table() |>
+      getElement("footer") |>
+      getElement("content") |>
+      getElement("data") %>%
+      `[`(1,) |>
+      getElement("label") |>
+      getElement("txt"),
+    c("1", "spanning footnote")
+  )
+  expect_equal(
+    my_spanning_tbl |>
+      modify_spanning_header(stat_1 = "**2 levels**", level = 2L) |>
+      modify_footnote_spanning_header(
+        footnote = "spanning footnote",
+        columns = stat_1
+      ) |>
+      modify_footnote_spanning_header(
+      footnote = "spanning footnote 2",
+      columns = stat_1,
+      level = 2
+    ) |>
+    as_flex_table() |>
+    getElement("footer") |>
+    getElement("content") |>
+    getElement("data") %>%
+    `[`(1,) |>
+    getElement("label") |>
+    getElement("txt"),
+    c("1", "spanning footnote 2")
+  )
 })
 
 test_that("as_flex_table passes multiple table footnotes correctly", {
   # testing one footnote passed to multiple columns and rows, addresses issue #2062
   out <- my_tbl_summary |>
-    modify_footnote(stat_0 = NA) |>
-    modify_table_styling(
+    remove_footnote_header(stat_0) |>
+    modify_footnote_body(
       columns = c(label, stat_0),
       rows = (variable %in% "trt") & (row_type == "level"),
       footnote = "my footnote"
@@ -312,17 +367,17 @@ test_that("as_flex_table passes multiple table footnotes correctly", {
       by = trt,
       include = grade
     ) |>
-    modify_table_styling(
+    modify_footnote_body(
       columns = stat_1,
       rows = (variable %in% "grade") & (row_type == "level"),
       footnote = "my footnote"
     ) |>
-    modify_table_styling(
+    modify_footnote_body(
       columns = label,
       rows = label == "grade",
       footnote = "my footnote"
     ) |>
-    modify_table_styling(
+    modify_footnote_body(
       columns = label,
       rows = label == "I",
       footnote = "my footnote"
@@ -410,7 +465,7 @@ test_that("as_flex_table passes missing symbols correctly", {
 
   # specify missing symbol
   tbl <- tbl |>
-    modify_table_styling(stat_0, rows = !is.na(label), missing_symbol = "n / a")
+    modify_missing_symbol(stat_0, rows = !is.na(label), symbol = "n / a")
   ft_tbl <- tbl |> as_flex_table()
 
   # correct substitution for missing values

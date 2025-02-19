@@ -1,10 +1,21 @@
 #' Modify Table Styling
 #'
-#' This is a function meant for advanced users to gain
-#' more control over the characteristics of the resulting
+#' @description
+#' **This function is for developers.**
+#' *This function has very little checking of the passed arguments, by design.*
+#'
+#' If you are not a developer, it's recommended that you use the following
+#' functions to make modifications to your table:
+#'
+#'   [`modify_header()`],
+#'   [`modify_spanning_header()`], [`modify_column_hide()`], [`modify_column_unhide()`],
+#'   [`modify_footnote_header()`], [`modify_footnote_body()`], [`modify_abbreviation()`],
+#'   [`modify_column_alignment()`], [`modify_fmt_fun()`], [`modify_column_indent()`],
+#'   [`modify_column_merge()`], [`modify_missing_symbol()`], [`modify_bold()`],
+#'   [`modify_italic()`].
+#'
+#' This is a function provides control over the characteristics of the resulting
 #' gtsummary table by directly modifying `.$table_styling`.
-#' *This function is primarily used in the development of other gtsummary
-#' functions, and very little checking of the passed arguments is performed.*
 #'
 #' Review the
 #' \href{https://www.danieldsjoberg.com/gtsummary/articles/gtsummary_definition.html}{gtsummary definition}
@@ -20,9 +31,9 @@
 #'   and text formatting. Default is `NULL`. See details below.
 #' @param label (`character`)\cr
 #'   Character vector of column label(s). Must be the same length as `columns`.
-#' @param hide (scalar `logical`)
+#' @param hide (scalar `logical`)\cr
 #'   Logical indicating whether to hide column from output
-#' @param align (`string`)
+#' @param align (`string`)\cr
 #'   String indicating alignment of column, must be one of `c("left", "right", "center")`
 #' @param text_format,undo_text_format (`string`)\cr
 #'   String indicated which type of text formatting to apply/remove to the rows and columns.
@@ -41,7 +52,7 @@
 #'   string with text for spanning header
 #' @param missing_symbol (`string`)\cr
 #'   string indicating how missing values are formatted.
-#' @param cols_merge_pattern (`string`) \lifecycle{experimental}\cr
+#' @param cols_merge_pattern (`string`)\cr
 #'   glue-syntax string indicating how to merge
 #'   columns in `x$table_body`. For example, to construct a confidence interval
 #'   use `"{conf.low}, {conf.high}"`. The first column listed in the pattern
@@ -52,6 +63,7 @@
 #' @seealso See \href{https://www.danieldsjoberg.com/gtsummary/articles/gtsummary_definition.html}{gtsummary internals vignette}
 #'
 #' @export
+#' @keywords internal
 #' @family Advanced modifiers
 #'
 #' @section rows argument:
@@ -101,7 +113,7 @@ modify_table_styling <- function(x,
                                  text_format = NULL,
                                  undo_text_format = NULL,
                                  indent = NULL,
-                                 text_interpret = c("md", "html"),
+                                 text_interpret = "md",
                                  cols_merge_pattern = NULL) {
   set_cli_abort_call()
   updated_call_list <- c(x$call_list, list(modify_table_styling = match.call()))
@@ -175,8 +187,6 @@ modify_table_styling <- function(x,
     )
   }
 
-  text_interpret <- paste0("gt::", arg_match(text_interpret))
-
   if (!is_empty(text_format)) {
     text_format <- arg_match(text_format, values = c("bold", "italic"), multiple = TRUE)
   }
@@ -202,18 +212,19 @@ modify_table_styling <- function(x,
     x$table_styling$header <-
       x$table_styling$header %>%
       dplyr::rows_update(
-        dplyr::tibble(column = columns, interpret_label = text_interpret, label = label),
+        dplyr::tibble(column = columns, interpret_label = paste0("gt::", text_interpret), label = label),
         by = "column"
       )
   }
 
   # spanning_header ------------------------------------------------------------
   if (!is_empty(spanning_header)) {
-    x$table_styling$header <-
-      x$table_styling$header %>%
-      dplyr::rows_update(
-        dplyr::tibble(column = columns, interpret_spanning_header = text_interpret, spanning_header = spanning_header),
-        by = "column"
+    x <-
+      .modify_spanning_header(
+        x = x,
+        columns = columns,
+        spanning_header = spanning_header,
+        text_interpret = text_interpret
       )
   }
 
@@ -239,29 +250,38 @@ modify_table_styling <- function(x,
 
   # footnote -------------------------------------------------------------------
   if (!is_empty(footnote)) {
-    x$table_styling$footnote <-
-      dplyr::bind_rows(
-        x$table_styling$footnote,
-        dplyr::tibble(
-          column = columns,
-          rows = list(rows),
+    # header footnotes
+    if (tryCatch(is.null(eval_tidy(rows)), error = \(x) FALSE)) {
+      x <-
+        .modify_footnote_header(
+          x = x,
+          lst_footnotes =
+            rep_named(columns, as.list(footnote)),
           text_interpret = text_interpret,
-          footnote = footnote
+          replace = TRUE,
+          remove = is.na(footnote)
         )
-      )
+    }
+    else {
+      x <-
+        .modify_footnote_body(
+          x = x,
+          lst_footnotes = rep_named(columns, as.list(footnote)),
+          rows = !!rows,
+          text_interpret = text_interpret,
+          replace = TRUE,
+          remove = is.na(footnote)
+        )
+    }
   }
 
   # footnote_abbrev ------------------------------------------------------------
   if (!is_empty(footnote_abbrev)) {
-    x$table_styling$footnote_abbrev <-
-      dplyr::bind_rows(
-        x$table_styling$footnote_abbrev,
-        dplyr::tibble(
-          column = columns,
-          rows = list(rows),
-          text_interpret = text_interpret,
-          footnote = footnote_abbrev
-        )
+    x <- x |>
+      .modify_abbreviation(
+        abbreviation = footnote_abbrev,
+        text_interpret = text_interpret,
+        column = columns
       )
   }
 
@@ -281,26 +301,22 @@ modify_table_styling <- function(x,
 
   # text_format ----------------------------------------------------------------
   if (!is_empty(text_format)) {
-    x$table_styling$text_format <-
-      list(
-        column = columns,
-        rows = list(rows),
-        format_type = text_format,
-        undo_text_format = FALSE
-      ) %>%
-      {tidyr::expand_grid(!!!.)} %>% # styler: off
-      {dplyr::bind_rows(x$table_styling$text_format, .)} # styler: off
+    x <- x |>
+      .modify_text_format(
+        columns = columns,
+        rows = !!rows,
+        text_format = text_format,
+        undo = FALSE
+      )
   }
   if (!is_empty(undo_text_format)) {
-    x$table_styling$text_format <-
-      list(
-        column = columns,
-        rows = list(rows),
-        format_type = undo_text_format,
-        undo_text_format = TRUE
-      ) %>%
-      {tidyr::expand_grid(!!!.)} %>% # styler: off
-      {dplyr::bind_rows(x$table_styling$text_format, .)} # styler: off
+    x <- x |>
+      .modify_text_format(
+        columns = columns,
+        rows = !!rows,
+        text_format = undo_text_format,
+        undo = TRUE
+      )
   }
 
   # indent ---------------------------------------------------------------------
@@ -308,39 +324,34 @@ modify_table_styling <- function(x,
     if (!is_scalar_integerish(indent) || indent < 0L) {
       cli::cli_abort("The {.arg indent} argument must be a non-negative scalar integer.")
     }
-    x$table_styling$indent <-
-      dplyr::bind_rows(
-        x$table_styling$indent,
-        dplyr::tibble(
-          column = columns,
-          rows = list(rows),
-          n_spaces = as.integer(indent)
-        )
-      )
+    x <- x |>
+      .modify_column_indent(columns = columns, rows = !!rows, indent = as.integer(indent))
   }
 
   # missing_symbol -------------------------------------------------------------
   if (!is_empty(missing_symbol)) {
-    x$table_styling$fmt_missing <-
-      list(
-        column = columns,
-        rows = list(rows),
-        symbol = missing_symbol
-      ) %>%
-      {tidyr::expand_grid(!!!.)} %>% # styler: off
-      {dplyr::bind_rows(x$table_styling$fmt_missing, .)} # styler: off
+    x <- x |>
+      .modify_missing_symbol(
+        symbol = missing_symbol,
+        columns = columns,
+        rows = !!rows
+      )
   }
 
   # cols_merge_pattern ---------------------------------------------------------
   if (!is_empty(cols_merge_pattern)) {
-    if (!is.na(cols_merge_pattern)) check_string(cols_merge_pattern)
-    x <-
-      .modify_cols_merge(
-        x,
-        column = columns,
-        rows = !!rows,
-        pattern = cols_merge_pattern
-      )
+    if (!is.na(cols_merge_pattern)) {
+      x <-
+        .modify_column_merge(
+          x,
+          rows = !!rows,
+          pattern = cols_merge_pattern
+        )
+    }
+    else {
+      x <- .remove_column_merge(x, columns = columns)
+    }
+
   }
 
   # return x -------------------------------------------------------------------
@@ -364,45 +375,3 @@ modify_table_styling <- function(x,
 }
 
 
-# function to add merging columns instructions
-.modify_cols_merge <- function(x, column, rows, pattern) {
-  rows <- enquo(rows)
-  all_columns <- .extract_glue_elements(pattern)
-
-  if (!is_empty(pattern) && !all(all_columns %in% x$table_styling$header$column)) {
-    cli::cli_abort(
-      c("All columns specified in {.arg cols_merge_pattern} argument must be present in {.code x$table_body}",
-        "i" = "The following columns are not present: {.val {setdiff(all_columns, x$table_styling$header$column)}}"),
-      call = get_cli_abort_call()
-    )
-  }
-
-  if (!is.na(pattern) && !identical(column, all_columns[1])) {
-    cli::cli_abort(
-      c("A single column must be specified in the {.arg columns} argument when
-         using {.arg cols_merge_pattern}, and that column must be the first to
-         appear in the pattern argument.",
-        i = "For example, {.code modify_table_styling(columns={.val {all_columns[1]}}, cols_merge_pattern={.val {pattern}})}"),
-      call = get_cli_abort_call()
-    )
-  }
-
-  x$table_styling$cols_merge <-
-    x$table_styling$cols_merge %>%
-    # remove previous merging for specified column
-    dplyr::filter(!.data$column %in% .env$column) %>%
-    # append new merge instructions
-    dplyr::bind_rows(
-      dplyr::tibble(
-        column = column,
-        rows = list(rows),
-        pattern = pattern
-      )
-    )
-
-  # hiding all but the first column
-  x <- modify_column_hide(x, columns = all_columns[-1])
-
-  # return gtsummary table
-  x
-}

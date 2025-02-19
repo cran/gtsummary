@@ -1,7 +1,12 @@
 #' Survival table
 #'
+#' @description
 #' Function takes a `survfit` object as an argument, and provides a
-#' formatted summary table of the results
+#' formatted summary table of the results.
+#'
+#' No more than one stratifying variable is allowed in each model.
+#' If you're experiencing unexpected errors using `tbl_survfit()`,
+#' please review [?tbl_survfit_errors][tbl_survfit_errors] for a possible explanation.
 #'
 #' @param x (`survfit`, `list`, `data.frame`)\cr
 #'   a survfit object, list of survfit objects, or a data frame.
@@ -53,6 +58,26 @@
 #'
 #' @export
 #' @name tbl_survfit
+#'
+#' @section Formula Specification:
+#' When passing a [`survival::survfit()`] object to `tbl_survfit()`,
+#' the `survfit()` call must use an evaluated formula and not a stored formula.
+#' Including a proper formula in the call allows the function to accurately
+#' identify all variables included in the estimation. See below for examples:
+#'
+#' ```r
+#' library(gtsummary)
+#' library(survival)
+#'
+#' # include formula in `survfit()` call
+#' survfit(Surv(time, status) ~ sex, lung) |> tbl_survfit(times = 500)
+#'
+#' # you can also pass a data frame to `tbl_survfit()` as well.
+#' lung |>
+#'   tbl_survfit(y = Surv(time, status), include = "sex", times = 500)
+#' ```
+#' You **cannot**, however, pass a stored formula, e.g. `survfit(my_formula, lung)`,
+#' but you can use stored formulas with `rlang::inject(survfit(!!my_formula, lung))`.
 #'
 #' @author Daniel D. Sjoberg
 #' @examplesIf gtsummary:::is_pkg_installed("survival")
@@ -206,11 +231,12 @@ tbl_survfit.list <- function(x,
     )
   }
   if (missing(statistic)) {
-    get_theme_element(
-      "tbl_survfit-arg:statistic",
-      default =
-        paste0("{estimate} ({conf.low}", get_theme_element("pkgwide-str:ci.sep", default = ", "), "{conf.high})")
-    )
+    statistic <-
+      get_theme_element(
+        "tbl_survfit-arg:statistic",
+        default =
+          paste0("{estimate} ({conf.low}", get_theme_element("pkgwide-str:ci.sep", default = ", "), "{conf.high})")
+      )
   }
   check_string(statistic)
   if (is_string(label)) label <- inject(everything() ~ !!label)
@@ -285,6 +311,7 @@ brdg_survfit <- function(cards,
                          statistic = "{estimate} ({conf.low}, {conf.high})",
                          label = NULL,
                          label_header) {
+  set_cli_abort_call()
   # grab information for the headers -------------------------------------------
   df_header_survfit <- cards[[1]] |>
     dplyr::filter(!.data$context %in% "attributes") |>
@@ -306,7 +333,8 @@ brdg_survfit <- function(cards,
     if (length(cards_names[[i]]) > 1L) {
       cli::cli_abort(
         c("The {.fun tbl_survfit} function supports {.fun survival::survfit} objects with no more than one stratifying variable.",
-          i = "The model is stratified by {.val {cards_names[[i]]}}.")
+          i = "The model is stratified by {.val {cards_names[[i]]}}."),
+        call = get_cli_abort_call()
       )
     }
   }
@@ -412,7 +440,11 @@ brdg_survfit <- function(cards,
 .default_survfit_labels <- function(x) {
   label <- list()
   for (i in seq_along(x)) {
-    variable_i <- x[[i]]$call$formula |> rlang::f_rhs() |> all.vars()
+    variable_i <-
+      tryCatch(
+        x[[i]]$call$formula |> rlang::f_rhs() |> all.vars() |> dplyr::first() |> discard(is.na),
+        error = \(e) character(0)
+      )
     if (!is_empty(variable_i)) {
       label[[variable_i]] <-
         tryCatch(

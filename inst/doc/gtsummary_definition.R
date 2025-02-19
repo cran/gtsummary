@@ -9,14 +9,13 @@ knitr::opts_chunk$set(
 library(gtsummary)
 
 tbl_regression_ex <-
-  lm(age ~ grade + marker, trial) %>%
-  tbl_regression() %>%
+  lm(age ~ grade + marker, trial) |> 
+  tbl_regression() |> 
   bold_p(t = 0.5)
 
 tbl_summary_ex <-
-  trial %>%
-  select(trt, age, grade, response) %>%
-  tbl_summary(by = trt)
+  trial |> 
+  tbl_summary(by = trt, include = c(trt, age, grade, response))
 
 ## -----------------------------------------------------------------------------
 tbl_summary_ex$table_body
@@ -29,8 +28,6 @@ dplyr::tribble(
   "align", "Specifies the alignment/justification of the column, e.g. 'center' or 'left'",
   "label", "Label that will be displayed (if column is displayed in output)",
   "interpret_label", "the {gt} function that is used to interpret the column label, `gt::md()` or `gt::html()`",
-  "spanning_header", "Includes text printed above columns as spanning headers.",
-  "interpret_spanning_header", "the {gt} function that is used to interpret the column spanning headers, `gt::md()` or `gt::html()`",
   "modify_stat_{*}", "any column beginning with `modify_stat_` is a statistic available to report in `modify_header()` (and others)",
   "modify_selector_{*}", "any column beginning with `modify_selector_` is a column that is scoped in `modify_header()` (and friends) to be used in a selecting environment"
 ) %>%
@@ -50,8 +47,93 @@ dplyr::tribble(
 dplyr::tribble(
   ~Column, ~Description,
   "column", "Column name from `.$table_body`",
+  "footnote", "string containing footnote to add to column/row",
+  "text_interpret", "the {gt} function that is used to interpret the source note, `gt::md()` or `gt::html()`",
+  "replace", "logical indicating whether this footnote should replace any existing footnote in that header (TRUE) or be added to any existing (FALSE)",
+  "remove", "logical indicating whether to remove all footnotes in the column header"
+) %>%
+  gt::gt() %>%
+  gt::fmt_markdown(columns = everything()) %>%
+  gt::tab_options(
+    table.font.size = "small",
+    data_row.padding = gt::px(1),
+    summary_row.padding = gt::px(1),
+    grand_summary_row.padding = gt::px(1),
+    footnotes.padding = gt::px(1),
+    source_notes.padding = gt::px(1),
+    row_group.padding = gt::px(1)
+  )
+
+## ----echo=FALSE---------------------------------------------------------------
+dplyr::tribble(
+  ~Column, ~Description,
+  "column", "Column name from `.$table_body`",
   "rows", "expression selecting rows in `.$table_body`, `NA` indicates to add footnote to header",
-  "footnote", "string containing footnote to add to column/row"
+  "footnote", "string containing footnote to add to column/row",
+  "text_interpret", "the {gt} function that is used to interpret the source note, `gt::md()` or `gt::html()`",
+  "replace", "logical indicating whether this footnote should replace any existing footnote in that header (TRUE) or be added to any existing (FALSE)",
+  "remove", "logical indicating whether to remove all footnotes in the column header",
+) %>%
+  gt::gt() %>%
+  gt::fmt_markdown(columns = everything()) %>%
+  gt::tab_options(
+    table.font.size = "small",
+    data_row.padding = gt::px(1),
+    summary_row.padding = gt::px(1),
+    grand_summary_row.padding = gt::px(1),
+    footnotes.padding = gt::px(1),
+    source_notes.padding = gt::px(1),
+    row_group.padding = gt::px(1)
+  )
+
+## ----echo=FALSE---------------------------------------------------------------
+dplyr::tribble(
+  ~Column, ~Description,
+  "level", "Integer specifying the spanning header level, similar to `gt::tab_spanner(level)`",
+  "column", "Column name from `.$table_body`",
+  "footnote", "string containing footnote to add to column/row",
+  "text_interpret", "the {gt} function that is used to interpret the source note, `gt::md()` or `gt::html()`",
+  "replace", "logical indicating whether this footnote should replace any existing footnote in that header (TRUE) or be added to any existing (FALSE)",
+  "remove", "logical indicating whether to remove all footnotes in the column header",
+) %>%
+  gt::gt() %>%
+  gt::fmt_markdown(columns = everything()) %>%
+  gt::tab_options(
+    table.font.size = "small",
+    data_row.padding = gt::px(1),
+    summary_row.padding = gt::px(1),
+    grand_summary_row.padding = gt::px(1),
+    footnotes.padding = gt::px(1),
+    source_notes.padding = gt::px(1),
+    row_group.padding = gt::px(1)
+  )
+
+## ----echo=FALSE---------------------------------------------------------------
+dplyr::tribble(
+  ~Column, ~Description,
+  "column", "Optional column name from `.$table_body`. When present, the abbreviation is only printed when the column appears in the rendered table",
+  "abbreviation", "string containing the abbreviation to add",
+  "text_interpret", "the {gt} function that is used to interpret the source note, `gt::md()` or `gt::html()`",
+) %>%
+  gt::gt() %>%
+  gt::fmt_markdown(columns = everything()) %>%
+  gt::tab_options(
+    table.font.size = "small",
+    data_row.padding = gt::px(1),
+    summary_row.padding = gt::px(1),
+    grand_summary_row.padding = gt::px(1),
+    footnotes.padding = gt::px(1),
+    source_notes.padding = gt::px(1),
+    row_group.padding = gt::px(1)
+  )
+
+## ----echo=FALSE---------------------------------------------------------------
+dplyr::tribble(
+  ~Column, ~Description,
+  "id", "Integer idenitfying the source note",
+  "source_note", "string containing the abbreviation to add",
+  "text_interpret", "the {gt} function that is used to interpret the source note, `gt::md()` or `gt::html()`",
+  "remove", "logical indicating whether the source note should be included or removed from final table"
 ) %>%
   gt::gt() %>%
   gt::fmt_markdown(columns = everything()) %>%
@@ -129,26 +211,6 @@ dplyr::tribble(
   "column", "Column name from `.$table_body`",
   "rows", "expression selecting rows in `.$table_body`",
   "pattern", "glue pattern directing how to combine/merge columns. The merged columns will replace the column indicated in 'column'."
-) %>%
-  gt::gt() %>%
-  gt::fmt_markdown(columns = everything()) %>%
-  gt::tab_options(
-    table.font.size = "small",
-    data_row.padding = gt::px(1),
-    summary_row.padding = gt::px(1),
-    grand_summary_row.padding = gt::px(1),
-    footnotes.padding = gt::px(1),
-    source_notes.padding = gt::px(1),
-    row_group.padding = gt::px(1)
-  )
-
-## ----echo=FALSE---------------------------------------------------------------
-dplyr::tribble(
-  ~Column, ~Description,
-  "id", "ID of the source note",
-  "sounrce_note", "string containing the source note", 
-  "text_interpret", "the {gt} function that is used to interpret the source note, `gt::md()` or `gt::html()`",
-  "remove", "logical indicating whether the source note should be removed from the table"
 ) %>%
   gt::gt() %>%
   gt::fmt_markdown(columns = everything()) %>%

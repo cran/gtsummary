@@ -10,12 +10,15 @@ modify_caption(x, caption, text_interpret = c("md", "html"))
 \item{x}{(\code{gtsummary})\cr
 A gtsummary object}
 
-\item{caption}{(\code{string})\cr
-A string for the table caption/title}
+\item{caption}{(\code{string}/\code{character})\cr
+A string for the table caption/title. NOTE: The \code{gt} print engine supports a
+vector of captions. But not every print engine supports this feature, and
+for those outputs, only a string is accepted.}
 
 \item{text_interpret}{(\code{string})\cr
 String indicates whether text will be interpreted with
-\code{\link[gt:md]{gt::md()}} or \code{\link[gt:html]{gt::html()}}. Must be \code{"md"} (default) or \code{"html"}.}
+\code{\link[gt:md]{gt::md()}} or \code{\link[gt:html]{gt::html()}}. Must be \code{"md"} (default) or \code{"html"}.
+Applies to tables printed with \code{{gt}}.}
 }
 \value{
 Updated gtsummary object

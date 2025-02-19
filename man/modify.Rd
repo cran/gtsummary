@@ -3,35 +3,34 @@
 \name{modify}
 \alias{modify}
 \alias{modify_header}
-\alias{modify_footnote}
 \alias{modify_spanning_header}
+\alias{remove_spanning_header}
 \alias{show_header_names}
 \title{Modify column headers, footnotes, and spanning headers}
 \usage{
 modify_header(x, ..., text_interpret = c("md", "html"), quiet, update)
 
-modify_footnote(
+modify_spanning_header(
   x,
   ...,
-  abbreviation = FALSE,
   text_interpret = c("md", "html"),
-  update,
-  quiet
+  level = 1L,
+  quiet,
+  update
 )
 
-modify_spanning_header(x, ..., text_interpret = c("md", "html"), quiet, update)
+remove_spanning_header(x, columns, level = 1L)
 
-show_header_names(x, include_example, quiet)
+show_header_names(x, show_hidden = FALSE, include_example, quiet)
 }
 \arguments{
 \item{x}{(\code{gtsummary})\cr
 A gtsummary object}
 
 \item{...}{\code{\link[rlang:dyn-dots]{dynamic-dots}}\cr
-Used to assign updates to headers,
-spanning headers, and footnotes.
+Used to assign updates to headers and spanning headers.
 
-Use \code{modify_*(colname='new header/footnote')} to update a single column. Using a
+Use \code{modify_*(colname='new header')} to update a single column. Using a
 formula will invoke tidyselect, e.g. \code{modify_*(all_stat_cols() ~ "**{level}**")}.
 The dynamic dots allow syntax like \code{modify_header(x, !!!list(label = "Variable"))}.
 See examples below.
@@ -40,12 +39,20 @@ Use the \code{show_header_names()} to see the column names that can be modified.
 
 \item{text_interpret}{(\code{string})\cr
 String indicates whether text will be interpreted with
-\code{\link[gt:md]{gt::md()}} or \code{\link[gt:html]{gt::html()}}. Must be \code{"md"} (default) or \code{"html"}.}
+\code{\link[gt:md]{gt::md()}} or \code{\link[gt:html]{gt::html()}}. Must be \code{"md"} (default) or \code{"html"}.
+Applies to tables printed with \code{{gt}}.}
 
 \item{update, quiet}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}}
 
-\item{abbreviation}{(scalar \code{logical})\cr
-Logical indicating if an abbreviation is being updated.}
+\item{level}{(\code{integer})\cr
+An integer specifying which level to place the spanning header.}
+
+\item{columns}{(\code{\link[dplyr:dplyr_tidy_select]{tidy-select}})\cr
+Columns from which to remove spanning headers.}
+
+\item{show_hidden}{(scalar \code{logical})\cr
+Logical indicating whether to print hidden columns as well as printed columns.
+Default is \code{FALSE}.}
 
 \item{include_example}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}}
 }
@@ -56,7 +63,6 @@ Updated gtsummary object
 These functions assist with modifying the aesthetics/style of a table.
 \itemize{
 \item \code{modify_header()} update column headers
-\item \code{modify_footnote()} update/add table footnotes
 \item \code{modify_spanning_header()} update/add spanning headers
 }
 
@@ -65,7 +71,7 @@ Run \code{show_header_names()} to print the column names to the console.
 }
 \section{\code{tbl_summary()}, \code{tbl_svysummary()}, and \code{tbl_cross()}}{
 
-When assigning column headers, footnotes, and spanning headers,
+When assigning column headers and spanning headers,
 you may use \code{{N}} to insert the number of observations.
 \code{tbl_svysummary} objects additionally have \code{{N_unweighted}} available.
 
@@ -84,6 +90,7 @@ for the number of events (when applicable).
 }
 
 \examples{
+\dontshow{if ((identical(Sys.getenv("NOT_CRAN"), "true") || identical(Sys.getenv("IN_PKGDOWN"), "true")) && gtsummary:::is_pkg_installed(c("cardx", "broom", "broom.helpers"))) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 # create summary table
 tbl <- trial |>
   tbl_summary(by = trt, missing = "no", include = c("age", "grade", "trt")) |>
@@ -93,23 +100,16 @@ tbl <- trial |>
 show_header_names(tbl)
 
 # Example 1 ----------------------------------
-# updating column headers and footnote
+# updating column headers
 tbl |>
-  modify_header(label = "**Variable**", p.value = "**P**") |>
-  modify_footnote(all_stat_cols() ~ "median (IQR) for Age; n (\%) for Grade")
+  modify_header(label = "**Variable**", p.value = "**P**")
 
 # Example 2 ----------------------------------
-# updating headers, remove all footnotes, add spanning header
+# updating headers add spanning header
 tbl |>
   modify_header(all_stat_cols() ~ "**{level}**, N = {n} ({style_percent(p)}\%)") |>
-  modify_footnote(everything() ~ NA) |>
   modify_spanning_header(all_stat_cols() ~ "**Treatment Received**")
-
-# Example 3 ----------------------------------
-# updating an abbreviation in table footnote
-glm(response ~ age + grade, trial, family = binomial) |>
-  tbl_regression(exponentiate = TRUE) |>
-  modify_footnote(conf.low = "CI = Credible Interval", abbreviation = TRUE)
+\dontshow{\}) # examplesIf}
 }
 \author{
 Daniel D. Sjoberg

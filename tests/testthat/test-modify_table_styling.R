@@ -120,7 +120,7 @@ test_that("modify_table_styling(spanning_header)", {
         spanning_header = "**Treatment Assignment**"
       ) |>
       getElement("table_styling") |>
-      getElement("header") |>
+      getElement("spanning_header") |>
       dplyr::filter(startsWith(column, "stat_")) |>
       dplyr::pull(spanning_header),
     c("**Treatment Assignment**", "**Treatment Assignment**")
@@ -152,7 +152,7 @@ test_that("modify_table_styling(footnote)", {
         footnote = "testing footnote"
       ) |>
       getElement("table_styling") |>
-      getElement("footnote") |>
+      getElement("footnote_header") |>
       dplyr::filter(column == "stat_0") |>
       dplyr::slice_tail(n = 1L) |>
       dplyr::pull(footnote),
@@ -169,10 +169,8 @@ test_that("modify_table_styling(footnote_abbrev)", {
         footnote_abbrev = "testing footnote_abbrev"
       ) |>
       getElement("table_styling") |>
-      getElement("footnote_abbrev") |>
-      dplyr::filter(column == "stat_0") |>
-      dplyr::slice_tail(n = 1L) |>
-      dplyr::pull(footnote),
+      getElement("abbreviation") |>
+      dplyr::pull(abbreviation),
     "testing footnote_abbrev"
   )
 })
@@ -309,7 +307,7 @@ test_that("modify_table_styling(text_interpret)", {
         text_interpret = "html"
       ) |>
       getElement("table_styling") |>
-      getElement("header") |>
+      getElement("spanning_header") |>
       dplyr::filter(startsWith(column, "stat_")) |>
       dplyr::pull(spanning_header),
     c("my big header", "my big header")
@@ -345,30 +343,6 @@ test_that("modify_table_styling(cols_merge_pattern)", {
       names(),
     c("label", "estimate",  "conf.low",  "conf.high", "p.value")
   )
-})
-
-test_that("modify_table_styling(cols_merge_pattern) messaging", {
-  expect_snapshot(
-    error = TRUE,
-    lm(mpg ~ factor(am), mtcars) |>
-      tbl_regression() |>
-      modify_table_styling(
-        columns = "label",
-        rows = !is.na(conf.low),
-        cols_merge_pattern = "{conf.low}:::{conf.high}"
-      )
-  )
-
-  expect_snapshot(
-    error = TRUE,
-    lm(mpg ~ factor(am), mtcars) |>
-      tbl_regression() |>
-      modify_table_styling(
-        columns = "conf.low",
-        rows = !is.na(conf.low),
-        cols_merge_pattern = "{conf.low}:::{not_in_table}"
-      )
-    )
 })
 
 test_that("modify_table_styling(indent) messaging", {

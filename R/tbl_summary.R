@@ -135,9 +135,9 @@
 #'
 #' # Example 2 ----------------------------------
 #' trial |>
-#'   select(age, grade, response, trt) |>
 #'   tbl_summary(
 #'     by = trt,
+#'     include = c(age, grade, response, trt),
 #'     label = list(age = "Patient Age"),
 #'     statistic = list(all_continuous() ~ "{mean} ({sd})"),
 #'     digits = list(age = c(0, 1))
@@ -145,8 +145,8 @@
 #'
 #' # Example 3 ----------------------------------
 #' trial |>
-#'   select(age, marker) |>
 #'   tbl_summary(
+#'     include = c(age, marker),
 #'     type = all_continuous() ~ "continuous2",
 #'     statistic = all_continuous() ~ c("{median} ({p25}, {p75})", "{min}, {max}"),
 #'     missing = "no"
@@ -575,7 +575,8 @@ tbl_summary <- function(data,
       cli::cli_abort(c(
         "Error in argument {.arg value} for variable {.val {variable}}.",
         "i" = "Summary type is {.val dichotomous} but no summary value has been assigned."
-      ))
+      ),
+      call = get_cli_abort_call())
     }
   ) |>
     stats::setNames(names(data))
@@ -611,7 +612,7 @@ tbl_summary <- function(data,
 
     c(
       "!" = "Column(s) {.val {haven_labelled_vars}} are class {.val haven_labelled}.",
-      "i" = "This is an intermediate datastructure not meant for analysis.",
+      "i" = "This is an intermediate data structure not meant for analysis.",
       "i" = "Convert columns with {.fun {cnvt_funs}}. Failure to convert may have unintended consequences or result in error.",
       paste0("{.url ", hyperlinks, "}")
     ) |>

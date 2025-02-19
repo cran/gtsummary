@@ -19,7 +19,7 @@ modify_table_styling(
   text_format = NULL,
   undo_text_format = NULL,
   indent = NULL,
-  text_interpret = c("md", "html"),
+  text_interpret = "md",
   cols_merge_pattern = NULL
 )
 }
@@ -41,7 +41,7 @@ Character vector of column label(s). Must be the same length as \code{columns}.}
 \item{spanning_header}{(\code{string})\cr
 string with text for spanning header}
 
-\item{hide}{(scalar \code{logical})
+\item{hide}{(scalar \code{logical})\cr
 Logical indicating whether to hide column from output}
 
 \item{footnote}{(\code{string})\cr
@@ -50,7 +50,7 @@ string with text for footnote}
 \item{footnote_abbrev}{(\code{string})\cr
 string with abbreviation definition, e.g. \code{"CI = Confidence Interval"}}
 
-\item{align}{(\code{string})
+\item{align}{(\code{string})\cr
 String indicating alignment of column, must be one of \code{c("left", "right", "center")}}
 
 \item{missing_symbol}{(\code{string})\cr
@@ -71,20 +71,29 @@ Must be one of \code{"md"} or \code{"html"} and indicates the processing functio
 as \code{gt::md()} or \code{gt::html()}. Use this in conjunction with arguments for
 header and footnotes.}
 
-\item{cols_merge_pattern}{(\code{string}) \lifecycle{experimental}\cr
+\item{cols_merge_pattern}{(\code{string})\cr
 glue-syntax string indicating how to merge
 columns in \code{x$table_body}. For example, to construct a confidence interval
 use \code{"{conf.low}, {conf.high}"}. The first column listed in the pattern
 string must match the single column name passed in \verb{columns=}.}
 }
 \description{
-This is a function meant for advanced users to gain
-more control over the characteristics of the resulting
+\strong{This function is for developers.}
+\emph{This function has very little checking of the passed arguments, by design.}
+
+If you are not a developer, it's recommended that you use the following
+functions to make modifications to your table:
+
+\code{\link[=modify_header]{modify_header()}},
+\code{\link[=modify_spanning_header]{modify_spanning_header()}}, \code{\link[=modify_column_hide]{modify_column_hide()}}, \code{\link[=modify_column_unhide]{modify_column_unhide()}},
+\code{\link[=modify_footnote_header]{modify_footnote_header()}}, \code{\link[=modify_footnote_body]{modify_footnote_body()}}, \code{\link[=modify_abbreviation]{modify_abbreviation()}},
+\code{\link[=modify_column_alignment]{modify_column_alignment()}}, \code{\link[=modify_fmt_fun]{modify_fmt_fun()}}, \code{\link[=modify_column_indent]{modify_column_indent()}},
+\code{\link[=modify_column_merge]{modify_column_merge()}}, \code{\link[=modify_missing_symbol]{modify_missing_symbol()}}, \code{\link[=modify_bold]{modify_bold()}},
+\code{\link[=modify_italic]{modify_italic()}}.
+
+This is a function provides control over the characteristics of the resulting
 gtsummary table by directly modifying \code{.$table_styling}.
-\emph{This function is primarily used in the development of other gtsummary
-functions, and very little checking of the passed arguments is performed.}
-}
-\details{
+
 Review the
 \href{https://www.danieldsjoberg.com/gtsummary/articles/gtsummary_definition.html}{gtsummary definition}
 vignette for information on \code{.$table_styling} objects.
@@ -137,3 +146,4 @@ Other Advanced modifiers:
 \code{\link{modify_column_merge}()}
 }
 \concept{Advanced modifiers}
+\keyword{internal}

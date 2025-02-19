@@ -70,11 +70,11 @@ test_that("tbl_merge works with standard use", {
 
   # correct spanning headers
   expect_equal(
-    t4$table_styling$header |>
-      dplyr::filter(!hide) |>
-      dplyr::pull(spanning_header),
-    c(NA,
-      rep("UVA Tumor Response", 4),
+    t4$table_styling$spanning_header |>
+      dplyr::filter(column %in% t4$table_styling$header$column[!t4$table_styling$header$hide]) |>
+      dplyr::pull(spanning_header) |>
+      rev(),
+    c(rep("UVA Tumor Response", 4),
       rep("MVA Tumor Response", 3),
       rep("MVA Time to Death", 3),
       rep("TTD Adjusted for grade", 3))
@@ -104,7 +104,7 @@ test_that("tbl_merge works with no spanning header", {
   expect_silent(tbl <- tbl_merge(list(t0, t1, t2, t3), tab_spanner = FALSE))
 
   expect_true(
-    tbl$table_styling$header$spanning_header |> is.na() |> all()
+    tbl$table_styling$spanning_header$spanning_header |> is_empty()
   )
 })
 
@@ -132,8 +132,8 @@ test_that("tbl_merge works with a single table", {
 
   # correct spanning header
   expect_equal(
-    tbl$table_styling$header$spanning_header,
-    c(rep(NA, 4), rep("**Table 1**", 3))
+    tbl$table_styling$spanning_header$spanning_header,
+    rep("**Table 1**", 3)
   )
 })
 
@@ -171,7 +171,7 @@ test_that("tbl_merge works with more complex merge", {
 test_that("tbl_merge returns expected message when nonunique columns present", {
   expect_message(
     tbl_merge(list(tbl_stack(list(t1, t1)))),
-    "not unique and the merge may fail or result in a malformed table"
+    "do not uniquely identify rows for each table.*merge may fail or result in a malformed table"
   )
 })
 
@@ -208,5 +208,94 @@ test_that("tbl_merge throws expected errors", {
   expect_snapshot(
     tbl_merge(list(tbl, tbl)),
     error = TRUE
+  )
+})
+
+test_that("tbl_merge() merges mixed-type from .$table_styling$header$modify_* columns", {
+  skip_if_not(is_pkg_installed(c("survey", "cardx", "broom", "withr")))
+  withr::local_seed(123)
+
+  num_rows <- 10
+  toy_data <-
+    data.frame(
+      item1 = sample(c("Never", "Sometimes", "All the time"), num_rows, replace = TRUE),
+      gender = sample(c("Male", "Female"), num_rows, replace = TRUE),
+      weight = rnorm(num_rows, mean = 0, sd = 5) |> abs()
+    )
+  # Create a survey object
+  toy_dataw <- survey::svydesign(data = toy_data, weights = ~weight, ids = ~1)
+  t1 <- tbl_summary(toy_data, by = gender)
+  t2 <- tbl_svysummary(toy_dataw, by = gender)
+  t3 <- tbl_summary(toy_data, include = item1)
+  t4 <- tbl_svysummary(toy_dataw, include = item1)
+
+  # confirm these columns are a mix of integers and non-integers
+  expect_true(t1$table_styling$header$modify_stat_N |> is("integer"))
+  expect_true(t3$table_styling$header$modify_stat_N |> is("integer"))
+  expect_false(t2$table_styling$header$modify_stat_N |> is("integer"))
+  expect_false(t4$table_styling$header$modify_stat_N |> is("integer"))
+
+  # no errors when mixing these variables during the merge
+  expect_silent(tbl_merge(tbls = list(t1, t2)))
+  expect_silent(tbl_merge(tbls = list(t3, t4)))
+})
+
+test_that("tbl_merge(merge_vars)", {
+  # no errors when merging
+  expect_silent(
+    tbl <-
+      as_gtsummary(mtcars[duplicated(mtcars$mpg),c("mpg", "cyl")]) %>%
+      list(., .) |>
+      tbl_merge(merge_vars = "mpg")
+  )
+
+  # check the headers are correct
+  expect_equal(
+    tbl$table_styling$header,
+    dplyr::tribble(
+      ~column, ~hide,   ~align, ~interpret_label, ~label,
+      "mpg",   FALSE, "center",         "gt::md",  "mpg",
+      "cyl_1", FALSE, "center",         "gt::md",  "cyl",
+      "cyl_2", FALSE, "center",         "gt::md",  "cyl"
+    )
+  )
+
+  # check the spanning headers are correct
+  expect_equal(
+    tbl$table_styling$spanning_header,
+    dplyr::tribble(
+      ~level, ~column, ~spanning_header, ~text_interpret, ~remove,
+      1L,     "cyl_2",    "**Table 2**",        "gt::md",   FALSE,
+      1L,     "cyl_1",    "**Table 1**",        "gt::md",   FALSE
+    )
+  )
+})
+
+test_that("tbl_merge() works with tbl_hierarchical()", {
+  # check that AE table can be merged
+  expect_silent(
+    tbl <-
+      cards::ADAE |>
+      dplyr::filter(
+        AESOC %in% unique(cards::ADAE$AESOC)[1:5],
+        AETERM %in% unique(cards::ADAE$AETERM)[1:5]
+      ) |>
+      tbl_hierarchical(
+        variables = c(AESOC, AETERM),
+        denominator = cards::ADSL,
+        id = USUBJID,
+        digits = everything() ~ list(p = 1),
+        overall_row = TRUE,
+        label = list(..ard_hierarchical_overall.. = "Any Adverse Event")
+      )
+  )
+  expect_equal(
+    list(tbl, tbl) |>
+      tbl_merge() |>
+      as.data.frame(col_labels = FALSE) |>
+      dplyr::pull("label"),
+    tbl |>
+    as.data.frame(col_labels = FALSE) |>
+      dplyr::pull("label")
   )
 })

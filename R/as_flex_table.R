@@ -118,51 +118,60 @@ table_styling_to_flextable_calls <- function(x, ...) {
 
   # add_header_row -------------------------------------------------------------
   # this is the spanning rows
-  any_spanning_header <- any(!is.na(x$table_styling$header$spanning_header))
+  any_spanning_header <- nrow(x$table_styling$spanning_header) > 0L
   if (any_spanning_header == FALSE) {
     flextable_calls[["add_header_row"]] <- list()
   } else {
-    df_header0 <-
-      x$table_styling$header |>
-      dplyr::filter(.data$hide == FALSE) |>
-      dplyr::select("spanning_header") |>
+    flextable_calls[["add_header_row"]] <-
+      tidyr::expand_grid(
+        level = unique(x$table_styling$spanning_header$level),
+        column = x$table_styling$header$column[!x$table_styling$header$hide]
+      ) |>
+      dplyr::left_join(
+        x$table_styling$spanning_header[c("level", "column", "spanning_header")],
+        by = c("level", "column")
+      ) |>
       dplyr::mutate(
-        spanning_header = ifelse(is.na(.data$spanning_header),
-                                 " ", .data$spanning_header
-        ),
+        .by = "level",
+        spanning_header =
+          ifelse(is.na(.data$spanning_header), " ", .data$spanning_header),
         spanning_header_id = dplyr::row_number()
-      )
-    # assigning an ID for each spanning header group
-    for (i in seq(2, nrow(df_header0))) {
-      if (df_header0$spanning_header[i] == df_header0$spanning_header[i - 1]) {
-        df_header0$spanning_header_id[i] <- df_header0$spanning_header_id[i - 1]
-      }
-    }
+      ) |>
+      dplyr::group_by(.data$level) |>
+      dplyr::group_map(
+        \(df_values, df_group) {
+          # assigning an ID for each spanning header group
+          for (i in seq(2, nrow(df_values))) {
+            if (df_values$spanning_header[i] == df_values$spanning_header[i - 1]) {
+              df_values$spanning_header_id[i] <- df_values$spanning_header_id[i - 1]
+            }
+          }
 
-    df_header <-
-      df_header0 |>
-      dplyr::group_by(.data$spanning_header_id) |>
-      dplyr::mutate(width = dplyr::n()) |>
-      dplyr::distinct() |>
-      dplyr::ungroup() |>
-      dplyr::mutate(
-        column_id = map2(.data$spanning_header_id, .data$width, ~ seq(.x, .x + .y - 1L, by = 1L))
-      )
+          df_header <-
+            dplyr::bind_cols(df_group, df_values) |>
+            dplyr::select(-"column") |>
+            dplyr::group_by(.data$spanning_header_id) |>
+            dplyr::mutate(width = dplyr::n()) |>
+            dplyr::distinct() |>
+            dplyr::ungroup() |>
+            dplyr::mutate(
+              column_id = map2(.data$spanning_header_id, .data$width, ~ seq(.x, .x + .y - 1L, by = 1L))
+            )
 
-    flextable_calls[["add_header_row"]] <- list(
-      expr(
-        # add the header row with the spanning headers
-        flextable::add_header_row(
-          values = !!df_header$spanning_header,
-          colwidths = !!df_header$width
-        )
-      )
-    )
-
-    flextable_calls[["compose_header_row"]] <-
-      .chr_with_md_to_ft_compose(
-        x = df_header$spanning_header,
-        j = df_header$column_id
+          c(
+            list(expr(
+              # add the header row with the spanning headers
+              flextable::add_header_row(
+                values = !!df_header$spanning_header,
+                colwidths = !!df_header$width
+              )
+            )),
+            .chr_with_md_to_ft_compose(
+              x = df_header$spanning_header,
+              j = df_header$column_id
+            )
+          )
+        }
       )
   }
 
@@ -206,45 +215,89 @@ table_styling_to_flextable_calls <- function(x, ...) {
   # autofit --------------------------------------------------------------------
   flextable_calls[["autofit"]] <- expr(flextable::autofit())
 
-  # footnote -------------------------------------------------------------------
-  header_i_index <- ifelse(any_spanning_header == TRUE, 2L, 1L)
-
-  df_footnote <-
-    .number_footnotes(x) |>
-    dplyr::inner_join(
-      x$table_styling$header |>
-        dplyr::select("column", column_id = "id"),
-      by = "column"
+  # footnote_header ------------------------------------------------------------
+  spanning_header_lvls <- x$table_styling$spanning_header$level |> append(0L) |> max()
+  df_footnote_header <-
+    dplyr::bind_rows(
+      x$table_styling$footnote_header |> dplyr::mutate(level = 0L),
+      x$table_styling$footnote_spanning_header
     ) |>
     dplyr::mutate(
-      row_numbers =
-        ifelse(.data$tab_location == "header",
-               header_i_index,
-               .data$row_numbers
-        )
-    ) |>
-    dplyr::select(
-      "footnote_id", "footnote", "tab_location",
-      "row_numbers", "column_id"
-    ) |>
-    tidyr::nest(location_ids = c("row_numbers", "column_id")) %>%
+      row_numbers = .env$spanning_header_lvls - .data$level + 1L
+    ) %>%
+    .number_footnotes(x, type = .) |>
+    tidyr::nest(df_location = c("column", "column_id", "row_numbers")) |>
     dplyr::mutate(
-      row_numbers = map(.data$location_ids, ~ getElement(.x, "row_numbers")),
-      column_id = map(.data$location_ids, ~ getElement(.x, "column_id"))
+      row_numbers = map(.data$df_location, ~ getElement(.x, "row_numbers")),
+      column_id = map(.data$df_location, ~ getElement(.x, "column_id"))
     )
 
-  flextable_calls[["footnote"]] <-
+  flextable_calls[["footnote_header"]] <-
     map(
-      seq_len(nrow(df_footnote)),
+      seq_len(nrow(df_footnote_header)),
       ~ expr(
         flextable::footnote(
-          i = !!df_footnote$row_numbers[[.x]],
-          j = !!df_footnote$column_id[[.x]],
-          value = flextable::as_paragraph(!!df_footnote$footnote[[.x]]),
-          part = !!df_footnote$tab_location[[.x]],
-          ref_symbols = !!df_footnote$footnote_id[[.x]]
+          i = !!df_footnote_header$row_numbers[[.x]],
+          j = !!df_footnote_header$column_id[[.x]],
+          value = flextable::as_paragraph(!!df_footnote_header$footnote[[.x]]),
+          part = "header",
+          ref_symbols = !!df_footnote_header$footnote_id[[.x]]
         )
       )
+    )
+
+  # footnote_body --------------------------------------------------------------
+  df_footnote_body <-
+    .number_footnotes(x, type = x$table_styling$footnote_body, start_with = nrow(df_footnote_header)) |>
+    tidyr::nest(df_location = c("column", "column_id", "row_numbers")) |>
+    dplyr::mutate(
+      row_numbers = map(.data$df_location, ~ getElement(.x, "row_numbers")),
+      column_id = map(.data$df_location, ~ getElement(.x, "column_id"))
+    )
+
+  flextable_calls[["footnote_body"]] <-
+    map(
+      seq_len(nrow(df_footnote_body)),
+      ~ expr(
+        flextable::footnote(
+          i = !!df_footnote_body$row_numbers[[.x]],
+          j = !!df_footnote_body$column_id[[.x]],
+          value = flextable::as_paragraph(!!df_footnote_body$footnote[[.x]]),
+          part = "body",
+          ref_symbols = !!df_footnote_body$footnote_id[[.x]]
+        )
+      )
+    )
+
+  # abbreviation ---------------------------------------------------------------
+  flextable_calls[["abbreviations"]] <-
+    case_switch(
+      nrow(x$table_styling$abbreviation) > 0L ~
+        expr(
+          flextable::add_footer_lines(
+            value = flextable::as_paragraph(
+              !!(x$table_styling$abbreviation$abbreviation |>
+                paste(collapse = ", ") %>%
+                paste0(
+                  ifelse(nrow(x$table_styling$abbreviation) > 1L, "Abbreviations", "Abbreviation") |> translate_string(),
+                  ": ", .
+                ))
+            )
+          )
+        ),
+      .default = list()
+    )
+
+  # source note ----------------------------------------------------------------
+  # in flextable, this is just a footnote associated without column or symbol
+  flextable_calls[["source_note"]] <-
+    map(
+      seq_len(nrow(x$table_styling$source_note)),
+      \(i) {
+        expr(
+          flextable::add_footer_lines(value = flextable::as_paragraph(!!x$table_styling$source_note$source_note[i]))
+        )
+      }
     )
 
   # fmt_missing ----------------------------------------------------------------
@@ -315,17 +368,7 @@ table_styling_to_flextable_calls <- function(x, ...) {
       ))
     )
 
-  # source note ----------------------------------------------------------------
-  # in flextable, this is just a footnote associated without column or symbol
-  flextable_calls[["source_note"]] <-
-    map(
-      seq_len(nrow(x$table_styling$source_note)),
-      \(i) {
-        expr(
-          flextable::add_footer_lines(value = flextable::as_paragraph(!!x$table_styling$source_note$source_note[i]))
-        )
-      }
-    )
+
 
   # border ---------------------------------------------------------------------
   flextable_calls[["border"]] <-

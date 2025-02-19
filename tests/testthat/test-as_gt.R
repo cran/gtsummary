@@ -114,7 +114,7 @@ test_that("as_gt passes table header labels correctly", {
 
   # spanning_tbl - spanning header
   expect_equal(
-    my_spanning_tbl$table_styling$header |>
+    my_spanning_tbl$table_styling$spanning_header |>
       dplyr::filter(!is.na(spanning_header)) |>
       dplyr::pull(column),
     gt_spanning_tbl$`_spanners`$vars[[1]]
@@ -185,9 +185,9 @@ test_that("as_gt passes table text interpreters correctly", {
   # spanning header
   expect_equal(
     sapply(
-      my_spanning_tbl$table_styling$header |>
+      my_spanning_tbl$table_styling$spanning_header |>
         dplyr::filter(!is.na(spanning_header)) |>
-        dplyr::pull(interpret_spanning_header),
+        dplyr::pull(text_interpret),
       \(x) do.call(eval(parse(text = x)), list("")) |> class()
     ),
     gt_spanning_tbl$`_spanners`$spanner_label[[1]] |> class() |>
@@ -210,51 +210,70 @@ test_that("as_gt passes table text interpreters correctly", {
   )
 
   # spanning header
-  expect_true(attr(gt_tbl$`_spanners`$spanner_label[[1]], "html"))
+  expect_true(attr(gt_tbl$`_spanners`$spanner_label[[2]], "html"))
+
+  # checking the placement of a second spanning header
+  expect_silent(
+    tbl2 <-
+      my_spanning_tbl |>
+      modify_spanning_header(all_stat_cols() ~ "**Tumor Grade**", level = 2) |>
+      as_gt()
+  )
+
+  expect_equal(
+    tbl2$`_spanners` |>
+      dplyr::select(vars, spanner_label, spanner_level) |>
+      dplyr::mutate(
+        vars = map_chr(vars, ~paste(.x, collapse = ", ")),
+        spanner_label = map_chr(spanner_label, as.character)
+      ),
+    data.frame(
+      stringsAsFactors = FALSE,
+      vars = c("stat_1, stat_3", "stat_1, stat_2, stat_3"),
+      spanner_label = c("**Testing**", "**Tumor Grade**"),
+      spanner_level = c(1L, 2L)
+    )
+  )
 })
 
-test_that("as_gt passes table footnotes & footnote abbreviations correctly", {
+test_that("as_gt passes table footnotes & abbreviations correctly", {
   tbl_fn <- my_tbl_summary |>
-    modify_table_styling(columns = label, footnote = "test footnote", rows = variable == "age")
+    modify_footnote_body(footnote = "test footnote", columns = label,rows = variable == "age")
   gt_tbl_fn <- tbl_fn |> as_gt()
 
   # footnote
   expect_equal(
-    tbl_fn$table_styling$footnote$column,
+    tbl_fn$table_styling$footnote_header$column |>
+      append(tbl_fn$table_styling$footnote_body$column) |>
+      unique(),
     gt_tbl_fn$`_footnotes`$colname |> unique()
   )
   expect_equal(
-    tbl_fn$table_styling$footnote$footnote,
-    gt_tbl_fn$`_footnotes`$footnotes |> unlist() |> unique()
+    tbl_fn$table_styling$footnote_header$footnote,
+    gt_tbl_fn$`_footnotes`$footnotes[[1]],
+    ignore_attr = TRUE
+  )
+  expect_equal(
+    tbl_fn$table_styling$footnote_body$footnote,
+    gt_tbl_fn$`_footnotes`$footnotes[-1] |> unlist() |> unique(),
+    ignore_attr = TRUE
   )
 
   tbl_fa <- tbl_fn |>
-    modify_footnote(stat_0 = "N = number of observations", abbreviation = TRUE)
+    modify_abbreviation("N = number of observations")
   gt_tbl_fa <- tbl_fa |> as_gt()
 
-  # footnote_abbrev
+  # abbreviation
   expect_equal(
-    gt_tbl_fa$`_footnotes` |>
-      dplyr::distinct(pick(!any_of("rownum"))) |>
-      dplyr::arrange(locnum) |>
-      dplyr::pull(colname),
-    c("stat_0", "stat_0", "label")
-  )
-  expect_equal(
-    gt_tbl_fa$`_footnotes` |>
-      dplyr::distinct(pick(!any_of("rownum"))) |>
-      dplyr::arrange(locnum) |>
-      dplyr::pull(footnotes) |>
+    gt_tbl_fa$`_source_notes` |>
       unlist(),
-    c("n (%); Median (Q1, Q3)", "N = number of observations", "test footnote")
+    "Abbreviation: N = number of observations"
   )
 
   # customized footnotes
   tbl <- my_tbl_summary |>
-    modify_footnote(
-      all_stat_cols() ~ "replace old footnote",
-      label = "another new footnote"
-    )
+    modify_footnote_header("replace old footnote", columns = all_stat_cols()) |>
+    modify_footnote_header("another new footnote", columns = label)
   gt_tbl <- tbl |> as_gt()
 
   expect_equal(
@@ -269,8 +288,8 @@ test_that("as_gt passes table footnotes & footnote abbreviations correctly", {
   # footnotes in the body of the table
   expect_equal(
     tbl_summary(trial, include = "age") |>
-      modify_table_styling(columns = label, rows = TRUE, footnote = "my footnote") |>
-      modify_table_styling(columns = stat_0, rows = row_type == "label", footnote = "my footnote") |>
+      modify_footnote_body(columns = label, rows = TRUE, footnote = "my footnote") |>
+      modify_footnote_body(columns = stat_0, rows = row_type == "label", footnote = "my footnote") |>
       as_gt() |>
       getElement("_footnotes") |>
       dplyr::filter(footnotes == "my footnote") |>
@@ -279,6 +298,34 @@ test_that("as_gt passes table footnotes & footnote abbreviations correctly", {
       colname = c("label", "label", "stat_0"),
       rownum = c(1, 2, 1)
     )
+  )
+
+  # footnotes in spanning headers
+  expect_equal(
+    my_spanning_tbl |>
+      modify_footnote_spanning_header(
+        footnote = "Testing 1 Footnote",
+        columns = stat_1
+      ) |>
+      as_gt() |>
+      getElement("_footnotes") |>
+      dplyr::filter(footnotes == "Testing 1 Footnote") |>
+      dplyr::pull(locname),
+    "columns_groups"
+  )
+  expect_equal(
+    my_spanning_tbl |>
+      modify_spanning_header(c(stat_1, stat_2) ~ "**Another Span**", level = 2L) |>
+      modify_footnote_spanning_header(
+        footnote = "Testing 1 Footnote",
+        columns = stat_1,
+        level = 2L
+      ) |>
+      as_gt() |>
+      getElement("_footnotes") |>
+      dplyr::filter(footnotes == "Testing 1 Footnote") |>
+      dplyr::pull(locname),
+    "columns_groups"
   )
 })
 
@@ -318,7 +365,7 @@ test_that("as_gt passes appended glance statistics correctly", {
   )
   expect_equal(
     tbl$table_styling$source_note$source_note,
-    gt_tbl$`_source_notes`[[1]],
+    gt_tbl$`_source_notes`[[2]],
     ignore_attr = "class"
   )
   expect_equal(
@@ -352,7 +399,7 @@ test_that("as_gt passes missing symbols correctly", {
 
   # specify missing symbol
   tbl <- tbl |>
-    modify_table_styling(stat_0, rows = !is.na(label), missing_symbol = "n / a")
+    modify_missing_symbol(stat_0, rows = !is.na(label), symbol = "n / a")
   gt_tbl <- tbl |> as_gt()
 
   # correct substitution for missing values

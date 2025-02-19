@@ -7,7 +7,7 @@
 #' available via the [gt package](https://gt.rstudio.com/index.html).
 #'
 #' @param x (`gtsummary`)\cr
-#'   An object of class `"gtsummary"
+#'   An object of class `"gtsummary"`
 #' @param include Commands to include in output. Input may be a vector of
 #' quoted or unquoted names. tidyselect and gtsummary select helper
 #' functions are also accepted.
@@ -87,23 +87,24 @@ table_styling_to_gt_calls <- function(x, ...) {
     )
 
   # gt -------------------------------------------------------------------------
-  groupname_col <-
-    switch("groupname_col" %in% x$table_styling$header$column,
-      "groupname_col"
-    )
-  caption <-
-    switch(!is.null(x$table_styling$caption),
-      rlang::call2(
-        .fn = attr(x$table_styling$caption, "text_interpret"),
-        x$table_styling$caption,
-        .ns = "gt"
-      )
-    )
+  gt_args_caption_groupname_col <-
+    list(
+      groupname_col =
+        switch("groupname_col" %in% x$table_styling$header$column, "groupname_col"),
+      caption =
+        switch(
+          !is.null(x$table_styling$caption),
+          rlang::call2(.fn = attr(x$table_styling$caption, "text_interpret"),
+                       x$table_styling$caption,
+                       .ns = "gt")
+        )
+    ) |>
+    compact()
+
   gt_calls[["gt"]] <-
     expr(gt::gt(
       data = x$table_body,
-      groupname_col = !!groupname_col,
-      caption = !!caption,
+      !!!gt_args_caption_groupname_col,
       !!!list(...)
     ))
 
@@ -234,80 +235,82 @@ table_styling_to_gt_calls <- function(x, ...) {
         expr(gt::cols_label_with(fn = function(x) gsub(x = x, pattern = "\\n(?!\\\\)", replacement = "", fixed = FALSE, perl = TRUE)))
     )
 
+  # spanning_header ------------------------------------------------------------
+  gt_calls[["tab_spanner"]] <-
+    case_switch(
+      nrow(x$table_styling$spanning_header) > 0L ~
+        x$table_styling$spanning_header |>
+        dplyr::group_by(.data$level, .data$spanning_header, .data$text_interpret) |>
+        dplyr::group_map(
+          \(.x, .y) {
+            expr(gt::tab_spanner(
+              columns = !!.x$column,
+              label = !!call2(parse_expr(.y$text_interpret), .y$spanning_header),
+              level = !!.y$level,
+              id = !!paste0("level ", .y$level, "; ", .x$column[1]),
+              gather = FALSE
+            ))
+          }
+        ),
+      .default = list()
+    )
 
   # tab_footnote ---------------------------------------------------------------
-  if (nrow(x$table_styling$footnote) == 0 &&
-    nrow(x$table_styling$footnote_abbrev) == 0) {
-    gt_calls[["tab_footnote"]] <- list()
-  } else {
-    df_footnotes <-
-      dplyr::bind_rows(
-        x$table_styling$footnote,
-        x$table_styling$footnote_abbrev
-      ) |>
-      tidyr::nest(row_numbers = "row_numbers") %>%
-      dplyr::mutate(
-        # columns = .data$data %>% dplyr::pull("column") %>% list(),
-        rows = map(.data$row_numbers, \(x) unlist(x) |> unname())
-      )
-    df_footnotes$footnote_exp <-
-      map2(
-        df_footnotes$text_interpret,
-        df_footnotes$footnote,
-        ~ call2(parse_expr(.x), .y)
-      )
-
-
-    gt_calls[["tab_footnote"]] <-
-      pmap(
-        list(
-          df_footnotes$tab_location, df_footnotes$footnote_exp,
-          df_footnotes$column, df_footnotes$rows
-        ),
-        function(tab_location, footnote, column, rows) {
-          if (tab_location == "header") {
-            return(expr(
-              gt::tab_footnote(
-                footnote = !!footnote,
-                locations = gt::cells_column_labels(columns = !!column)
-              )
-            ))
-          }
-          if (tab_location == "body") {
-            return(expr(
-              gt::tab_footnote(
-                footnote = !!footnote,
-                locations = gt::cells_body(columns = !!column, rows = !!rows)
-              )
-            ))
-          }
+  gt_calls[["tab_footnote"]] <-
+    c(
+      # header footnotes
+      map(
+        seq_len(nrow(x$table_styling$footnote_header)),
+        function(i) {
+          expr(
+            gt::tab_footnote(
+              footnote =
+                !!call2(
+                  parse_expr(x$table_styling$footnote_header$text_interpret[i]),
+                  x$table_styling$footnote_header$footnote[i]
+                ),
+              locations = gt::cells_column_labels(columns = !!x$table_styling$footnote_header$column[i])
+            )
+          )
+        }
+      ),
+      # body footnotes
+      map(
+        seq_len(nrow(x$table_styling$footnote_body)),
+        function(i) {
+          expr(
+            gt::tab_footnote(
+              footnote =
+                !!call2(
+                  parse_expr(x$table_styling$footnote_body$text_interpret[i]),
+                  x$table_styling$footnote_body$footnote[i]
+                ),
+              locations = gt::cells_body(columns = !!x$table_styling$footnote_body$column[i],
+                                         rows = !!x$table_styling$footnote_body$row_numbers[i])
+            )
+          )
+        }
+      ),
+      # spanning header footnotes
+      map(
+        seq_len(nrow(x$table_styling$footnote_spanning_header)),
+        function(i) {
+          expr(
+            gt::tab_footnote(
+              footnote =
+                !!call2(
+                  parse_expr(x$table_styling$footnote_spanning_header$text_interpret[i]),
+                  x$table_styling$footnote_spanning_header$footnote[i]
+                ),
+              locations =
+                gt::cells_column_spanners(
+                  spanners = !!paste0("level ", x$table_styling$footnote_spanning_header$level[i], "; ", x$table_styling$footnote_spanning_header$column[i]),
+                  levels = !!x$table_styling$footnote_spanning_header$level[i]
+                )
+            )
+          )
         }
       )
-  }
-
-  # spanning_header ------------------------------------------------------------
-  df_spanning_header <-
-    x$table_styling$header |>
-    dplyr::select("column", "interpret_spanning_header", "spanning_header") |>
-    dplyr::filter(!is.na(.data$spanning_header)) |>
-    tidyr::nest(cols = "column") |>
-    dplyr::mutate(
-      spanning_header = map2(
-        .data$interpret_spanning_header, .data$spanning_header,
-        ~ call2(parse_expr(.x), .y)
-      ),
-      cols = map(.data$cols, ~ dplyr::pull(.x))
-    ) |>
-    dplyr::select("spanning_header", "cols")
-
-  gt_calls[["tab_spanner"]] <-
-    map(
-      seq_len(nrow(df_spanning_header)),
-      ~ expr(gt::tab_spanner(
-        columns = !!df_spanning_header$cols[[.x]],
-        label = gt::md(!!df_spanning_header$spanning_header[[.x]]),
-        gather = FALSE
-      ))
     )
 
   # horizontal_line ------------------------------------------------------------
@@ -321,9 +324,32 @@ table_styling_to_gt_calls <- function(x, ...) {
       )
   }
 
+  # abbreviation  --------------------------------------------------------------
+  gt_calls[["abbreviations"]] <-
+    case_switch(
+      nrow(x$table_styling$abbreviation) > 0L ~
+        expr(
+          gt::tab_source_note(
+            source_note =
+              !!call2(
+                parse_expr(dplyr::last(x$table_styling$abbreviation$text_interpret)),
+                x$table_styling$abbreviation$abbreviation |>
+                  paste(collapse = ", ") %>%
+                  paste0(
+                    ifelse(nrow(x$table_styling$abbreviation) > 1L, "Abbreviations", "Abbreviation") |> translate_string(),
+                    ": ", .
+                  )
+              )
+          )
+        ),
+      .default = list()
+    )
+
+
   # tab_source_note  -----------------------------------------------------------
   # adding other calls from x$table_styling$source_note
   gt_calls[["tab_source_note"]] <-
+    # source notes
     map(
       seq_len(nrow(x$table_styling$source_note)),
       \(i) {
@@ -334,7 +360,6 @@ table_styling_to_gt_calls <- function(x, ...) {
         )
       }
     )
-
 
   # cols_hide ------------------------------------------------------------------
   gt_calls[["cols_hide"]] <-

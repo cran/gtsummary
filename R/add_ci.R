@@ -59,7 +59,7 @@
 #'     include = c(response, grade)
 #'   ) |>
 #'   add_ci(pattern = "{stat} ({ci})") |>
-#'   modify_footnote(everything() ~ NA)
+#'   remove_footnote_header(everything())
 NULL
 
 #' @rdname add_ci
@@ -91,10 +91,6 @@ add_ci.tbl_summary <- function(x,
   # check inputs ---------------------------------------------------------------
   check_scalar_range(conf.level, range = c(0, 1))
   check_string(pattern, allow_empty = TRUE)
-  if (!"column" %in% x$inputs$percent) {
-    cli::cli_inform("The {.fun add_ci} function is meant to work with {.code tbl_summary(percent={cli::cli_format('column')})},
-                     but {.code tbl_summary(percent={cli::cli_format(x$inputs$percent)})} was used.")
-  }
 
   # process inputs -------------------------------------------------------------
   cards::process_selectors(
@@ -177,7 +173,8 @@ add_ci.tbl_summary <- function(x,
     .calculate_add_ci_cards_summary(data = x$inputs$data, include = include, by = x$inputs$by,
                                     method = method, style_fun = style_fun, conf.level = conf.level,
                                     overall= "add_overall" %in% names(x$call_list),
-                                    value = x$inputs$value)
+                                    value = x$inputs$value,
+                                    denominator = x$inputs$percent)
 
 
 
@@ -293,10 +290,7 @@ brdg_add_ci <- function(x, pattern, statistic, include, conf.level, updated_call
       modify_header(
         matches("^ci_stat_\\d+$") ~ paste0("**", conf.level * 100, "% ", translate_string("CI"), "**")
       ) |>
-      modify_footnote(
-        matches("^ci_stat_\\d+$") ~ translate_string("CI = Confidence Interval"),
-        abbreviation = TRUE
-      )
+      modify_abbreviation(translate_string("CI = Confidence Interval"))
   }
   else {
     # get the stat column index numbers, eg get the 1 and 2 from stat_1 and stat_2
@@ -327,10 +321,7 @@ brdg_add_ci <- function(x, pattern, statistic, include, conf.level, updated_call
     x <-
       cols_merge_expr |>
       reduce(\(.x, .y) inject(!!.x %>% !!.y), .init = x) |>
-      modify_footnote(
-        all_stat_cols() ~ translate_string("CI = Confidence Interval"),
-        abbreviation = TRUE
-      )
+      modify_abbreviation(translate_string("CI = Confidence Interval"))
 
     # updating header using `pattern=` argument
     x$table_styling$header <-
@@ -357,11 +348,13 @@ brdg_add_ci <- function(x, pattern, statistic, include, conf.level, updated_call
   x
 }
 
-.calculate_add_ci_cards_summary <- function(data, include, by, method, style_fun, conf.level, overall= FALSE, value) {
+.calculate_add_ci_cards_summary <- function(data, include, by, method, style_fun,
+                                            conf.level, overall= FALSE, value, denominator) {
   lst_cards <-
     lapply(
       include,
-      FUN = \(v) .calculate_one_ci_ard_summary(data = data, variable = v, by = by, method = method, conf.level = conf.level, value = value)
+      FUN = \(v) .calculate_one_ci_ard_summary(data = data, variable = v, by = by, method = method,
+                                               conf.level = conf.level, value = value, denominator = denominator)
     ) |>
     set_names(include)
 
@@ -370,7 +363,8 @@ brdg_add_ci <- function(x, pattern, statistic, include, conf.level, updated_call
     lst_cards <-
       lapply(
         include,
-        FUN = \(v) .calculate_one_ci_ard_summary(data = data, variable = v, by = NULL, method = method, conf.level = conf.level, value = value)
+        FUN = \(v) .calculate_one_ci_ard_summary(data = data, variable = v, by = NULL, method = method,
+                                                 conf.level = conf.level, value = value, denominator = denominator)
       ) |>
       set_names(include) |>
       append(lst_cards)
@@ -386,13 +380,14 @@ brdg_add_ci <- function(x, pattern, statistic, include, conf.level, updated_call
                         list(style_fun[[.y]]),
                         .data$fmt_fn)
       ) |>
+        cards::replace_null_statistic() |>
         cards::apply_fmt_fn()
     ) |>
     dplyr::bind_rows() |>
     cards::tidy_ard_column_order()
 }
 
-.calculate_one_ci_ard_summary <- function(data, variable, by, method, conf.level, value) {
+.calculate_one_ci_ard_summary <- function(data, variable, by, method, conf.level, value, denominator) {
   switch(
     method[[variable]],
     # continuous variables
@@ -400,15 +395,15 @@ brdg_add_ci <- function(x, pattern, statistic, include, conf.level, updated_call
     "wilcox.test" = cardx::ard_stats_wilcox_test_onesample(data, variables = all_of(variable), by = any_of(by), conf.level = conf.level, conf.int = TRUE),
 
     # categorical variables
-    "wald" = cardx::ard_categorical_ci(data, variables = all_of(variable), by = any_of(by), method = "waldcc", conf.level = conf.level, value = value),
-    "wald.no.correct" = cardx::ard_categorical_ci(data, variables = all_of(variable), by = any_of(by), method = "wald", conf.level = conf.level, value = value),
-    "exact" = cardx::ard_categorical_ci(data, variables = all_of(variable), by = any_of(by), method = "clopper-pearson", conf.level = conf.level, value = value),
-    "wilson" = cardx::ard_categorical_ci(data, variables = all_of(variable), by = any_of(by), method = "wilsoncc", conf.level = conf.level, value = value),
-    "wilson.no.correct" = cardx::ard_categorical_ci(data, variables = all_of(variable), by = any_of(by), method = "wilson", conf.level = conf.level, value = value),
-    "agresti.coull" = cardx::ard_categorical_ci(data, variables = all_of(variable), by = any_of(by), method = "agresti-coull", conf.level = conf.level, value = value),
-    "jeffreys" = cardx::ard_categorical_ci(data, variables = all_of(variable), by = any_of(by), method = "jeffreys", conf.level = conf.level, value = value),
+    "wald" = cardx::ard_categorical_ci(data, variables = all_of(variable), by = any_of(by), method = "waldcc", conf.level = conf.level, value = value, denominator = denominator),
+    "wald.no.correct" = cardx::ard_categorical_ci(data, variables = all_of(variable), by = any_of(by), method = "wald", conf.level = conf.level, value = value, denominator = denominator),
+    "exact" = cardx::ard_categorical_ci(data, variables = all_of(variable), by = any_of(by), method = "clopper-pearson", conf.level = conf.level, value = value, denominator = denominator),
+    "wilson" = cardx::ard_categorical_ci(data, variables = all_of(variable), by = any_of(by), method = "wilsoncc", conf.level = conf.level, value = value, denominator = denominator),
+    "wilson.no.correct" = cardx::ard_categorical_ci(data, variables = all_of(variable), by = any_of(by), method = "wilson", conf.level = conf.level, value = value, denominator = denominator),
+    "agresti.coull" = cardx::ard_categorical_ci(data, variables = all_of(variable), by = any_of(by), method = "agresti-coull", conf.level = conf.level, value = value, denominator = denominator),
+    "jeffreys" = cardx::ard_categorical_ci(data, variables = all_of(variable), by = any_of(by), method = "jeffreys", conf.level = conf.level, value = value, denominator = denominator),
 
     # Documentation for 'asymptotic' was removed in v2.0.0
-    "asymptotic" = cardx::ard_categorical_ci(data, variables = all_of(variable), by = any_of(by), method = "wald", conf.level = conf.level, value = value)
+    "asymptotic" = cardx::ard_categorical_ci(data, variables = all_of(variable), by = any_of(by), method = "wald", conf.level = conf.level, value = value, denominator = denominator)
   )
 }

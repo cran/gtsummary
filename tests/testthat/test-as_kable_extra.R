@@ -28,7 +28,8 @@ test_that("as_kable_extra(return_calls) works as expected", {
   expect_equal(
     names(kbl),
     c("tibble", "fmt", "cols_merge", "fmt_missing", "cols_hide", "remove_line_breaks",
-      "escape_table_body", "bold_italic", "kable", "add_indent", "footnote")
+      "escape_table_body", "bold_italic", "kable", "add_indent",
+      "add_header_above", "source_note", "abbreviations", "footnote")
   )
 })
 
@@ -125,6 +126,22 @@ test_that("as_kable_extra works with tbl_stack", {
   expect_snapshot(kbl_stack)
 })
 
+test_that("as_kable_extra checking the placement of a second spanning header", {
+  expect_silent(
+    tbl2 <-
+      trial |>
+      tbl_summary(by = grade, include = age) |>
+      modify_spanning_header(c(stat_1, stat_3) ~ "**Testing**") |>
+      modify_spanning_header(all_stat_cols() ~ "**Tumor Grade**", level = 2) |>
+      as_kable_extra()
+  )
+
+  # this isn't a great test, but it's something!
+  expect_true(as.character(tbl2) |> str_detect("Testing"))
+  expect_true(as.character(tbl2) |> str_detect("Tumor Grade"))
+})
+
+
 test_that("as_kable_extra works with bold/italics", {
   tbl <- my_tbl_summary |>
     bold_labels() |>
@@ -167,9 +184,9 @@ test_that("as_kable_extra passes table column alignment correctly", {
   )
 })
 
-test_that("as_kable_extra passes table footnotes & footnote abbreviations correctly", {
+test_that("as_kable_extra passes table footnotes & abbreviations correctly", {
   tbl_fn <- my_tbl_summary |>
-    modify_table_styling(columns = label, footnote = "test footnote", rows = variable == "age")
+    modify_footnote_body(columns = label, footnote = "test footnote", rows = variable == "age")
   kbl_fn <- tbl_fn |> as_kable_extra()
 
   # footnote
@@ -178,7 +195,7 @@ test_that("as_kable_extra passes table footnotes & footnote abbreviations correc
   )
 
   tbl_fa <- tbl_fn |>
-    modify_footnote(stat_0 = "N = number of observations", abbreviation = TRUE)
+    modify_abbreviation("N = number of observations")
   kbl_fa <- tbl_fa |> as_kable_extra()
 
   # footnote_abbrev
@@ -188,14 +205,19 @@ test_that("as_kable_extra passes table footnotes & footnote abbreviations correc
 
   # customized footnotes
   tbl <- my_tbl_summary |>
-    modify_footnote(
-      all_stat_cols() ~ "replace old footnote",
-      label = "another new footnote"
-    )
+    modify_footnote_header("replace old footnote", columns = all_stat_cols()) |>
+    modify_footnote_header("another new footnote", columns = label)
   kbl <- tbl |> as_kable_extra()
 
   expect_snapshot_value(
     strsplit(kbl[1], "* </?tr>\n *")[[1]][10]
+  )
+
+  expect_true(
+    my_tbl_summary |>
+      modify_footnote_spanning_header("footnote test", columns = all_stat_cols()) |>
+      as_kable_extra(format = "html") |>
+      str_detect("footnote test")
   )
 })
 
@@ -266,7 +288,7 @@ test_that("as_kable_extra passes missing symbols correctly", {
 
   # specify missing symbol
   tbl <- tbl |>
-    modify_table_styling(stat_0, rows = !is.na(label), missing_symbol = "n / a")
+    modify_missing_symbol(stat_0, rows = !is.na(label), symbol = "n / a")
   kbl <- tbl |> as_kable_extra()
 
   # correct substitution for missing values
