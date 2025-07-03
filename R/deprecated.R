@@ -23,12 +23,27 @@ NULL
 #   v1.7.0 2023-01-13
 #   v1.6.3 2022-12-06
 #   v1.6.2 2022-09-30
-#   v1.6.1 2022-06-22
 
 
-# v1.6.1 ----------------------------------------------------------
+# v2.3.0 -----------------------------------------------------------------------
 #' @rdname deprecated
 #' @export
-modify_cols_merge <- function(...) {
-  lifecycle::deprecate_stop("1.6.1", "gtsummary::modify_cols_merge()", "modify_column_merge()")
+modify_column_indent <- function(...) {
+  lifecycle::deprecate_soft("2.3.0", "gtsummary::modify_column_indent()", "modify_indent()")
+  modify_indent(...)
+}
+
+# v2.3.0 -----------------------------------------------------------------------
+#' @rdname deprecated
+#' @export
+tbl_split <- function(x, ...) {
+  UseMethod("tbl_split")
+}
+
+# v2.3.0 -----------------------------------------------------------------------
+#' @rdname deprecated
+#' @export
+tbl_split.gtsummary <- function(...) {
+  lifecycle::deprecate_soft("2.3.0", "gtsummary::tbl_split.gtsummary()", "tbl_split_by_rows()")
+  tbl_split_by_rows(...)
 }

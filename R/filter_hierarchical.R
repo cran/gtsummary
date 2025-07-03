@@ -11,6 +11,8 @@
 #' @param keep_empty (scalar `logical`)\cr
 #'   Logical argument indicating whether to retain summary rows corresponding to table hierarchy sections that have had
 #'   all rows filtered out. Default is `FALSE`.
+#' @inheritParams rlang::args_dots_empty
+#'
 #'
 #' @details
 #' The `filter` argument can be used to filter out rows of a table which do not meet the criteria provided as an
@@ -39,7 +41,7 @@
 #'
 #' @seealso [sort_hierarchical()]
 #'
-#' @export
+#' @name filter_hierarchical
 #'
 #' @examplesIf (identical(Sys.getenv("NOT_CRAN"), "true") || identical(Sys.getenv("IN_PKGDOWN"), "true"))
 #' ADAE_subset <- cards::ADAE |>
@@ -68,12 +70,25 @@
 #' # Example 3 ----------------------------------
 #' # Keep rows where AEs across the row have an overall prevalence of greater than 0.5%
 #' filter_hierarchical(tbl, sum(n) / sum(N) > 0.005)
-filter_hierarchical <- function(x, filter, keep_empty = FALSE) {
+NULL
+
+#' @rdname filter_hierarchical
+#' @export
+filter_hierarchical <- function(x, ...) {
   set_cli_abort_call()
+  check_not_missing(x)
+  check_class(x, "gtsummary")
+  UseMethod("filter_hierarchical")
+}
+
+#' @rdname filter_hierarchical
+#' @export
+filter_hierarchical.tbl_hierarchical <- function(x, filter, keep_empty = FALSE, ...) {
+  set_cli_abort_call()
+  check_dots_empty(call = get_cli_abort_call())
 
   # check input
   check_not_missing(x)
-  check_class(x, "gtsummary")
 
   ard_args <- attributes(x$cards$tbl_hierarchical)$args
   x_ard <- x$cards$tbl_hierarchical
@@ -84,10 +99,14 @@ filter_hierarchical <- function(x, filter, keep_empty = FALSE) {
   x_ard <- reshape_x$x_ard
 
   # get `by` variable count rows (do not correspond to a table row)
-  rm_idx <- x_ard |>
-    dplyr::filter(is.na(.data$group1)) |>
-    dplyr::pull("pre_idx") |>
-    unique()
+  rm_idx <- if (!is_empty(ard_args$by)) {
+    x_ard |>
+      dplyr::filter(is.na(.data$group1)) |>
+      dplyr::pull("pre_idx") |>
+      unique()
+  } else {
+    NULL
+  }
 
   # apply filtering
   x_ard_filter <- x_ard |> cards::filter_ard_hierarchical({{ filter }}, keep_empty)
@@ -144,3 +163,7 @@ filter_hierarchical <- function(x, filter, keep_empty = FALSE) {
 
   x
 }
+
+#' @rdname filter_hierarchical
+#' @export
+filter_hierarchical.tbl_hierarchical_count <- filter_hierarchical.tbl_hierarchical

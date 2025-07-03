@@ -179,7 +179,7 @@ brdg_hierarchical <- function(cards,
   # correct indentation to account for label rows
   for (i in seq_along(variables)) {
     x <- x |>
-      modify_column_indent(
+      modify_indent(
         columns = label,
         rows = .data$variable == !!variables[i],
         indent = (i - 1) * 4
@@ -187,7 +187,7 @@ brdg_hierarchical <- function(cards,
   }
   if (overall_row) {
     x <- x |>
-      modify_column_indent(
+      modify_indent(
         columns = label,
         rows = .data$variable == "..ard_hierarchical_overall..",
         indent = 0
@@ -202,7 +202,7 @@ brdg_hierarchical <- function(cards,
       paste0(
         paste(rep("\U00A0", indent[x]), collapse = ""),
         "**",
-        label[x],
+        label[variables][x],
         "**",
         if (x < length(indent)) "  "
       )
@@ -222,7 +222,7 @@ brdg_hierarchical <- function(cards,
                             default = "**N = {style_number(N)}**"),
           is_empty(by) ~
             get_theme_element("tbl_hierarchical-str:header-noby-noN",
-                            default = "Overall"),
+                            default = "**Overall**"),
           "modify_stat_n" %in% names(x$table_styling$header) ~
             get_theme_element("tbl_hierarchical-str:header-withby",
                             default = "**{level}**  \nN = {style_number(n)}"),
@@ -235,10 +235,6 @@ brdg_hierarchical <- function(cards,
   # return tbl_hierarchical table ---------------------------------------------------
   x$call_list <- list(call) |>
     stats::setNames(if (count) "tbl_hierarchical_count" else "tbl_hierarchical")
-  # running any additional mods
-  x <-
-    get_theme_element("tbl_hierarchical-fn:addnl-fn-to-run", default = identity) |>
-    do.call(list(x))
 
   x
 }
@@ -263,7 +259,7 @@ pier_summary_hierarchical <- function(cards,
   cards_no_attr <-
     cards |>
     dplyr::filter(.data$variable %in% .env$variables, !.data$context %in% "attributes") |>
-    cards::apply_fmt_fn()
+    cards::apply_fmt_fun()
 
   # construct formatted statistics ---------------------------------------------
   df_glued <-

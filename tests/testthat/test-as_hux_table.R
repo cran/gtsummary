@@ -1,5 +1,5 @@
 skip_on_cran()
-skip_if_not(is_pkg_installed(c("huxtable", "withr")))
+skip_if_not(is_pkg_installed(c("huxtable", "withr", "broom.helpers")))
 
 my_tbl_summary <- trial |>
   select(trt, age, death) |>
@@ -223,7 +223,7 @@ test_that("as_hux_table passes table indentation correctly", {
 
   # indentation removed
   tbl <- my_tbl_summary |>
-    modify_column_indent(columns = label, indent = 0)
+    modify_indent(columns = label, indent = 0)
   ht <- tbl |> as_hux_table()
 
   expect_equal(

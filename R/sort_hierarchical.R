@@ -21,12 +21,12 @@
 #'     all variables, an error will occur.
 #'
 #'   Defaults to `"descending"`.
+#' @inheritParams rlang::args_dots_empty
 #'
 #' @return A `gtsummary` of the same class as `x`.
 #'
 #' @seealso [filter_hierarchical()]
-#'
-#' @export
+#' @name sort_hierarchical
 #'
 #' @examplesIf (identical(Sys.getenv("NOT_CRAN"), "true") || identical(Sys.getenv("IN_PKGDOWN"), "true"))
 #' theme_gtsummary_compact()
@@ -54,12 +54,24 @@
 #' sort_hierarchical(tbl, sort = "alphanumeric")
 #'
 #' reset_gtsummary_theme()
-sort_hierarchical <- function(x, sort = c("descending", "alphanumeric")) {
+NULL
+
+#' @rdname sort_hierarchical
+#' @export
+sort_hierarchical <- function(x, ...) {
+  set_cli_abort_call()
+  check_not_missing(x)
+  check_class(x, "gtsummary")
+  UseMethod("sort_hierarchical")
+}
+
+#' @rdname sort_hierarchical
+#' @export
+sort_hierarchical.tbl_hierarchical <- function(x, sort = c("descending", "alphanumeric"), ...) {
   set_cli_abort_call()
 
   # check input
   check_not_missing(x)
-  check_class(x, "gtsummary")
 
   sort <- arg_match(sort, error_call = get_cli_abort_call())
   ard_args <- attributes(x$cards$tbl_hierarchical)$args
@@ -72,7 +84,7 @@ sort_hierarchical <- function(x, sort = c("descending", "alphanumeric")) {
 
   # get `by` variable count rows (do not correspond to a table row)
   rm_idx <- x_ard |>
-    dplyr::filter(is.na(.data$group1)) |>
+    dplyr::filter(if (!is_empty(ard_args$by)) is.na(.data$group1) else .data$context != "hierarchical") |>
     dplyr::pull("pre_idx") |>
     unique()
 
@@ -91,7 +103,7 @@ sort_hierarchical <- function(x, sort = c("descending", "alphanumeric")) {
       select(-"tmp")
   }
 
-  # if overall column present, filter x$cards$add_overall
+  # if overall column present, sort x$cards$add_overall
   if ("add_overall" %in% names(x$cards)) {
     # update x$cards$add_overall
     x$cards$add_overall <- x$cards$add_overall |> cards::sort_ard_hierarchical(sort)
@@ -107,7 +119,7 @@ sort_hierarchical <- function(x, sort = c("descending", "alphanumeric")) {
 }
 
 .reshape_ard_compare <- function(x, x_ard, ard_args, sort = NULL) {
-  by_cols <- paste0("group", seq_along(length(ard_args$by)), c("", "_level"))
+  by_cols <- if (length(ard_args$by) > 0) c("group1", "group1_level") else NULL
 
   # add dummy rows for variables not in include so their label rows are sorted correctly
   x_ard <- x_ard |> .append_not_incl(ard_args, sort)
@@ -121,8 +133,12 @@ sort_hierarchical <- function(x, sort = c("descending", "alphanumeric")) {
   gps <- x_ard |>
     dplyr::group_keys() |>
     dplyr::mutate(pre_idx = dplyr::row_number()) |>
-    cards::as_card() |>
-    cards::rename_ard_groups_shift(shift = -1) |>
+    cards::as_card()
+
+  # if by variable present, shift grouping columns
+  if (!is_empty(by_cols)) gps <- gps |> cards::rename_ard_groups_shift(shift = -1)
+
+  gps <- gps |>
     dplyr::filter(!.data$variable %in% ard_args$by) |>
     dplyr::rename(label = "variable_level")
 
@@ -205,3 +221,7 @@ sort_hierarchical <- function(x, sort = c("descending", "alphanumeric")) {
 
   x
 }
+
+#' @rdname sort_hierarchical
+#' @export
+sort_hierarchical.tbl_hierarchical_count <- sort_hierarchical.tbl_hierarchical

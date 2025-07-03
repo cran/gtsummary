@@ -15,7 +15,7 @@
 #' @param data (`data.frame`)\cr
 #'   a data frame.
 #' @param variables ([`tidy-select`][dplyr::dplyr_tidy_select])\cr
-#'   character vector or tidy-selector of columns in data used to create a hierarchy. Hierarchy will be built with
+#'   character vector or tidy-selector of columns in `data` used to create a hierarchy. Hierarchy will be built with
 #'   variables in the order given.
 #' @param by ([`tidy-select`][dplyr::dplyr_tidy_select])\cr
 #'   a single column from `data`. Summary statistics will be stratified by this variable.
@@ -28,8 +28,8 @@
 #'   The argument is required for `tbl_hierarchical()` and optional for `tbl_hierarchical_count()`.
 #'   The `denominator` argument must be specified when `id` is used to calculate event rates.
 #' @param include ([`tidy-select`][dplyr::dplyr_tidy_select])\cr
-#'   variables from `hierarchy` for which summary statistics should be returned (on the variable label rows) Including
-#'   the last element of `hierarchy` has no effect since each level has its own row for this variable.
+#'   columns from the `variables` argument for which summary statistics should be returned (on the variable label rows).
+#'   Including the last element of `variables` has no effect since each level has its own row for this variable.
 #'   The default is `everything()`.
 #' @param statistic ([`formula-list-selector`][syntax])\cr
 #'   used to specify the summary statistics to display for all variables in `tbl_hierarchical()`.
@@ -42,9 +42,9 @@
 #'   The default for each variable is the column label attribute, `attr(., 'label')`.
 #'   If no label has been set, the column name is used.
 #' @param digits ([`formula-list-selector`][syntax])\cr
-#'  Specifies how summary statistics are rounded. Values may be either integer(s) or function(s). If not specified,
-#'  default formatting is assigned via `label_style_number()` for statistics `n` and `N`, and
-#'  `label_style_percent(digits=1)` for statistic `p`.
+#'   specifies how summary statistics are rounded. Values may be either integer(s) or function(s). If not specified,
+#'   default formatting is assigned via `label_style_number()` for statistics `n` and `N`, and
+#'   `label_style_percent(digits=1)` for statistic `p`.
 #'
 #' @section Overall Row:
 #'
@@ -135,19 +135,24 @@ tbl_hierarchical <- function(data,
   }
 
   # create table ---------------------------------------------------------------
-  internal_tbl_hierarchical(
-    data = data,
-    variables = variables,
-    by = by,
-    id = id,
-    denominator = denominator,
-    include = {{ include }},
-    statistic = {{ statistic }},
-    overall_row = overall_row,
-    label = label,
-    digits = {{ digits }},
-    calling_fun = "tbl_hierarchical"
-  )
+  x <-
+    internal_tbl_hierarchical(
+      data = data,
+      variables = variables,
+      by = by,
+      id = id,
+      denominator = denominator,
+      include = {{ include }},
+      statistic = {{ statistic }},
+      overall_row = overall_row,
+      label = label,
+      digits = {{ digits }},
+      calling_fun = "tbl_hierarchical"
+    )
+
+  # running any additional mods
+  get_theme_element("tbl_hierarchical-fn:addnl-fn-to-run", default = identity) |>
+    do.call(list(x))
 }
 
 #' @rdname tbl_hierarchical
@@ -180,19 +185,24 @@ tbl_hierarchical_count <- function(data,
   }
 
   # create table ---------------------------------------------------------------
-  internal_tbl_hierarchical(
-    data = data,
-    variables = variables,
-    by = by,
-    id = NULL,
-    denominator = denominator,
-    include = {{ include }},
-    statistic = statistic,
-    overall_row = overall_row,
-    label = label,
-    digits = digits,
-    calling_fun = "tbl_hierarchical_count"
-  )
+  x <-
+    internal_tbl_hierarchical(
+      data = data,
+      variables = variables,
+      by = by,
+      id = NULL,
+      denominator = denominator,
+      include = {{ include }},
+      statistic = statistic,
+      overall_row = overall_row,
+      label = label,
+      digits = digits,
+      calling_fun = "tbl_hierarchical_count"
+    )
+
+  # running any additional mods
+  get_theme_element("tbl_hierarchical_count-fn:addnl-fn-to-run", default = identity) |>
+    do.call(list(x))
 }
 
 internal_tbl_hierarchical <- function(data,
@@ -306,14 +316,14 @@ internal_tbl_hierarchical <- function(data,
     dplyr::rows_update(
       imap(
         digits,
-        ~ enframe(.x, "stat_name", "fmt_fn") |>
+        ~ enframe(.x, "stat_name", "fmt_fun") |>
           dplyr::mutate(variable = .y)
       ) |>
         dplyr::bind_rows(),
       by = c("variable", "stat_name"),
       unmatched = "ignore"
     ) |>
-    cards::apply_fmt_fn()
+    cards::apply_fmt_fun()
 
   # print all warnings and errors that occurred while calculating requested stats
   cards::print_ard_conditions(cards)

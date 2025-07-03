@@ -89,10 +89,10 @@ test_that("tbl_hierarchical(overall_row) works properly", {
   expect_snapshot(tbl_hierarchical(data = trial2, variables = trt, denominator = trial2, id = id, overall_row = TRUE) |> as.data.frame())
 
   # value are correct when by is passed
-  expect_warning(expect_warning(
+  expect_silent(
     res <-
       tbl_hierarchical(data = trial2, variables = trt, by = grade, denominator = trial2, id = id, overall_row = TRUE)
-  ))
+  )
   expect_snapshot(res |> as.data.frame())
   expect_equal((res |> as.data.frame())[1, 1], "Number of patients with event")
   expect_equal(
@@ -101,13 +101,13 @@ test_that("tbl_hierarchical(overall_row) works properly", {
   )
 
   # overall row labeling works
-  expect_warning(expect_warning(
+  expect_silent(
     res <-
       tbl_hierarchical(
         data = trial2, variables = trt, by = grade, denominator = trial2, id = id, overall_row = TRUE,
         label = list(..ard_hierarchical_overall.. = "Total patients")
       )
-  ))
+  )
   expect_equal((res |> as.data.frame())[1, 1], "Total patients")
 
   # errors thrown when bad overall_row argument passed
@@ -132,6 +132,15 @@ test_that("tbl_hierarchical(label) works properly", {
     error = TRUE,
     tbl_hierarchical(data = trial2, variables = c(stage, grade), denominator = trial2, id = id, label = "Stages")
   )
+
+  # variable labels correct when label is passed for ..ard_hierarchical_overall..
+  res <- tbl_hierarchical(
+    data = trial2, variables = c(grade, stage), denominator = trial2, id = id,
+    label = list(stage = "My Stage", ..ard_hierarchical_overall.. = "Total AEs", grade = "My Grade"),
+    overall_row = TRUE
+  )
+  expect_equal(res$table_styling$header$label[6], "**My Grade**  \n\U00A0\U00A0\U00A0\U00A0**My Stage**")
+  expect_identical(res$table_body$label[1], "Total AEs")
 })
 
 # tbl_hierarchical(digits) ------------------------------------------------------------
@@ -394,7 +403,7 @@ test_that("tbl_hierarchical works with one arm level present", {
       data = ADAE_subset,
       variables = c(AESOC, AEDECOD),
       by = TRTA,
-      denominator = cards::ADSL |> dplyr::rename(TRTA = ARM),
+      denominator = cards::ADSL,
       id = USUBJID
     )
   )
@@ -416,7 +425,7 @@ test_that("tbl_hierarchical table_body group variables are correct with no by", 
     tbl_hierarchical(
       data = ADAE_subset,
       variables = c(AESOC, AEDECOD),
-      denominator = cards::ADSL |> dplyr::rename(TRTA = ARM),
+      denominator = cards::ADSL,
       id = USUBJID
     )
   )
