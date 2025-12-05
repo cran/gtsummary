@@ -79,6 +79,7 @@ a gtsummary table of class \code{"tbl_hierarchical"} (for \code{tbl_hierarchical
 (for \code{tbl_hierarchical_count()}).
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}\cr
 Use these functions to generate hierarchical tables.
 \itemize{
 \item \code{tbl_hierarchical()}: Calculates \emph{rates} of events (e.g. adverse events)
@@ -104,7 +105,7 @@ again referencing the \code{'..ard_hierarchical_overall..'} name.
 }
 
 \examples{
-\dontshow{if ((identical(Sys.getenv("NOT_CRAN"), "true") || identical(Sys.getenv("IN_PKGDOWN"), "true"))) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if ((identical(Sys.getenv("NOT_CRAN"), "true") || identical(Sys.getenv("IN_PKGDOWN"), "true"))) withAutoprint(\{ # examplesIf}
 ADAE_subset <- cards::ADAE |>
   dplyr::filter(
     AESOC \%in\% unique(cards::ADAE$AESOC)[1:5],

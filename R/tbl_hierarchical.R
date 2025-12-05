@@ -1,6 +1,6 @@
 #' Hierarchical Table
 #'
-#' @description
+#' @description `r lifecycle::badge('experimental')`\cr
 #' Use these functions to generate hierarchical tables.
 #'
 #' - `tbl_hierarchical()`: Calculates *rates* of events (e.g. adverse events)
@@ -125,6 +125,14 @@ tbl_hierarchical <- function(data,
   if (!is.data.frame(denominator) && !is_integerish(denominator)) {
     cli::cli_abort(
       "The {.arg denominator} argument must be a {.cls data.frame} or an {.cls integer}, not {.obj_type_friendly {denominator}}.",
+      call = get_cli_abort_call()
+    )
+  }
+
+  if (is.data.frame(denominator) && !is_empty(by) && !identical(class(data[[by]]), class(denominator[[by]]))) {
+    cli::cli_abort(
+      "The class of the {.val {by}} column in {.arg data} data frame ({.cls {class(data[[by]])}})
+          must match the class in the {.arg denominator} data frame ({.cls {class(denominator[[by]])}}) .",
       call = get_cli_abort_call()
     )
   }

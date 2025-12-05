@@ -1,6 +1,6 @@
 Package: gtsummary
 Title: Presentation-Ready Data Summary and Analytic Result Tables
-Version: 2.4.0
+Version: 2.5.0
 Authors@R: c(
     person("Daniel D.", "Sjoberg", , "danield.sjoberg@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-0862-2018")),
@@ -47,7 +47,7 @@ URL: https://github.com/ddsjoberg/gtsummary,
         https://www.danieldsjoberg.com/gtsummary/
 BugReports: https://github.com/ddsjoberg/gtsummary/issues
 Depends: R (>= 4.2)
-Imports: cards (>= 0.7.0), cardx (>= 0.3.0), cli (>= 3.6.3), dplyr (>=
+Imports: cards (>= 0.7.1), cardx (>= 0.3.1), cli (>= 3.6.3), dplyr (>=
         1.1.3), glue (>= 1.8.0), gt (>= 0.11.1), lifecycle (>= 1.0.3),
         rlang (>= 1.1.1), tidyr (>= 1.3.0), vctrs (>= 0.6.4)
 Suggests: aod (>= 1.3.3), broom (>= 1.0.5), broom.helpers (>= 1.20.0),
@@ -67,9 +67,9 @@ Config/testthat/parallel: true
 Encoding: UTF-8
 Language: en-US
 LazyData: true
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 NeedsCompilation: no
-Packaged: 2025-08-28 03:45:15 UTC; sjobergd
+Packaged: 2025-12-05 03:16:10 UTC; sjobergd
 Author: Daniel D. Sjoberg [aut, cre] (ORCID:
     <https://orcid.org/0000-0003-0862-2018>),
   Joseph Larmarange [aut] (ORCID:
@@ -91,4 +91,4 @@ Author: Daniel D. Sjoberg [aut, cre] (ORCID:
     <https://orcid.org/0000-0002-2524-3637>)
 Maintainer: Daniel D. Sjoberg <danield.sjoberg@gmail.com>
 Repository: CRAN
-Date/Publication: 2025-08-28 04:50:02 UTC
+Date/Publication: 2025-12-05 11:40:07 UTC

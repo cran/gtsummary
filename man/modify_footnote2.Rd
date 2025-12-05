@@ -81,7 +81,7 @@ Updated gtsummary object
 Modify Footnotes
 }
 \examples{
-\dontshow{if (identical(Sys.getenv("NOT_CRAN"), "true") || identical(Sys.getenv("IN_PKGDOWN"), "true")) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (identical(Sys.getenv("NOT_CRAN"), "true") || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Example 1 ----------------------------------
 tbl <- trial |>
   tbl_summary(by = trt, include = c(age, grade), missing = "no") |>
@@ -103,4 +103,7 @@ tbl |>
   remove_footnote_header(columns = all_stat_cols()) |>
   remove_footnote_body(columns = label, rows = variable == "grade" & row_type == "label")
 \dontshow{\}) # examplesIf}
+}
+\seealso{
+\href{https://www.danieldsjoberg.com/gtsummary/articles/modify-functions.html}{Footnotes vs Source Notes vs Abbreviations}
 }
