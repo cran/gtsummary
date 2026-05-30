@@ -1,10 +1,22 @@
+# gtsummary 2.5.1
+
+* Theme elements are no longer 'evaluated' by default, e.g. `rlang::eval()`. Only `'as_flex_table-lst:addl_cmds'`, `'as_gt-lst:addl_cmds'`, `'as_hux_table-lst:addl_cmds'`, `'as_kable_extra-lst:addl_cmds'` elements that pass expressions are evaluated.
+
+* Removed `test = "tarone"` from `add_p.tbl_survfit()`. The previous implementation used `survdiff(rho = 1.5)`, which does not correctly compute the Tarone-Ware test. Users who need a G-rho family test can use `test = "survdiff"` with `test.args = list(rho = )`. (#2391)
+
+* Add alternative text to figures on website. (#1958)
+
+* Improved efficiency of `style_number()`. There is a slight change to a small subset of rounded values. For example, the difference between two dates was previously formatted to `'0 days'`, and now it is formatted to `'0'`.
+
+* Fixed bug in `tbl_hierarchical()`, `filter_hierarchical()` and `sort_hierarchical()` that was dropping class attributes. (#2397, @jszczypinski) 
+
 # gtsummary 2.5.0
 
 ### New Features and Functions
 
 * Added AI chat bot to homepage, powered by `kapa.ai`.
 
-* Added functions `tlb_ard_strata()` and `tlb_ard_strata2()`. (#1852)
+* Added functions `tbl_ard_strata()` and `tbl_ard_strata2()`. (#1852)
 
 ### Other Updates
 
