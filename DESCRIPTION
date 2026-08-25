@@ -1,6 +1,6 @@
 Package: gtsummary
 Title: Presentation-Ready Data Summary and Analytic Result Tables
-Version: 2.5.1
+Version: 2.6.0
 Authors@R: c(
     person("Daniel D.", "Sjoberg", , "danield.sjoberg@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-0862-2018")),
@@ -47,18 +47,20 @@ URL: https://github.com/ddsjoberg/gtsummary,
         https://www.danieldsjoberg.com/gtsummary/
 BugReports: https://github.com/ddsjoberg/gtsummary/issues
 Depends: R (>= 4.2)
-Imports: cards (>= 0.8.0), cardx (>= 0.3.3), cli (>= 3.6.3), dplyr (>=
+Imports: cards (>= 0.9.0), cardx (>= 0.3.3), cli (>= 3.6.3), dplyr (>=
         1.1.3), glue (>= 1.8.0), gt (>= 0.11.1), lifecycle (>= 1.0.3),
         rlang (>= 1.1.1), tidyr (>= 1.3.0), vctrs (>= 0.6.4)
 Suggests: aod (>= 1.3.3), broom (>= 1.0.5), broom.helpers (>= 1.20.0),
-        broom.mixed (>= 0.2.9), car (>= 3.0-11), cmprsk, effectsize (>=
-        0.6.0), emmeans (>= 1.7.3), flextable (>= 0.8.1), geepack (>=
-        1.3.10), ggstats (>= 0.2.1), huxtable (>= 5.4.0), insight (>=
-        0.15.0), kableExtra (>= 1.3.4), knitr (>= 1.37), lme4 (>=
-        1.1-31), mice (>= 3.10.0), nnet, officer, openxlsx, parameters
-        (>= 0.20.2), parsnip (>= 0.1.7), rmarkdown, smd (>= 0.6.6),
-        spelling, survey (>= 4.2), survival (>= 3.6-4), testthat (>=
-        3.2.0), withr (>= 2.5.0), workflows (>= 0.2.4)
+        broom.mixed (>= 0.2.9), car (>= 3.0-11), cmprsk (>= 2.2.12),
+        effectsize (>= 0.6.0), emmeans (>= 1.7.3), flextable (>=
+        0.9.11), geepack (>= 1.3.10), ggstats (>= 0.2.1), huxtable (>=
+        5.4.0), insight (>= 0.15.0), kableExtra (>= 1.3.4), knitr (>=
+        1.37), lme4 (>= 1.1-31), mice (>= 3.10.0), nnet (>= 7.3.20),
+        officer (>= 0.7.5), openxlsx (>= 4.2.8.1), parameters (>=
+        0.20.2), parsnip (>= 0.1.7), rmarkdown (>= 2.3.1), smd (>=
+        0.6.6), spelling (>= 2.3.2), survey (>= 4.5), survival (>=
+        3.6-4), testthat (>= 3.2.0), withr (>= 2.5.0), workflows (>=
+        0.2.4)
 VignetteBuilder: knitr
 Config/Needs/check: hms
 Config/Needs/website: forcats, sandwich, scales
@@ -67,9 +69,9 @@ Config/testthat/parallel: true
 Encoding: UTF-8
 Language: en-US
 LazyData: true
-Config/roxygen2/version: 8.0.0
+Config/roxygen2/version: 8.1.0
 NeedsCompilation: no
-Packaged: 2026-05-29 18:21:56 UTC; sjobergd
+Packaged: 2026-08-21 15:27:14 UTC; DanielSjoberg
 Author: Daniel D. Sjoberg [aut, cre] (ORCID:
     <https://orcid.org/0000-0003-0862-2018>),
   Joseph Larmarange [aut] (ORCID:
@@ -91,4 +93,4 @@ Author: Daniel D. Sjoberg [aut, cre] (ORCID:
     <https://orcid.org/0000-0002-2524-3637>)
 Maintainer: Daniel D. Sjoberg <danield.sjoberg@gmail.com>
 Repository: CRAN
-Date/Publication: 2026-05-30 05:12:53 UTC
+Date/Publication: 2026-08-25 11:00:44 UTC

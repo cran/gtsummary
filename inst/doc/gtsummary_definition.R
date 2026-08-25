@@ -8,10 +8,12 @@ knitr::opts_chunk$set(
 ## ----setup, message=FALSE-----------------------------------------------------
 library(gtsummary)
 
-tbl_regression_ex <-
-  lm(age ~ grade + marker, trial) |> 
-  tbl_regression() |> 
-  bold_p(t = 0.5)
+if (requireNamespace("broom", quietly = TRUE) && requireNamespace("broom.helpers", quietly = TRUE)) {
+  tbl_regression_ex <-
+    lm(age ~ grade + marker, trial) |> 
+    tbl_regression() |> 
+    bold_p(t = 0.5)
+}
 
 tbl_summary_ex <-
   trial |> 
@@ -130,7 +132,7 @@ dplyr::tribble(
 ## ----echo=FALSE---------------------------------------------------------------
 dplyr::tribble(
   ~Column, ~Description,
-  "id", "Integer idenitfying the source note",
+  "id", "Integer identifying the source note",
   "source_note", "string containing the abbreviation to add",
   "text_interpret", "the {gt} function that is used to interpret the source note, `gt::md()` or `gt::html()`",
   "remove", "logical indicating whether the source note should be included or removed from final table"
@@ -224,10 +226,10 @@ dplyr::tribble(
     row_group.padding = gt::px(1)
   )
 
-## -----------------------------------------------------------------------------
+## ----eval=requireNamespace("broom", quietly = TRUE) && requireNamespace("broom.helpers", quietly = TRUE)----
 tbl_regression_ex$table_styling
 
-## -----------------------------------------------------------------------------
+## ----eval=requireNamespace("broom", quietly = TRUE) && requireNamespace("broom.helpers", quietly = TRUE)----
 tbl_regression_ex %>%
   getElement("table_body") %>%
   select(variable, row_type, label)
