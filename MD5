@@ -1,7 +1,7 @@
-a626afd26fd5a0ad559a86f2c359ab43 *DESCRIPTION
+24e5877c379cbedf460c16810d29a4ec *DESCRIPTION
 27c9faa887d17c21ad51fbc508806f18 *LICENSE
 e599c42373e847319bb2c27d7bc94c8c *NAMESPACE
-483fa66f7f7b90871171bff9ae216501 *NEWS.md
+9edf5d8f05d1dc390d4b5dbce81f7f40 *NEWS.md
 620d550d5edb8d3b05f46d58f09ae251 *R/aaa.R
 62bdf43733d9284d2648fae9e187ca89 *R/add_ci.R
 b2bcda5b1fa5665425563835e98a1c7d *R/add_ci.tbl_svysummary.R
@@ -90,12 +90,12 @@ ff55469e1e3ed0be4cf99161552a5319 *R/modify_footnote.R
 1e7de80066a7d0d6fcc7ef67bbc3f1ea *R/modify_source_note.R
 79364aa4b6a0b2ec793fc34e23b0f2d8 *R/modify_table_body.R
 cfab3a937bbff56b28ef2253551ba883 *R/modify_table_styling.R
-a20a260d76e159d0b4168e93dfc02941 *R/plot.R
+7c4ef076f7f3e2361eb5790da16626b2 *R/plot.R
 31ebaaefd276648d542f4a105fbc1f82 *R/print.R
 3bfdf711e0dc7ac0e40e8884b6289f18 *R/reexport.R
 c1bc52a9bc540b83d27ced78da343fab *R/remove_row_type.R
 a4b4c487a12a07c06b9042b6855cd35d *R/rows_argument.R
-62fb44bd2341c12e98eace1298e7f12a *R/save_flex_docx.R
+0350310d2d11a082de305e356398ef35 *R/save_flex_docx.R
 6a93d2ca285e5d482e7b5768a7f14a51 *R/select_helpers.R
 dce67fe7dee327c24f78aa7b8fbddc1c *R/separate_p_footnotes.R
 5c599e1a0a91f5f6dc603d6699dfeabc *R/set_gtsummary_theme.R
@@ -127,7 +127,7 @@ b9109bc4045bcb2649c64c39314dffea *R/tbl_regression.R
 24ba9c79ece1a7fb046979be65f55e16 *R/tbl_stack.R
 7e9be7fa302715ac3f69030f053544ca *R/tbl_strata.R
 a1922f3daf057a4e1cf1ef6aaf0a5f53 *R/tbl_strata_nested_stack.R
-941fd300428507ff72bb9c619cc75d68 *R/tbl_summary.R
+5ca2128817383b05eee84d4615392aca *R/tbl_summary.R
 0444745f6c1bcf7bdaabbacc85fb398d *R/tbl_survfit.R
 4d3a36ed116335974504ff6eab68f4d8 *R/tbl_survfit_errors.R
 870fca99896e3bd631f7c051dac4f9b0 *R/tbl_svysummary.R
@@ -137,7 +137,7 @@ c11f6f84cec45bd8f4a81bf107b11f3c *R/tests.R
 f25f77355049b222d78251320c388fd1 *R/theme_gtsummary.R
 f7b2bfb9fd10572ccfd50f985910309e *R/tibble_as_cli.R
 fe0df2d477087252de933dbd97ff9a7c *R/utils-add_p_tests.R
-9afabba79e65c47223b09311a69e3875 *R/utils-as.R
+dda1fdca873c84a7929f93e80b19976f *R/utils-as.R
 834d8c6abeb679b2b2450f4b08d92e98 *R/utils-cards.R
 f2afc3f9b241b5be8e479270af0babb1 *R/utils-gtsummary_core.R
 0704ae51cb28f295dffabaa65574788e *R/utils-misc.R
@@ -150,10 +150,10 @@ e5ecb90b9c50cbd7af65e95ba64a1bb7 *R/zzz.R
 18ae0caf03bfb08a4119c0b31afcbf49 *build/vignette.rds
 5fb68e8d7a8283e7a10540134c089a8f *data/trial.rda
 84854fc5e7db9e8d1ee326987850df52 *inst/CITATION
-e9342ca10adc02fbed4e7c770c4f153e *inst/WORDLIST
+979ca574d7a6f8d1efc11e80f431ea9b *inst/WORDLIST
 750fbf3f886eff34ca453e58aedac692 *inst/doc/gtsummary_definition.R
 6185630c41d08247b704c6e29f18aa92 *inst/doc/gtsummary_definition.Rmd
-14ba327cecc3194422606f6207222199 *inst/doc/gtsummary_definition.html
+ed45a37c4f9a5aac3d88ab5bbc3012f6 *inst/doc/gtsummary_definition.html
 bfe474f3e7ef7b2d6cf3740fdb0c60e1 *inst/rmarkdown_example/gtsummary_rmarkdown_html.Rmd
 85fa001bbcc396c25c698d3480aaa073 *man/add_ci.Rd
 9836043b6fc0bfd7916cdbe82f4342c3 *man/add_ci.tbl_svysummary.Rd
@@ -269,7 +269,7 @@ cbc5f8a63e1c1323b826184331e36702 *man/ratio_summary.Rd
 6bb1dd2989463a171483dec041bdd0cc *man/reexports.Rd
 d0b042cf13fbd1a7170143c833fb1034 *man/remove_row_type.Rd
 d47a8597b741932456c8ee8b257c43e1 *man/rows_argument.Rd
-0fb261301258cc327b72d4d61c267384 *man/save_flex_docx.Rd
+d8686d1a73a8e96f2c236f8bcee6345c *man/save_flex_docx.Rd
 d597a312b1fcc1fe75cc9a8383f87045 *man/scoping_gtsummary.Rd
 8d1a44362579e84d1b378f70a2424d49 *man/select_helpers.Rd
 f1cb7c14bc7dc437dfa654d6814010bb *man/separate_p_footnotes.Rd
@@ -463,7 +463,7 @@ b06b4e0c10aa13d824ef87b7b5cd1b51 *tests/testthat/test-modify_post_fmt_fun.R
 86da216302dbd03ac1893e547afcd7db *tests/testthat/test-modify_spanning_header.R
 e4cd9aafbf615f85a8bdf4effde773d8 *tests/testthat/test-modify_table_body.R
 d0ff43188a163429e51c79baac319c62 *tests/testthat/test-modify_table_styling.R
-f7588cfb3f87204f485cb1f828625bdd *tests/testthat/test-plot.tbl_regression.R
+af8006d309d28d78791509e67fe90dc7 *tests/testthat/test-plot.tbl_regression.R
 5e3f232bb69743945835036843ed3749 *tests/testthat/test-plot.tbl_uvregression.R
 e3a06701ce7580a5f3ef25ecb3b77005 *tests/testthat/test-remove_row_type.R
 ebead9ac4b88f02e7098d291b04f639a *tests/testthat/test-save_flex_docx.R
@@ -503,5 +503,6 @@ ad520152076198e367a706f42789e9d0 *tests/testthat/test-tbl_summary.R
 e3ddce92e70322971bafa1a5d7ed9749 *tests/testthat/test-tbl_wide_summary.R
 4d75f04244758570a41107748d589499 *tests/testthat/test-theme_elements_gtsummary.R
 c07240b7fe8372cd53acf8280308ea0a *tests/testthat/test-theme_gtsummary.R
+67e3cb2be79b63e55d6118d92ae19304 *tests/testthat/test-utils-as.R
 80edbd008770d2ce7b917868da403ffa *tests/testthat/test-utils-gtsummary_core.R
 6185630c41d08247b704c6e29f18aa92 *vignettes/gtsummary_definition.Rmd
